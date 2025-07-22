@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ investor.name }} — Инвестор — StanBase{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <h2 class="mb-2">{{ investor.name }}</h2>
+        <div class="mb-2 text-muted small">{{ investor.country }} | {{ inv_type }}</div>
+        <p class="mb-3">{{ investor.description }}</p>
+        {% if investor.website %}
+          <div class="mb-2"><b>Сайт:</b> <a href="{{ investor.website }}" target="_blank">{{ investor.website }}</a></div>
+        {% endif %}
+        <div class="mb-3"><b>Стадии инвестирования:</b>
+          {% for stage in investor.stages.split(',') %}
+            <span class="badge bg-info text-dark me-1">{{ stage.strip() }}</span>
+          {% endfor %}
+        </div>
+        <hr>
+        {% if investor.type in ['angel', 'venture'] %}
+        <h5 class="mb-2">Портфель</h5>
+        {% if investor.portfolio %}
+          <ul class="list-group mb-3">
+            {% for startup in investor.portfolio %}
+              <li class="list-group-item">
+                <a href="/startup/{{ startup.id }}"><b>{{ startup.name }}</b></a><br>
+                <span class="text-muted small">{{ startup.country }}, {{ startup.city }} | {{ startup.industry }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет данных о портфеле.</div>
+        {% endif %}
+        {% endif %}
+        {% if investor.type == 'venture' and investor.team %}
+        <hr>
+        <h5 class="mb-2">Команда</h5>
+        <ul class="list-group mb-3">
+          {% for p in investor.team %}
+            <li class="list-group-item">
+              <span><b>{{ p.name }}</b> — {{ p.role }}</span>
+              {% if p.linkedin %}<a href="{{ p.linkedin }}" target="_blank" class="ms-2">LinkedIn</a>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="mb-3">Похожие инвесторы</h5>
+        {% if similar %}
+          <ul class="list-group list-group-flush">
+            {% for inv in similar %}
+              <li class="list-group-item">
+                <a href="/investor/{{ inv.id }}"><b>{{ inv.name }}</b></a><br>
+                <span class="text-muted small">{{ inv.country }} | {{ inv.focus }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет похожих инвесторов.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}StanBase{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { background: #fff; font-family: 'Roboto', Arial, sans-serif; }
+      .card { border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+      .navbar { margin-bottom: 2rem; }
+      .card-title a, .card-body a {
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+      .card-title a:hover, .card-body a:hover {
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+    </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="/">StanBase</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/startups">Стартапы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/investors">Инвесторы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/news">Новости</a></li>
+            <li class="nav-item"><a class="nav-link" href="/podcasts">Подкасты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/events">Мероприятия</a></li>
+            <li class="nav-item d-flex align-items-center"><a href="/login" class="btn btn-primary ms-lg-3">Войти</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      {% block content %}{% endblock %}
+      <div style="margin-bottom: 48px;"></div>
+    </div>
+    <footer class="footer mt-auto py-3 bg-light border-top">
+      <div class="container text-center small text-muted">
+        StanBase &copy; 2025 &middot; Powered by Venn Lab
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html> 

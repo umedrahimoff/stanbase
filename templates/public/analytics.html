@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+{% block title %}Аналитика рынка — StanBase{% endblock %}
+{% block content %}
+<div class="container-lg mt-4">
+  <h2 class="mb-4">Аналитика рынка</h2>
+  <form method="get" class="mb-4 row g-2 align-items-end">
+    <div class="col-auto">
+      <label for="year" class="form-label">Год:</label>
+      <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+        {% for y in years %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Страна</th>
+          <th>Сумма инвестиций (USD)</th>
+          <th>Количество сделок</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for country, data in stats %}
+        <tr>
+          <td>{{ country }}</td>
+          <td>{{ '{:,.0f}'.format(data.sum) }}</td>
+          <td>{{ data.count }}</td>
+        </tr>
+        {% endfor %}
+        {% if not stats %}
+        <tr><td colspan="3" class="text-center text-muted">Нет данных за выбранный год</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %} 

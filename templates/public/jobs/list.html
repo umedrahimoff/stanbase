@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block title %}Вакансии — StanBase{% endblock %}
+{% block content %}
+<h2 class="mb-4">Вакансии</h2>
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-3">
+    <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.args.get('q', '') }}">
+  </div>
+  <div class="col-md-3">
+    <select name="city" class="form-select">
+      <option value="">Город</option>
+      {% for c in cities %}
+        <option value="{{ c }}" {% if c == request.args.get('city') %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="job_type" class="form-select">
+      <option value="">Тип</option>
+      {% for t in job_types %}
+        <option value="{{ t }}" {% if t == request.args.get('job_type') %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="startup" class="form-select">
+      <option value="">Стартап</option>
+      {% for s in startups %}
+        <option value="{{ s.id }}" {% if s.id|string == request.args.get('startup') %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-12 col-lg-2 mt-2 mt-lg-0">
+    <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
+  </div>
+</form>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for j in jobs %}
+  <div class="col">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title"><a href="/job/{{ j.id }}">{{ j.title }}</a></h5>
+        <div class="mb-2 text-muted small">{{ j.city }} | {{ j.job_type }}</div>
+        <p class="card-text">{{ j.description[:120] }}{% if j.description|length > 120 %}...{% endif %}</p>
+        <a href="/job/{{ j.id }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %} 

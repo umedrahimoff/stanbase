@@ -1,0 +1,164 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center g-2">
+  <div class="col-lg-9">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h3 class="mb-4">{% if startup %}Редактировать стартап{% else %}Создать стартап{% endif %}</h3>
+        <ul class="nav nav-tabs mb-4" id="startupTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">Команда</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">Раунды</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs" type="button" role="tab">Вакансии</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <div class="tab-content" id="startupTabContent">
+          <div class="tab-pane fade show active" id="main" role="tabpanel">
+            <form method="post">
+              <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" name="name" class="form-control" value="{{ startup.name if startup else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control">{{ startup.description if startup else '' }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Страна</label>
+                <input type="text" name="country" class="form-control" value="{{ startup.country if startup else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Город</label>
+                <input type="text" name="city" class="form-control" value="{{ startup.city if startup else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Стадия</label>
+                <input type="text" name="stage" class="form-control" value="{{ startup.stage if startup else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Индустрия</label>
+                <input type="text" name="industry" class="form-control" value="{{ startup.industry if startup else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if startup and startup.status=='active' %}selected{% endif %}>Активен</option>
+                  <option value="inactive" {% if startup and startup.status=='inactive' %}selected{% endif %}>Неактивен</option>
+                  <option value="archived" {% if startup and startup.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if startup and startup.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Дата основания (YYYY-MM-DD)</label>
+                <input type="text" name="founded_date" class="form-control" value="{{ startup.founded_date if startup and startup.founded_date else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Сайт</label>
+                <input type="text" name="website" class="form-control" value="{{ startup.website if startup else '' }}">
+              </div>
+              <div class="d-flex justify-content-between mt-4">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{{ url_for('admin_startups') }}" class="btn btn-link">Отмена</a>
+              </div>
+            </form>
+          </div>
+          <div class="tab-pane fade" id="team" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Команда</h5>
+              <button class="btn btn-sm btn-outline-primary">Добавить</button>
+            </div>
+            <table class="table table-sm table-hover">
+              <thead><tr><th>Имя</th><th>Роль</th><th>LinkedIn</th><th></th></tr></thead>
+              <tbody>
+                {% for p in team %}
+                  <tr>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.role }}</td>
+                    <td>{% if p.linkedin %}<a href="{{ p.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-secondary">Редактировать</button>
+                      <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="tab-pane fade" id="deals" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Раунды</h5>
+              <button class="btn btn-sm btn-outline-primary">Добавить</button>
+            </div>
+            <table class="table table-sm table-hover">
+              <thead><tr><th>Тип</th><th>Сумма</th><th>Оценка</th><th>Дата</th><th>Инвесторы</th><th></th></tr></thead>
+              <tbody>
+                {% for d in deals %}
+                  <tr>
+                    <td>{{ d.type }}</td>
+                    <td>{{ d.amount }}</td>
+                    <td>{{ d.valuation }}</td>
+                    <td>{{ d.date }}</td>
+                    <td>{{ d.investors }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-secondary">Редактировать</button>
+                      <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="tab-pane fade" id="jobs" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Вакансии</h5>
+              <button class="btn btn-sm btn-outline-primary">Добавить</button>
+            </div>
+            <table class="table table-sm table-hover">
+              <thead><tr><th>Должность</th><th>Город</th><th>Тип</th><th>Контакт</th><th></th></tr></thead>
+              <tbody>
+                {% for j in jobs %}
+                  <tr>
+                    <td>{{ j.title }}</td>
+                    <td>{{ j.city }}</td>
+                    <td>{{ j.job_type }}</td>
+                    <td>{{ j.contact }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-secondary">Редактировать</button>
+                      <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Мета-информация</h6>
+        {% if startup %}
+          <div class="mb-2"><b>ID:</b> {{ startup.id }}</div>
+        {% endif %}
+        <div class="mb-2"><b>Страна:</b> {{ startup.country if startup else '—' }}</div>
+        <div class="mb-2"><b>Стадия:</b> {{ startup.stage if startup else '—' }}</div>
+        {% if startup %}
+          <div class="mb-2">
+            <a href="{{ url_for('startup_profile', id=startup.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Открыть на сайте</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

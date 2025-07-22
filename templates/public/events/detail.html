@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block title %}{{ event.title }} — Мероприятия — StanBase{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h2>{{ event.title }}</h2>
+  <div class="mb-2 text-muted small">{{ event.date.strftime('%d.%m.%Y %H:%M') if event.date else '' }} | {{ event.format }} | {{ event.location }}</div>
+  <div class="mb-3">{{ event.description }}</div>
+  {% if event.registration_url %}
+    <a href="{{ event.registration_url }}" class="btn btn-primary" target="_blank">Регистрация</a>
+  {% endif %}
+</div>
+<a href="/events" class="btn btn-outline-secondary">← К списку мероприятий</a>
+{% endblock %} 

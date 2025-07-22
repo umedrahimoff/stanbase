@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block title %}{{ job.title }} — Вакансии — StanBase{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h2>{{ job.title }}</h2>
+  <div class="mb-2 text-muted small">{{ job.city }} | {{ job.job_type }}</div>
+  <div class="mb-3">{{ job.description }}</div>
+  <div><b>Контакт:</b> {{ job.contact }}</div>
+  {% if job.startup %}
+    <div class="mt-3"><b>Стартап:</b> <a href="/startup/{{ job.startup.id }}">{{ job.startup.name }}</a></div>
+  {% endif %}
+</div>
+<a href="/jobs" class="btn btn-outline-secondary">← К списку вакансий</a>
+{% endblock %} 

@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+{% block title %}Кабинет инвестора — StanBase{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="mb-3">Добро пожаловать, {{ user.username }}!</h3>
+        <p>Вы вошли как <b>инвестор</b>.</p>
+        {% if investor %}
+          <p>Ваш профиль: <a href="/investor/{{ investor.id }}">{{ investor.name }}</a></p>
+        {% endif %}
+        <a href="/dashboard/investor/edit" class="btn btn-outline-primary mb-3">Редактировать профиль</a>
+        <h5 class="mt-4">Портфель</h5>
+        {% if investor.portfolio %}
+          <ul class="list-group mb-3">
+            {% for s in investor.portfolio %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><a href="/startup/{{ s.id }}">{{ s.name }}</a></span>
+                <form method="post" action="/dashboard/investor/portfolio/delete/{{ s.id }}" style="display:inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Портфель пуст.</div>
+        {% endif %}
+        <form method="post" action="/dashboard/investor/portfolio/add" class="row g-2 align-items-end">
+          <div class="col-8">
+            <select name="startup_id" class="form-select" required>
+              <option value="">Добавить стартап в портфель...</option>
+              {% for s in startups %}
+                {% if s not in investor.portfolio %}
+                  <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-4">
+            <button type="submit" class="btn btn-success w-100">Добавить</button>
+          </div>
+        </form>
+        <a href="/logout" class="btn btn-outline-secondary mt-3">Выйти</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

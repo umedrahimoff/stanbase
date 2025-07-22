@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+{% block title %}Редактировать профиль стартапа — StanBase{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-7 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="mb-4 text-center">Редактировать профиль стартапа</h3>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Название</label>
+            <input type="text" class="form-control" name="name" value="{{ startup.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Описание</label>
+            <textarea class="form-control" name="description" rows="3">{{ startup.description }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Страна</label>
+            <input type="text" class="form-control" name="country" value="{{ startup.country }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Город</label>
+            <input type="text" class="form-control" name="city" value="{{ startup.city }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Стадия</label>
+            <input type="text" class="form-control" name="stage" value="{{ startup.stage }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Индустрия</label>
+            <input type="text" class="form-control" name="industry" value="{{ startup.industry }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Сайт</label>
+            <input type="text" class="form-control" name="website" value="{{ startup.website }}">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Сохранить</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

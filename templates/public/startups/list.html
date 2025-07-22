@@ -1,0 +1,69 @@
+{% extends 'layout.html' %}
+{% block title %}Стартапы — StanBase{% endblock %}
+{% block head %}
+<style>
+  .card-google {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    background: #fff;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.15s;
+  }
+  .card-google:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="mb-4">Стартапы</h2>
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-3">
+    <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.args.get('q', '') }}">
+  </div>
+  <div class="col-md-2">
+    <select name="country" class="form-select">
+      <option value="">Страна</option>
+      {% for c in countries %}
+        <option value="{{ c }}" {% if c == request.args.get('country') %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="stage" class="form-select">
+      <option value="">Стадия</option>
+      {% for s in stages %}
+        <option value="{{ s }}" {% if s == request.args.get('stage') %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="industry" class="form-select">
+      <option value="">Индустрия</option>
+      {% for i in industries %}
+        <option value="{{ i }}" {% if i == request.args.get('industry') %}selected{% endif %}>{{ i }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
+  </div>
+</form>
+
+{% if startups %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for s in startups %}
+    <div class="col">
+      <div class="card card-google h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="/startup/{{ s.id }}">{{ s.name }}</a></h5>
+          <div class="mb-2 text-muted small">{{ s.country }}, {{ s.city }} | {{ s.stage }} | {{ s.industry }}</div>
+          <p class="card-text">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">Стартапы не найдены.</div>
+{% endif %}
+{% endblock %} 

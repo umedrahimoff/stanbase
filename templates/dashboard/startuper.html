@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+{% block title %}Кабинет стартапера — StanBase{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="mb-3">Добро пожаловать, {{ user.username }}!</h3>
+        <p>Вы вошли как <b>стартапер</b>.</p>
+        {% if startup %}
+          <p>Ваш стартап: <a href="/startup/{{ startup.id }}">{{ startup.name }}</a></p>
+        {% endif %}
+        <a href="/dashboard/startuper/edit" class="btn btn-outline-primary mb-3">Редактировать профиль стартапа</a>
+        <h5 class="mt-4">Команда</h5>
+        {% if startup.team %}
+          <ul class="list-group mb-3">
+            {% for person in startup.team %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ person.name }} — {{ person.role }}</span>
+                <form method="post" action="/dashboard/startuper/team/delete/{{ person.id }}" style="display:inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Команда не указана.</div>
+        {% endif %}
+        <form method="post" action="/dashboard/startuper/team/add" class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <input type="text" name="name" class="form-control" placeholder="Имя" required>
+          </div>
+          <div class="col-md-4">
+            <input type="text" name="role" class="form-control" placeholder="Роль" required>
+          </div>
+          <div class="col-md-4">
+            <input type="text" name="linkedin" class="form-control" placeholder="LinkedIn">
+          </div>
+          <div class="col-12 mt-2">
+            <button type="submit" class="btn btn-success w-100">Добавить в команду</button>
+          </div>
+        </form>
+        <a href="/logout" class="btn btn-outline-secondary mt-3">Выйти</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

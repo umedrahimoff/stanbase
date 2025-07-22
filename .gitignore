@@ -1,0 +1,6 @@
+# StanBase
+venv/
+__pycache__/
+*.pyc
+stanbase.db
+.env 

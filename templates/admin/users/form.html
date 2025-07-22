@@ -1,0 +1,66 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if user %}Редактирование пользователя{% else %}Создание пользователя{% endif %}</h3>
+        <ul class="nav nav-tabs mb-4" id="userTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="tab-content" id="userTabContent">
+            <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Логин</label>
+                <input type="text" name="username" class="form-control" value="{{ user.username if user else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Пароль</label>
+                <input type="password" name="password" class="form-control" {% if not user %}required{% endif %}>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Роль</label>
+                <select name="role" class="form-select" required>
+                  <option value="admin" {% if user and user.role=='admin' %}selected{% endif %}>admin</option>
+                  <option value="moderator" {% if user and user.role=='moderator' %}selected{% endif %}>moderator</option>
+                  <option value="investor" {% if user and user.role=='investor' %}selected{% endif %}>investor</option>
+                  <option value="startuper" {% if user and user.role=='startuper' %}selected{% endif %}>startuper</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if user and user.status=='active' %}selected{% endif %}>Активен</option>
+                  <option value="inactive" {% if user and user.status=='inactive' %}selected{% endif %}>Неактивен</option>
+                  <option value="archived" {% if user and user.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if user and user.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Мета-информация</h6>
+        {% if user %}
+          <div class="mb-2"><b>ID:</b> {{ user.id }}</div>
+        {% endif %}
+        <div class="mb-2"><b>Роль:</b> {{ user.role if user else '—' }}</div>
+        <!-- Можно добавить дату создания/изменения, если появятся -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

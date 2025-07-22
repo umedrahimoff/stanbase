@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}
+{% block title %}Инвесторы — StanBase{% endblock %}
+{% block head %}
+<style>
+  .card-google {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    background: #fff;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.15s;
+  }
+  .card-google:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="mb-4">Инвесторы</h2>
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-3">
+    <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.args.get('q', '') }}">
+  </div>
+  <div class="col-md-2">
+    <select name="country" class="form-select">
+      <option value="">Страна</option>
+      {% for c in countries %}
+        <option value="{{ c }}" {% if c == request.args.get('country') %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <input type="text" name="focus" class="form-control" placeholder="Фокус" value="{{ request.args.get('focus', '') }}">
+  </div>
+  <div class="col-md-2">
+    <input type="text" name="stages" class="form-control" placeholder="Стадии" value="{{ request.args.get('stages', '') }}">
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
+  </div>
+</form>
+
+{% if investors %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for inv in investors %}
+      {% if inv.type == 'angel' %}
+        {% set inv_type = 'Ангельский инвестор' %}
+      {% elif inv.type == 'venture' %}
+        {% set inv_type = 'Венчурный фонд' %}
+      {% else %}
+        {% set inv_type = 'Прочие инвестиции' %}
+      {% endif %}
+    <div class="col">
+      <div class="card card-google h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="/investor/{{ inv.id }}">{{ inv.name }}</a></h5>
+          <div class="mb-1 text-muted small">{{ inv.country }} | {{ inv_type }}</div>
+          <div class="mb-2 text-muted small">{{ inv.focus }} | {{ inv.stages }}</div>
+          <p class="card-text">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
+          {% if inv.type in ['angel', 'venture'] and inv.portfolio %}
+            <div class="mt-2 small text-muted">Портфель: {{ inv.portfolio|length }} стартап(ов)</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">Инвесторы не найдены.</div>
+{% endif %}
+{% endblock %} 

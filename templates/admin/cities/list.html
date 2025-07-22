@@ -1,0 +1,39 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<h2 class="mb-4">Города</h2>
+<form class="row g-3 mb-3" method="post">
+  <div class="col-md-4">
+    <input type="text" name="name" class="form-control" placeholder="Название города" required>
+  </div>
+  <div class="col-md-4">
+    <select name="country_id" class="form-select" required>
+      <option value="">Страна...</option>
+      {% for country in countries %}
+        <option value="{{ country.id }}">{{ country.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary">Добавить</button>
+  </div>
+  {% if error %}<div class="col-12"><div class="alert alert-danger">{{ error }}</div></div>{% endif %}
+</form>
+<table class="table table-striped table-hover align-middle bg-white rounded-0 border-0">
+  <thead class="table-light"><tr><th>ID</th><th>Название</th><th>Страна</th><th class="text-end">Действия</th></tr></thead>
+  <tbody>
+    {% for city in cities %}
+      <tr>
+        <td>{{ city.id }}</td>
+        <td>{{ city.name }}</td>
+        <td>{{ city.country.name if city.country else '' }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('admin_edit_city', city_id=city.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+          <form action="{{ url_for('admin_delete_city', city_id=city.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить город?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %} 

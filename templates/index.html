@@ -1,0 +1,168 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<style>
+  .card-google {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    background: #fff;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.15s;
+  }
+  .card-google:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.01em;
+  }
+  .section-divider {
+    border-top: 1px solid #e5e7eb;
+    margin: 2.5rem 0 2rem 0;
+  }
+  .card-google-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: box-shadow 0.15s;
+  }
+  .card-google-link:hover .card-google {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .hero-bg {
+    background: #f5f7fa;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    margin-bottom: 2.5rem;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-3">
+  <div class="col-lg-8 text-center">
+    <h1 class="display-5 mb-2">StanBase</h1>
+    <p class="lead mb-3">База стартапов, инвесторов, сделок, новостей, подкастов, вакансий и мероприятий Центральной Азии</p>
+    <form action="/startups" method="get" class="mb-3">
+      <div class="input-group input-group-lg shadow-sm">
+        <input type="text" name="q" class="form-control form-control-lg" placeholder="Поиск по стартапам, людям, инвесторам..." aria-label="Поиск">
+        <button class="btn btn-primary px-4" type="submit">Найти</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+<div class="container-lg">
+  <div class="section-title">Стартапы</div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for s in startups[:6] %}
+    <div class="col">
+      <div class="card card-google h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-1"><a href="/startup/{{ s.id }}">{{ s.name }}</a></h5>
+          <div class="mb-2 text-muted small">{{ s.country }}, {{ s.city }} | {{ s.stage }} | {{ s.industry }}</div>
+          <p class="card-text">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-end"><a href="/startups" class="btn btn-link">Все стартапы →</a></div>
+</div>
+
+<div class="section-divider"></div>
+<div class="container-lg">
+  <div class="section-title">Инвесторы</div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for i in investors[:6] %}
+    <div class="col">
+      <a href="/investor/{{ i.id }}" class="card-google-link">
+        <div class="card card-google h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1">{{ i.name }}</h5>
+            <div class="mb-2 text-muted small">{{ i.country }} | {{ i.focus }} | {{ i.stages }}</div>
+            <p class="card-text">{{ i.description[:120] }}{% if i.description|length > 120 %}...{% endif %}</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-end"><a href="/investors" class="btn btn-link">Все инвесторы →</a></div>
+</div>
+
+<div class="section-divider"></div>
+<div class="container-lg">
+  <div class="section-title">Новости</div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for n in news[:6] %}
+    <div class="col">
+      <a href="/news/{{ n.id }}" class="card-google-link">
+        <div class="card card-google h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1">{{ n.title }}</h5>
+            <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>
+            <p class="card-text">{{ n.summary }}</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-end"><a href="/news" class="btn btn-link">Все новости →</a></div>
+</div>
+
+<div class="section-divider"></div>
+<div class="container-lg">
+  <div class="section-title">Подкасты</div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for p in podcasts[:6] %}
+    <div class="col">
+      <a href="#" class="card-google-link">
+        <div class="card card-google h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1">{{ p.title }}</h5>
+            <div class="mb-2 text-muted small">{{ p.date.strftime('%d.%m.%Y') }}</div>
+            <p class="card-text">{{ p.description }}</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-end"><a href="/podcasts" class="btn btn-link">Все подкасты →</a></div>
+</div>
+
+<div class="section-divider"></div>
+<div class="container-lg">
+  <div class="section-title">Мероприятия</div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for e in events[:6] %}
+    <div class="col">
+      <a href="/event/{{ e.id }}" class="card-google-link">
+        <div class="card card-google h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1">{{ e.title }}</h5>
+            <div class="mb-2 text-muted small">{{ e.date.strftime('%d.%m.%Y %H:%M') if e.date else '' }}</div>
+            <p class="card-text">{{ e.description }}</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-end"><a href="/events" class="btn btn-link">Все мероприятия →</a></div>
+</div>
+
+{% endblock %} 

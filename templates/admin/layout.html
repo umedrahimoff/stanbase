@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Админка — StanBase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin_custom.css') }}">
+</head>
+<body>
+  <!-- Header на всю ширину, без тени -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom w-100" style="min-height:64px;">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h4">Админка StanBase</span>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <div class="row min-vh-100">
+      <!-- Sidebar без тени и без названия -->
+      <nav class="col-md-2 d-none d-md-block bg-light sidebar py-4">
+        <div class="sidebar-sticky">
+          <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Дашборд</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}" href="{{ url_for('admin_users') }}">Пользователи</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_startups' %}active{% endif %}" href="{{ url_for('admin_startups') }}">Стартапы</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_investors' %}active{% endif %}" href="{{ url_for('admin_investors') }}">Инвесторы</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_news' %}active{% endif %}" href="{{ url_for('admin_news') }}">Новости</a>
+              <ul class="nav flex-column ms-3">
+                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_authors' %}active{% endif %}" href="{{ url_for('admin_authors') }}">Авторы</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_jobs' %}active{% endif %}" href="{{ url_for('admin_jobs') }}">Вакансии</a></li>
+            <li><hr class="my-2"></li>
+            <li class="nav-item">
+              <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#refsCollapse" role="button" aria-expanded="{{ 'true' if request.endpoint in ['admin_countries', 'admin_cities', 'admin_stages', 'admin_categories'] else 'false' }}" aria-controls="refsCollapse">
+                <span>Справочники</span>
+                <span class="caret"></span>
+              </a>
+              <div class="collapse{% if request.endpoint in ['admin_countries', 'admin_cities', 'admin_stages', 'admin_categories'] %} show{% endif %}" id="refsCollapse">
+                <ul class="nav flex-column ms-3">
+                  <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_countries' %}active{% endif %}" href="{{ url_for('admin_countries') }}">Страны</a></li>
+                  <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_cities' %}active{% endif %}" href="{{ url_for('admin_cities') }}">Города</a></li>
+                  <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_stages' %}active{% endif %}" href="{{ url_for('admin_stages') }}">Стадии стартапа</a></li>
+                  <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" href="{{ url_for('admin_categories') }}">Категории</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <!-- Main content -->
+      <main class="col-md-10 ms-sm-auto px-md-4 py-4">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,111 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if job %}Редактировать вакансию{% else %}Создать вакансию{% endif %}</h3>
+        <ul class="nav nav-tabs mb-4" id="jobTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="tab-content" id="jobTabContent">
+            <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Должность</label>
+                <input type="text" name="title" class="form-control" value="{{ job.title if job else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control">{{ job.description if job else '' }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Стартап</label>
+                <select name="startup_id" id="startup-select" class="form-select">
+                  <option value=""></option>
+                  {% if job and job.startup_id %}
+                    <option value="{{ job.startup_id }}" selected>{{ job.startup.name }}</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Город</label>
+                <input type="text" name="city" class="form-control" value="{{ job.city if job else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Тип</label>
+                <input type="text" name="job_type" class="form-control" value="{{ job.job_type if job else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Контакт</label>
+                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if job and job.status=='active' %}selected{% endif %}>Активна</option>
+                  <option value="inactive" {% if job and job.status=='inactive' %}selected{% endif %}>Неактивна</option>
+                  <option value="archived" {% if job and job.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if job and job.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_jobs') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% if job %}
+  <div class="col-lg-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Мета-информация</h6>
+        <div class="mb-2"><b>ID:</b> {{ job.id }}</div>
+        <div class="mb-2"><b>Стартап:</b> {% if job.startup %}<a href="/admin/startups/edit/{{ job.startup.id }}">{{ job.startup.name }}</a>{% else %}—{% endif %}</div>
+        <div class="mb-2"><b>Город:</b> {{ job.city or '—' }}</div>
+        <div class="mb-2"><b>Тип:</b> {{ job.job_type or '—' }}</div>
+        <div class="mb-2"><b>Контакт:</b> {{ job.contact or '—' }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(function() {
+  $('#startup-select').select2({
+    placeholder: 'Выберите стартап',
+    allowClear: true,
+    minimumInputLength: 2,
+    ajax: {
+      url: '/admin/startup_search',
+      dataType: 'json',
+      delay: 250,
+      data: function (params) {
+        return { q: params.term };
+      },
+      processResults: function (data) {
+        return { results: data.results };
+      },
+      cache: true
+    }
+  });
+  // Если нет выбранного значения, показываем placeholder
+  if (!$('#startup-select').val()) {
+    $('#startup-select').val(null).trigger('change');
+  }
+});
+</script>
+{% endblock %} 
