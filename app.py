@@ -263,11 +263,15 @@ def migrate_reference_data():
     db.session.commit()
 
 with app.app_context():
-    from models import Startup, Investor, Person, Deal, Job, News, Podcast, Event
+    from models import Startup, Investor, Person, Deal, Job, News, Podcast, Event, User
     db.create_all()
     # Добавляем тестовые данные всегда в новую базу
     if not Startup.query.first():
         seed_data()
+    
+    # Инициализируем тестовых пользователей
+    from init_users import init_test_users
+    init_test_users()
 
 
 @app.route('/')
