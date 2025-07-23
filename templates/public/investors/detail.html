@@ -6,6 +6,14 @@
 
 {% block meta_keywords %}{{ investor.name }}, {{ inv_type }}, {{ investor.country }}, {{ investor.focus }}, {{ investor.stages }}, инвестор, венчурные инвестиции, Центральная Азия{% endblock %}
 
+{% block og_title %}{{ investor.name }} — {{ inv_type }} в {{ investor.country }} | StanBase{% endblock %}
+
+{% block og_description %}{{ investor.name }} - {{ inv_type }} в {{ investor.country }}. {{ investor.description[:150] }}{% if investor.description|length > 150 %}...{% endif %} Фокус на {{ investor.focus }}. Инвестирует в стадии: {{ investor.stages }}.{% if investor.website %} Официальный сайт: {{ investor.website }}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ investor.name }} — {{ inv_type }} в {{ investor.country }} | StanBase{% endblock %}
+
+{% block twitter_description %}{{ investor.name }} - {{ inv_type }} в {{ investor.country }}. {{ investor.description[:150] }}{% if investor.description|length > 150 %}...{% endif %} Фокус на {{ investor.focus }}. Инвестирует в стадии: {{ investor.stages }}.{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
   <div class="col-lg-8">

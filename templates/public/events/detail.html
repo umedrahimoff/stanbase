@@ -5,6 +5,14 @@
 {% block meta_description %}{{ event.title }} - {{ event.format }} в {{ event.location }}{% if event.date %} {{ event.date.strftime('%d.%m.%Y %H:%M') }}{% endif %}. {{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}{% endblock %}
 
 {% block meta_keywords %}{{ event.title }}, {{ event.format }}, {{ event.location }}, мероприятие, стартап-событие, Центральная Азия{% endblock %}
+
+{% block og_title %}{{ event.title }} — {{ event.format }} в {{ event.location }} | StanBase{% endblock %}
+
+{% block og_description %}{{ event.title }} - {{ event.format }} в {{ event.location }}{% if event.date %} {{ event.date.strftime('%d.%m.%Y %H:%M') }}{% endif %}. {{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ event.title }} — {{ event.format }} в {{ event.location }} | StanBase{% endblock %}
+
+{% block twitter_description %}{{ event.title }} - {{ event.format }} в {{ event.location }}{% if event.date %} {{ event.date.strftime('%d.%m.%Y %H:%M') }}{% endif %}. {{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}{% endblock %}
 {% block content %}
 <div class="mb-4">
   <h2>{{ event.title }}</h2>
