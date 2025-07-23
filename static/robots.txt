@@ -1,0 +1,22 @@
+User-agent: *
+Disallow: /
+
+# Запрещаем индексацию всех страниц
+# Это тестовый сайт, не предназначенный для публичной индексации
+
+# Разрешаем только доступ к статическим файлам (CSS, JS, изображения)
+Allow: /static/
+
+# Запрещаем индексацию админ панели
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard/
+
+# Запрещаем индексацию API и служебных страниц
+Disallow: /api/
+Disallow: /debug/
+Disallow: /test/
+
+# Указываем расположение sitemap (если понадобится в будущем)
+# Sitemap: https://yourdomain.com/sitemap.xml 

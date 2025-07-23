@@ -11,6 +11,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+# Маршруты для SEO файлов
+@app.route('/robots.txt')
+def robots_txt():
+    return app.send_static_file('robots.txt')
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    return app.send_static_file('sitemap.xml')
+
 def seed_data():
     from models import db, Country, City, StartupStage, Category, Startup, Investor, Person, Deal, Job, News, Podcast, Event, User, Author
     import random
