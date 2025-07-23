@@ -1260,6 +1260,21 @@ def admin_startup_search():
         results = [{'id': s.id, 'text': s.name} for s in startups]
     return jsonify({'results': results})
 
+@app.route('/admin/startup_info/<int:startup_id>')
+@admin_required
+def admin_startup_info(startup_id):
+    from models import Startup
+    s = Startup.query.get_or_404(startup_id)
+    return jsonify({
+        'id': s.id,
+        'name': s.name,
+        'city': s.city,
+        'country': s.country,
+        'stage': s.stage,
+        'industry': s.industry,
+        'website': s.website
+    })
+
 @app.route('/admin/authors')
 @admin_required
 def admin_authors():

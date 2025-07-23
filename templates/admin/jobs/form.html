@@ -23,7 +23,7 @@
                 <textarea name="description" class="form-control">{{ job.description if job else '' }}</textarea>
               </div>
               <div class="mb-3">
-                <label class="form-label">Стартап</label>
+                <label class="form-label">Компания</label>
                 <select name="startup_id" id="startup-select" class="form-select">
                   <option value=""></option>
                   {% if job and job.startup_id %}
@@ -37,11 +37,18 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Тип</label>
-                <input type="text" name="job_type" class="form-control" value="{{ job.job_type if job else '' }}">
+                <select name="job_type" id="job-type-select" class="form-select" required>
+                  <option value="">Выберите тип</option>
+                  <option value="Полная занятость" {% if job and job.job_type=='Полная занятость' %}selected{% endif %}>Полная занятость</option>
+                  <option value="Частичная занятость" {% if job and job.job_type=='Частичная занятость' %}selected{% endif %}>Частичная занятость</option>
+                  <option value="Стажировка" {% if job and job.job_type=='Стажировка' %}selected{% endif %}>Стажировка</option>
+                  <option value="Удалёнка" {% if job and job.job_type=='Удалёнка' %}selected{% endif %}>Удалёнка</option>
+                  <option value="Проектная работа" {% if job and job.job_type=='Проектная работа' %}selected{% endif %}>Проектная работа</option>
+                </select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Контакт</label>
-                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}">
+                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}" placeholder="Email или t.me/username" pattern="(^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$)|(^t\.me\/[\w_]+$)" title="Введите email или ссылку на Telegram (t.me/username)">
               </div>
               <div class="mb-3">
                 <label class="form-label">Статус</label>
@@ -86,7 +93,7 @@
 <script>
 $(function() {
   $('#startup-select').select2({
-    placeholder: 'Выберите стартап',
+    placeholder: 'Выберите компанию',
     allowClear: true,
     minimumInputLength: 2,
     ajax: {
@@ -106,6 +113,17 @@ $(function() {
   if (!$('#startup-select').val()) {
     $('#startup-select').val(null).trigger('change');
   }
+  // --- Автозаполнение города при выборе компании ---
+  $('#startup-select').on('select2:select', function(e) {
+    var companyId = $(this).val();
+    if (companyId) {
+      $.getJSON('/admin/startup_info/' + companyId, function(data) {
+        if (data && data.city) {
+          $('input[name="city"]').val(data.city);
+        }
+      });
+    }
+  });
 });
 </script>
 {% endblock %} 
