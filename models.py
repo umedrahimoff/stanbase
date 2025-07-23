@@ -11,6 +11,11 @@ investor_startup = db.Table('investor_startup',
     db.Column('startup_id', db.Integer, db.ForeignKey('startup.id'))
 )
 
+investor_person = db.Table('investor_person',
+    db.Column('investor_id', db.Integer, db.ForeignKey('investor.id')),
+    db.Column('person_id', db.Integer, db.ForeignKey('person.id'))
+)
+
 class Startup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
@@ -44,8 +49,9 @@ class Investor(db.Model):
     country = db.Column(db.String(64))
     focus = db.Column(db.String(128))
     stages = db.Column(db.String(128))
-    # portfolio = db.relationship('Startup', secondary=investor_startup, backref='investors')
+    portfolio = db.relationship('Startup', secondary=investor_startup, backref='investors')
     portfolio_entries = db.relationship('PortfolioEntry', back_populates='investor', cascade='all, delete-orphan')
+    team = db.relationship('Person', secondary=investor_person, backref='investor_teams')
     website = db.Column(db.String(256))
     status = db.Column(db.String(16), default='active')
     type = db.Column(db.String(16), default='angel')  # angel, venture, other
