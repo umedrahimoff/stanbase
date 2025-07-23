@@ -1,6 +1,10 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ startup.name }} — Стартап — StanBase{% endblock %}
+{% block title %}{{ startup.name }} — {{ startup.industry }} стартап в {{ startup.city }}, {{ startup.country }} | StanBase{% endblock %}
+
+{% block meta_description %}{{ startup.name }} - {{ startup.industry }} стартап на стадии {{ startup.stage }} в {{ startup.city }}, {{ startup.country }}. {{ startup.description[:150] }}{% if startup.description|length > 150 %}...{% endif %}{% if startup.founded_date %} Основан {{ startup.founded_date.strftime('%d.%m.%Y') }}.{% endif %}{% if startup.website %} Официальный сайт: {{ startup.website }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ startup.name }}, {{ startup.industry }}, {{ startup.stage }}, {{ startup.city }}, {{ startup.country }}, стартап, инновации, технологические проекты, Центральная Азия{% endblock %}
 
 {% block content %}
 <div class="row mb-4">

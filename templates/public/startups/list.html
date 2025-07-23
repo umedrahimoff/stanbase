@@ -1,5 +1,35 @@
 {% extends 'layout.html' %}
-{% block title %}Стартапы — StanBase{% endblock %}
+
+{% block title %}
+  {% if request.args.get('q') or request.args.get('country') or request.args.get('stage') or request.args.get('industry') %}
+    {% if request.args.get('q') %}Поиск: {{ request.args.get('q') }}{% endif %}
+    {% if request.args.get('country') %} в {{ request.args.get('country') }}{% endif %}
+    {% if request.args.get('stage') %} | Стадия: {{ request.args.get('stage') }}{% endif %}
+    {% if request.args.get('industry') %} | {{ request.args.get('industry') }}{% endif %}
+    — Стартапы | StanBase
+  {% else %}
+    Стартапы Центральной Азии — Каталог инновационных проектов | StanBase
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if request.args.get('q') or request.args.get('country') or request.args.get('stage') or request.args.get('industry') %}
+    {% if request.args.get('q') %}Найдите стартапы по запросу "{{ request.args.get('q') }}"{% endif %}
+    {% if request.args.get('country') %} в {{ request.args.get('country') }}{% endif %}
+    {% if request.args.get('stage') %} на стадии {{ request.args.get('stage') }}{% endif %}
+    {% if request.args.get('industry') %} в сфере {{ request.args.get('industry') }}{% endif %}. Полный каталог стартапов Центральной Азии с фильтрами по стране, стадии и индустрии.
+  {% else %}
+    Каталог стартапов Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане. Фильтры по стране, стадии развития и индустрии.
+  {% endif %}
+{% endblock %}
+
+{% block meta_keywords %}
+  {% if request.args.get('q') %}{{ request.args.get('q') }}, {% endif %}
+  {% if request.args.get('country') %}{{ request.args.get('country') }}, {% endif %}
+  {% if request.args.get('stage') %}{{ request.args.get('stage') }}, {% endif %}
+  {% if request.args.get('industry') %}{{ request.args.get('industry') }}, {% endif %}
+  стартапы Центральной Азии, инновационные проекты, технологические стартапы, венчурные инвестиции, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
+{% endblock %}
 {% block head %}
 <style>
   .card-google {

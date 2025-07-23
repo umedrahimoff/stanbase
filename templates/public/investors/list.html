@@ -1,5 +1,35 @@
 {% extends 'layout.html' %}
-{% block title %}Инвесторы — StanBase{% endblock %}
+
+{% block title %}
+  {% if request.args.get('q') or request.args.get('country') or request.args.get('focus') or request.args.get('stages') %}
+    {% if request.args.get('q') %}Поиск: {{ request.args.get('q') }}{% endif %}
+    {% if request.args.get('country') %} в {{ request.args.get('country') }}{% endif %}
+    {% if request.args.get('focus') %} | Фокус: {{ request.args.get('focus') }}{% endif %}
+    {% if request.args.get('stages') %} | Стадии: {{ request.args.get('stages') }}{% endif %}
+    — Инвесторы | StanBase
+  {% else %}
+    Инвесторы Центральной Азии — Венчурные фонды и ангельские инвесторы | StanBase
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if request.args.get('q') or request.args.get('country') or request.args.get('focus') or request.args.get('stages') %}
+    {% if request.args.get('q') %}Найдите инвесторов по запросу "{{ request.args.get('q') }}"{% endif %}
+    {% if request.args.get('country') %} в {{ request.args.get('country') }}{% endif %}
+    {% if request.args.get('focus') %} с фокусом на {{ request.args.get('focus') }}{% endif %}
+    {% if request.args.get('stages') %} инвестирующих в стадии {{ request.args.get('stages') }}{% endif %}. Каталог инвесторов Центральной Азии.
+  {% else %}
+    Каталог инвесторов Центральной Азии. Венчурные фонды, ангельские инвесторы и инвестиционные компании в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.
+  {% endif %}
+{% endblock %}
+
+{% block meta_keywords %}
+  {% if request.args.get('q') %}{{ request.args.get('q') }}, {% endif %}
+  {% if request.args.get('country') %}{{ request.args.get('country') }}, {% endif %}
+  {% if request.args.get('focus') %}{{ request.args.get('focus') }}, {% endif %}
+  {% if request.args.get('stages') %}{{ request.args.get('stages') }}, {% endif %}
+  инвесторы Центральной Азии, венчурные фонды, ангельские инвесторы, инвестиции в стартапы, венчурный капитал, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
+{% endblock %}
 {% block head %}
 <style>
   .card-google {

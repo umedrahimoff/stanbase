@@ -1,5 +1,10 @@
 {% extends 'layout.html' %}
-{% block title %}{{ news.title }} — Новости — StanBase{% endblock %}
+
+{% block title %}{{ news.title }} — Новости стартап-экосистемы | StanBase{% endblock %}
+
+{% block meta_description %}{{ news.summary }}{% if news.content %}{{ news.content[:100] }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ news.title }}, новости стартапов, стартап-экосистема, Центральная Азия, инновации, венчурные инвестиции{% endblock %}
 {% block content %}
 <div class="mb-4">
   <h2>{{ news.title }}</h2>
