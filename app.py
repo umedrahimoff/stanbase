@@ -751,7 +751,7 @@ def admin_create_user():
             db.session.commit()
             flash('Пользователь создан!')
             return redirect(url_for('admin_users'))
-    return render_template('admin/user_form.html', error=error, user=None)
+    return render_template('admin/users/form.html', error=error, user=None)
 
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
 @admin_required
@@ -768,7 +768,7 @@ def admin_edit_user(user_id):
         db.session.commit()
         flash('Пользователь обновлён!')
         return redirect(url_for('admin_users'))
-    return render_template('admin/user_form.html', error=error, user=user)
+    return render_template('admin/users/form.html', error=error, user=user)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 @admin_required
@@ -822,7 +822,7 @@ def admin_create_startup():
         db.session.commit()
         flash('Стартап создан!')
         return redirect(url_for('admin_startups'))
-    return render_template('admin/startup_form.html', error=error, startup=None)
+    return render_template('admin/startups/form.html', error=error, startup=None)
 
 @app.route('/admin/startups/edit/<int:startup_id>', methods=['GET', 'POST'])
 @admin_required
@@ -846,7 +846,7 @@ def admin_edit_startup(startup_id):
     team = startup.team
     deals = startup.deals
     jobs = startup.jobs
-    return render_template('admin/startup_form.html', error=error, startup=startup, team=team, deals=deals, jobs=jobs)
+    return render_template('admin/startups/form.html', error=error, startup=startup, team=team, deals=deals, jobs=jobs)
 
 @app.route('/admin/startups/delete/<int:startup_id>', methods=['POST'])
 @admin_required
@@ -898,7 +898,7 @@ def admin_create_investor():
         db.session.commit()
         flash('Инвестор создан!')
         return redirect(url_for('admin_investors'))
-    return render_template('admin/investor_form.html', error=error, investor=None)
+    return render_template('admin/investors/form.html', error=error, investor=None)
 
 @app.route('/admin/investors/edit/<int:investor_id>', methods=['GET', 'POST'])
 @admin_required
@@ -917,7 +917,7 @@ def admin_edit_investor(investor_id):
         db.session.commit()
         flash('Инвестор обновлён!')
         return redirect(url_for('admin_investors'))
-    return render_template('admin/investor_form.html', error=error, investor=investor, today=date.today())
+    return render_template('admin/investors/form.html', error=error, investor=investor, today=date.today())
 
 @app.route('/admin/investors/delete/<int:investor_id>', methods=['POST'])
 @admin_required
@@ -966,7 +966,7 @@ def admin_create_news():
         db.session.commit()
         flash('Новость создана!')
         return redirect(url_for('admin_news'))
-    return render_template('admin/news_form.html', error=error, news_item=None)
+    return render_template('admin/news/form.html', error=error, news_item=None)
 
 @app.route('/admin/news/edit/<int:news_id>', methods=['GET', 'POST'])
 @admin_required
@@ -984,7 +984,7 @@ def admin_edit_news(news_id):
         db.session.commit()
         flash('Новость обновлена!')
         return redirect(url_for('admin_news'))
-    return render_template('admin/news_form.html', error=error, news_item=news_item)
+    return render_template('admin/news/form.html', error=error, news_item=news_item)
 
 @app.route('/admin/news/delete/<int:news_id>', methods=['POST'])
 @admin_required
@@ -1073,7 +1073,7 @@ def admin_edit_country(country_id):
             return redirect(url_for('admin_countries'))
         else:
             error = 'Такая страна уже есть или имя пустое.'
-    return render_template('admin/country_form.html', country=country, error=error)
+    return render_template('admin/countries/form.html', country=country, error=error)
 
 @app.route('/admin/countries/delete/<int:country_id>', methods=['POST'])
 @admin_required
@@ -1103,7 +1103,7 @@ def admin_edit_city(city_id):
             return redirect(url_for('admin_cities'))
         else:
             error = 'Такой город уже есть или не выбрана страна.'
-    return render_template('admin/city_form.html', city=city, countries=countries, error=error)
+    return render_template('admin/cities/form.html', city=city, countries=countries, error=error)
 
 @app.route('/admin/cities/delete/<int:city_id>', methods=['POST'])
 @admin_required
@@ -1130,7 +1130,7 @@ def admin_edit_stage(stage_id):
             return redirect(url_for('admin_stages'))
         else:
             error = 'Такая стадия уже есть или имя пустое.'
-    return render_template('admin/stage_form.html', stage=stage, error=error)
+    return render_template('admin/stages/form.html', stage=stage, error=error)
 
 @app.route('/admin/stages/delete/<int:stage_id>', methods=['POST'])
 @admin_required
@@ -1157,7 +1157,7 @@ def admin_edit_category(category_id):
             return redirect(url_for('admin_categories'))
         else:
             error = 'Такая категория уже есть или имя пустое.'
-    return render_template('admin/category_form.html', category=category, error=error)
+    return render_template('admin/categories/form.html', category=category, error=error)
 
 @app.route('/admin/categories/delete/<int:category_id>', methods=['POST'])
 @admin_required
@@ -1209,7 +1209,7 @@ def admin_create_job():
         db.session.commit()
         flash('Вакансия создана!')
         return redirect(url_for('admin_jobs'))
-    return render_template('admin/job_form.html', error=error, job=None, startups=startups)
+    return render_template('admin/jobs/form.html', error=error, job=None, startups=startups)
 
 @app.route('/admin/jobs/edit/<int:job_id>', methods=['GET', 'POST'])
 @admin_required
@@ -1228,7 +1228,7 @@ def admin_edit_job(job_id):
         db.session.commit()
         flash('Вакансия обновлена!')
         return redirect(url_for('admin_jobs'))
-    return render_template('admin/job_form.html', error=error, job=job, startups=startups)
+    return render_template('admin/jobs/form.html', error=error, job=job, startups=startups)
 
 @app.route('/admin/jobs/delete/<int:job_id>', methods=['POST'])
 @admin_required
@@ -1280,7 +1280,7 @@ def admin_create_author():
         db.session.commit()
         flash('Автор создан!')
         return redirect(url_for('admin_authors'))
-    return render_template('admin/author_form.html', error=error, author=None)
+    return render_template('admin/authors/form.html', error=error, author=None)
 
 @app.route('/admin/authors/edit/<int:author_id>', methods=['GET', 'POST'])
 @admin_required
@@ -1296,7 +1296,7 @@ def admin_edit_author(author_id):
         db.session.commit()
         flash('Автор обновлён!')
         return redirect(url_for('admin_authors'))
-    return render_template('admin/author_form.html', error=error, author=author)
+    return render_template('admin/authors/form.html', error=error, author=author)
 
 @app.route('/admin/authors/delete/<int:author_id>', methods=['POST'])
 @admin_required
