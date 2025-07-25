@@ -1425,6 +1425,16 @@ async def admin_edit_news(request: Request, news_id: int):
     # Получаем уведомление из сессии
     success_message = request.session.pop('success_message', None)
     
+    # Обрабатываем контент новости
+    if news and news.content:
+        if isinstance(news.content, bytes):
+            try:
+                news.content = news.content.decode('utf-8')
+            except UnicodeDecodeError:
+                news.content = ''
+        elif not isinstance(news.content, str):
+            news.content = str(news.content)
+    
     db.close()
     return templates.TemplateResponse("admin/news/form.html", {
         "request": request, 
