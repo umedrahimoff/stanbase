@@ -1642,9 +1642,12 @@ def create_full_test_data():
         countries = [Country(name=n) for n in ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]]
         session.add_all(countries)
         session.commit()
+    # Получаем id страны Казахстан или первую попавшуюся
+    kz = session.query(Country).filter_by(name="Казахстан").first() or session.query(Country).first()
+    kz_id = kz.id if kz else 1
     # City
     if not session.query(City).first():
-        cities = [City(name=n, country_id=1) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
+        cities = [City(name=n, country_id=kz_id) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
         session.add_all(cities)
         session.commit()
     # Category
@@ -1674,17 +1677,17 @@ def create_full_test_data():
         session.commit()
     # User
     if not session.query(User).filter_by(username="admin").first():
-        admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234567", status="active")
+        admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
         session.add(admin_user)
         session.commit()
     if not session.query(User).filter_by(username="moderator").first():
-        moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234568", status="active")
+        moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
         session.add(moderator_user)
         session.commit()
     if not session.query(User).filter_by(username="startuper").first():
         startup = session.query(Startup).first()
         if startup:
-            startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
+            startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
             session.add(startuper_user)
             session.commit()
     # News
