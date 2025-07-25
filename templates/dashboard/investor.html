@@ -5,7 +5,7 @@
   <div class="col-md-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h3 class="mb-3">Добро пожаловать, {{ user.username }}!</h3>
+        <h3 class="mb-3">Добро пожаловать, {{ user.email }}!</h3>
         <p>Вы вошли как <b>инвестор</b>.</p>
         {% if investor %}
           <p>Ваш профиль: <a href="/investor/{{ investor.id }}">{{ investor.name }}</a></p>
@@ -16,7 +16,7 @@
           <ul class="list-group mb-3">
             {% for s in investor.portfolio %}
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span><a href="/startup/{{ s.id }}">{{ s.name }}</a></span>
+                <span><a href="/company/{{ s.id }}">{{ s.name }}</a></span>
                 <form method="post" action="/dashboard/investor/portfolio/delete/{{ s.id }}" style="display:inline;">
                   <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
                 </form>
@@ -28,9 +28,9 @@
         {% endif %}
         <form method="post" action="/dashboard/investor/portfolio/add" class="row g-2 align-items-end">
           <div class="col-8">
-            <select name="startup_id" class="form-select" required>
+            <select name="company_id" class="form-select" required>
               <option value="">Добавить стартап в портфель...</option>
-              {% for s in startups %}
+              {% for s in companies %}
                 {% if s not in investor.portfolio %}
                   <option value="{{ s.id }}">{{ s.name }}</option>
                 {% endif %}

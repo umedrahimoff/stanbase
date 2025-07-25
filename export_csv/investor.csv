@@ -1,0 +1,12 @@
+id,name,description,country,focus,stages,website,status,type
+1,"MOST Ventures","Венчурный фонд, поддерживающий стартапы Центральной Евразии.","Казахстан","Tech, SaaS, AI","Seed, Series A",https://mostfund.vc,active,venture
+2,"Big Sky Capital","Фонд, инвестирующий в технологические компании региона.","Казахстан","Tech, SaaS, AI","Seed, Series A",https://bigskycapital.kz,active,venture
+3,"Quest Ventures","Один из крупнейших фондов Центральной Азии и Сингапура.","Казахстан","AI, Fintech, SaaS","Seed, Series A",https://www.questventures.com,active,venture
+4,"Tumar Venture Fund","Фонд из Кыргызстана, инвестирующий в стартапы региона.","Кыргызстан","Fintech, SaaS","Seed, Series A",https://tumar.vc,active,venture
+5,"UMAY Angels Club","Ангельский клуб для инвесторов и стартапов Центральной Азии.","Казахстан","Tech, SaaS, AI","Pre-seed, Seed",https://umay.vc,active,angel
+6,QazAngels,"Казахстанский клуб бизнес-ангелов.","Казахстан","Tech, SaaS, AI","Pre-seed, Seed",https://qazangels.com,active,angel
+7,"White Hill Capital","Венчурный фонд, инвестирующий в стартапы Казахстана.","Казахстан","Tech, SaaS, AI","Seed, Series A",https://whitehillcapital.com,active,venture
+8,"Astana Hub Ventures","Фонд при Astana Hub для поддержки стартапов.","Казахстан","Tech, SaaS, AI","Seed, Series A",https://astanahub.com,active,venture
+9,AloqaVentures,"Венчурный фонд из Узбекистана.","Узбекистан","Fintech, SaaS, AI","Seed, Series A",https://aloqaventures.com,active,venture
+10,"Sturgeon Capital","Международный фонд, инвестирующий в стартапы Узбекистана и региона.","Узбекистан","Tech, SaaS, AI","Seed, Series A",https://sturgeoncapital.com,active,venture
+11,"CentrAsia Angels","Региональный клуб бизнес-ангелов Центральной Азии.","Казахстан","Tech, SaaS, AI","Pre-seed, Seed",https://centrasiaangels.com,active,angel

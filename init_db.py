@@ -9,7 +9,7 @@ Base.metadata.create_all(bind=engine)
 
 # Заполнить тестовыми данными, если база пуста
 session = SessionLocal()
-real_startups = [
+real_companies = [
     {
         "name": "CerebraAI",
         "description": "AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.",
@@ -251,15 +251,15 @@ real_funds = [
 
 # Оставляем только стартапы и фонды из Центральной Азии
 central_asia_countries = ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]
-real_startups = [s for s in real_startups if s["country"] in central_asia_countries]
+real_companies = [s for s in real_companies if s["country"] in central_asia_countries]
 real_funds = [f for f in real_funds if f["country"] in central_asia_countries]
 
 # --- Заполнение реальными стартапами ---
-startup_objs = []
+company_objs = []
 investor_objs = []
-if not session.query(Startup).first():
-    for s in real_startups:
-        startup = Startup(
+if not session.query(Company).first():
+    for s in real_companies:
+        company = Company(
             name=s["name"],
             description=s["description"],
             country=s["country"],
@@ -269,8 +269,8 @@ if not session.query(Startup).first():
             founded_date=date(2021, 1, 1),
             website=s["website"]
         )
-        session.add(startup)
-        startup_objs.append(startup)
+        session.add(company)
+        company_objs.append(company)
     session.commit()
 
 # --- Заполнение реальными фондами ---
@@ -290,9 +290,9 @@ if not session.query(Investor).first():
     session.commit()
 
 # --- Добавляем или обновляем команды, раунды и портфели для части стартапов и инвесторов ---
-startup_objs = session.query(Startup).order_by(Startup.id).all()
+company_objs = session.query(Company).order_by(Company.id).all()
 investor_objs = session.query(Investor).order_by(Investor.id).all()
-if startup_objs and investor_objs:
+if company_objs and investor_objs:
     # Команды для первых 5 стартапов
     team_names = [
         ["Айдар Ахметов", "CEO"],
@@ -301,18 +301,18 @@ if startup_objs and investor_objs:
         ["Светлана Петрова", "CMO"],
         ["Азамат Садыков", "Product Manager"]
     ]
-    for i, startup in enumerate(startup_objs[:5]):
+    for i, company in enumerate(company_objs[:5]):
         # Добавлять только если у стартапа нет команды
-        if not startup.team:
+        if not company.team:
             for j in range(3):
-                p = Person(name=team_names[(i+j)%5][0], role=team_names[(i+j)%5][1], country=startup.country)
+                p = Person(name=team_names[(i+j)%5][0], role=team_names[(i+j)%5][1], country=company.country)
                 session.add(p)
-                startup.team.append(p)
+                company.team.append(p)
     session.commit()
     # Инвестиционные раунды для первых 3 стартапов
-    for i, startup in enumerate(startup_objs[:3]):
+    for i, company in enumerate(company_objs[:3]):
         # Добавлять только если у стартапа нет раундов
-        if not startup.deals:
+        if not company.deals:
             deal = Deal(
                 type="Seed",
                 amount=500000 + i*250000,
@@ -321,12 +321,12 @@ if startup_objs and investor_objs:
                 currency="USD",
                 investors=investor_objs[i % len(investor_objs)].name,
                 status="active",
-                startup_id=startup.id
+                company_id=company.id
             )
             session.add(deal)
             # Добавлять в портфель инвестора только если его там нет
-            if startup not in investor_objs[i % len(investor_objs)].portfolio:
-                investor_objs[i % len(investor_objs)].portfolio.append(startup)
+            if company not in investor_objs[i % len(investor_objs)].portfolio:
+                investor_objs[i % len(investor_objs)].portfolio.append(company)
     session.commit()
 
 if not session.query(News).first():
@@ -388,9 +388,8 @@ if not session.query(Event).first():
 # --- Добавление тестовых пользователей-админов ---
 kz = session.query(Country).filter_by(name="Казахстан").first()
 kz_id = kz.id if kz else 1
-if not session.query(User).filter_by(username="admin").first():
+if not session.query(User).filter_by(email="admin@stanbase.test").first():
     admin_user = User(
-        username="admin",
         email="admin@stanbase.test",
         password="admin123",  # для теста, в проде обязательно хешировать!
         role="admin",
@@ -403,9 +402,8 @@ if not session.query(User).filter_by(username="admin").first():
     )
     session.add(admin_user)
     session.commit()
-if not session.query(User).filter_by(username="moderator").first():
+if not session.query(User).filter_by(email="moderator@stanbase.test").first():
     moderator_user = User(
-        username="moderator",
         email="moderator@stanbase.test",
         password="mod123",
         role="moderator",
@@ -419,31 +417,30 @@ if not session.query(User).filter_by(username="moderator").first():
     session.add(moderator_user)
     session.commit()
 # --- Добавление тестового пользователя-стартапера ---
-if not session.query(User).filter_by(username="startuper").first():
-    startup = session.query(Startup).first()
-    if startup:
-        startuper_user = User(
-            username="startuper",
-            email="startuper@stanbase.test",
-            password="startuper123",
-            role="startuper",
+if not session.query(User).filter_by(email="company_owner@stanbase.test").first():
+    company = session.query(Company).first()
+    if company:
+        company_owner_user = User(
+            email="company_owner@stanbase.test",
+            password="company_owner123",
+            role="company_owner",
             first_name="Start",
             last_name="StanBase",
             country_id=kz_id,
             city="Алматы",
             phone="+77001234569",
-            startup_id=startup.id,
+            company_id=company.id,
             status="active"
         )
-        session.add(startuper_user)
+        session.add(company_owner_user)
         session.commit()
 
 # --- Исправление country, city, stage, industry для стартапов ---
-def fix_startup_fields():
+def fix_company_fields():
     session = SessionLocal()
-    from models import Startup, Country, City, StartupStage, Category
-    startups = session.query(Startup).all()
-    for s in startups:
+    from models import Company, Country, City, CompanyStage, Category
+    companies = session.query(Company).all()
+    for s in companies:
         # Исправить страну
         if s.country and s.country.isdigit():
             country = session.query(Country).get(int(s.country))
@@ -456,7 +453,7 @@ def fix_startup_fields():
                 s.city = city.name
         # Исправить стадию
         if s.stage and s.stage.isdigit():
-            stage = session.query(StartupStage).get(int(s.stage))
+            stage = session.query(CompanyStage).get(int(s.stage))
             if stage:
                 s.stage = stage.name
         # Исправить индустрию
@@ -475,7 +472,7 @@ if not session.query(Country).first():
     session.commit()
 
 if __name__ == "__main__":
-    fix_startup_fields()
+    fix_company_fields()
 
 session.close()
 print('Таблицы созданы и тестовые данные добавлены (если база была пуста)!') 

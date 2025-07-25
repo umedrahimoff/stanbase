@@ -33,7 +33,7 @@
     <tr>
       <th>ID</th>
       <th>Должность</th>
-      <th>Стартап</th>
+      <th>Компания</th>
       <th>Город</th>
       <th>Тип</th>
       <th>Статус</th>
@@ -45,7 +45,7 @@
       <tr>
         <td>{{ j.id }}</td>
         <td>{{ j.title }}</td>
-        <td>{% if j.startup_id %}<a href="/admin/startups/edit/{{ j.startup_id }}">{{ startups[j.startup_id].name }}</a>{% else %}—{% endif %}</td>
+        <td>{% if j.company_id %}<a href="/admin/companies/edit/{{ j.company_id }}">{{ companies[j.company_id].name }}</a>{% else %}—{% endif %}</td>
         <td>{{ j.city }}</td>
         <td>{{ j.job_type }}</td>
         <td>{{ j.status }}</td>

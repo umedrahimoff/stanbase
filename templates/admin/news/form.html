@@ -1,7 +1,7 @@
 {% extends 'admin/layout.html' %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-7">
+<div class="row mb-4">
+  <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-body">
         <h3 class="mb-4">{% if news_item %}Редактировать новость{% else %}Создать новость{% endif %}</h3>
@@ -43,28 +43,32 @@
           </div>
           <div class="d-flex justify-content-between mt-4">
             <button type="submit" class="btn btn-primary">Сохранить</button>
-            <a href="{{ url_for('admin_news') }}" class="btn btn-link">Отмена</a>
+            <a href="{{ url_for('admin_news') }}" class="btn btn-outline-secondary">Отмена</a>
           </div>
         </form>
       </div>
     </div>
   </div>
   <div class="col-lg-4">
-    <div class="card mb-4">
+    <div class="card mb-4 user-meta-card">
       <div class="card-body">
-        <h6 class="text-muted mb-3">Мета-информация</h6>
+        <h6 class="text-muted mb-3">Тех. информация</h6>
         {% if news_item %}
-          <div class="mb-2"><b>ID:</b> {{ news_item.id }}</div>
+          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ news_item.id }}</span></div>
         {% endif %}
-        <div class="mb-2"><b>Дата:</b> {{ news_item.date if news_item and news_item.date else '—' }}</div>
+        <div class="meta-row"><span class="meta-label">Дата:</span> <span class="meta-value">{{ news_item.date if news_item and news_item.date else '—' }}</span></div>
         {% if news_item %}
-          <div class="mb-2">
-            <a href="{{ url_for('news_detail', id=news_item.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Открыть на сайте</a>
-          </div>
+          <div class="meta-row"><a href="/news/{{ news_item.id }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Открыть на сайте</a></div>
         {% endif %}
-        <!-- Можно добавить дату создания/изменения, если появятся -->
       </div>
     </div>
   </div>
 </div>
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
 {% endblock %} 

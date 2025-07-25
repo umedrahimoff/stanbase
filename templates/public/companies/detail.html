@@ -37,11 +37,11 @@
           {% if company.founded_date %}<li><b>Дата основания:</b> {{ company.founded_date.strftime('%d.%m.%Y') }}</li>{% endif %}
           {% if company.website %}<li><b>Сайт:</b> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></li>{% endif %}
         </ul>
-        <hr>
+        <hr class="my-4">
         <h5 class="mt-4 mb-2">Команда</h5>
-        {% if company.team %}
-          <ul class="list-group mb-3">
-            {% for person in company.team %}
+        {% if team %}
+          <ul class="list-group mb-4">
+            {% for person in team %}
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 {% if session is defined and session.get('user_id') %}
                   <span><a href="#">{{ person.name }}</a> — {{ person.role }}</span>
@@ -53,13 +53,13 @@
             {% endfor %}
           </ul>
         {% else %}
-          <div class="text-muted">Нет данных о команде.</div>
+          <div class="text-muted mb-4">Нет данных о команде.</div>
         {% endif %}
-        <hr>
+        <hr class="my-4">
         <h5 class="mt-4 mb-2">Инвестиционные раунды</h5>
-        {% if company.deals %}
-          <ul class="list-group mb-3">
-            {% for deal in company.deals %}
+        {% if deals %}
+          <ul class="list-group mb-4">
+            {% for deal in deals %}
               <li class="list-group-item">
                 <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ deal.amount|int }} {{ deal.currency }}{% else %}{{ (deal.amount|string)[:2] }}**** {{ deal.currency }}{% endif %}
                 <span class="text-muted small">({{ deal.date.strftime('%d.%m.%Y') if deal.date else '' }})</span><br>
@@ -79,13 +79,13 @@
             {% endfor %}
           </ul>
         {% else %}
-          <div class="text-muted">Нет данных о сделках.</div>
+          <div class="text-muted mb-4">Нет данных о сделках.</div>
         {% endif %}
-        <hr>
+        <hr class="my-4">
         <h5 class="mt-4 mb-2">Вакансии</h5>
-        {% if company.jobs %}
-          <ul class="list-group mb-3">
-            {% for job in company.jobs %}
+        {% if jobs %}
+          <ul class="list-group mb-4">
+            {% for job in jobs %}
               <li class="list-group-item">
                 <a href="/job/{{ job.id }}">{{ job.title }}</a> — {{ job.city }} ({{ job.job_type }})<br>
                 <span class="text-muted small">Контакт: {{ job.contact }}</span>
@@ -93,7 +93,7 @@
             {% endfor %}
           </ul>
         {% else %}
-          <div class="text-muted">Нет открытых вакансий.</div>
+          <div class="text-muted mb-4">Нет открытых вакансий.</div>
         {% endif %}
       </div>
     </div>
@@ -103,7 +103,7 @@
       <div class="card-body">
         <h5 class="mb-3">Похожие компании</h5>
         {% if similar %}
-          <ul class="list-group list-group-flush">
+          <ul class="list-group list-group-flush mb-4">
             {% for s in similar %}
               <li class="list-group-item">
                 <a href="/company/{{ s.id }}"><b>{{ s.name }}</b></a><br>
@@ -112,10 +112,13 @@
             {% endfor %}
           </ul>
         {% else %}
-          <div class="text-muted">Нет похожих компаний.</div>
+          <div class="text-muted mb-4">Нет похожих компаний.</div>
         {% endif %}
       </div>
     </div>
+    
+    {# Удалён блок технической информации #}
+    
   </div>
 </div>
 {% endblock %}
@@ -131,5 +134,7 @@
   padding: 0 8px;
   user-select: none;
 }
+.card { margin-bottom: 2rem; }
+hr.my-4 { margin-top: 2rem; margin-bottom: 2rem; }
 </style>
 {% endblock %} 

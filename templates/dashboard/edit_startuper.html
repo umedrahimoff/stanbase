@@ -9,31 +9,31 @@
         <form method="post">
           <div class="mb-3">
             <label class="form-label">Название</label>
-            <input type="text" class="form-control" name="name" value="{{ startup.name }}" required>
+            <input type="text" class="form-control" name="name" value="{{ company.name }}" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Описание</label>
-            <textarea class="form-control" name="description" rows="3">{{ startup.description }}</textarea>
+            <textarea class="form-control" name="description" rows="3">{{ company.description }}</textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">Страна</label>
-            <input type="text" class="form-control" name="country" value="{{ startup.country }}">
+            <input type="text" class="form-control" name="country" value="{{ company.country }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Город</label>
-            <input type="text" class="form-control" name="city" value="{{ startup.city }}">
+            <input type="text" class="form-control" name="city" value="{{ company.city }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Стадия</label>
-            <input type="text" class="form-control" name="stage" value="{{ startup.stage }}">
+            <input type="text" class="form-control" name="stage" value="{{ company.stage }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Индустрия</label>
-            <input type="text" class="form-control" name="industry" value="{{ startup.industry }}">
+            <input type="text" class="form-control" name="industry" value="{{ company.industry }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Сайт</label>
-            <input type="text" class="form-control" name="website" value="{{ startup.website }}">
+            <input type="text" class="form-control" name="website" value="{{ company.website }}">
           </div>
           <button type="submit" class="btn btn-primary w-100">Сохранить</button>
         </form>

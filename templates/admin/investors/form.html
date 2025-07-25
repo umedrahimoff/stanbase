@@ -75,15 +75,15 @@
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title" id="portfolioModalLabel">Добавить стартап в портфель</h5>
+                      <h5 class="modal-title" id="portfolioModalLabel">Добавить компанию в портфель</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                       <form id="portfolio-entry-form">
                         <div class="mb-3">
-                          <label class="form-label">Стартап</label>
-                          <input type="text" id="startup-autocomplete" class="form-control" autocomplete="off" placeholder="Начните вводить название..." required>
-                          <input type="hidden" name="startup_id" id="startup-id-hidden">
+                          <label class="form-label">Компания</label>
+                          <input type="text" id="company-autocomplete" class="form-control" autocomplete="off" placeholder="Начните вводить название..." required>
+                          <input type="hidden" name="company_id" id="company-id-hidden">
                           <div class="form-text">Выберите из списка или начните вводить название</div>
                         </div>
                         <div class="mb-3">
@@ -95,7 +95,7 @@
                           <input type="date" name="date" id="date-input" class="form-control" required min="2000-01-01" max="{{ today.isoformat() }}">
                         </div>
                         <div class="mb-3">
-                          <label class="form-label">Оценка стартапа (USD, необязательно)</label>
+                          <label class="form-label">Оценка компании (USD, необязательно)</label>
                           <input type="text" name="valuation" id="valuation-input" class="form-control">
                         </div>
                         <div class="alert alert-danger d-none" id="portfolio-entry-error"></div>
@@ -107,12 +107,12 @@
               </div>
               {% endif %}
               <table class="table table-sm table-hover">
-                <thead><tr><th>Стартап</th><th>Сумма</th><th>Дата</th><th>Оценка</th><th></th></tr></thead>
+                <thead><tr><th>Компания</th><th>Сумма</th><th>Дата</th><th>Оценка</th><th></th></tr></thead>
                 <tbody id="portfolio-table-body">
                   {% if investor and investor.portfolio_entries %}
                     {% for entry in investor.portfolio_entries %}
                       <tr data-entry-id="{{ entry.id }}">
-                        <td><a href="{{ url_for('startup_profile', id=entry.startup.id) }}" target="_blank">{{ entry.startup.name }}</a></td>
+                        <td><a href="{{ url_for('company_profile', id=entry.company.id) }}" target="_blank">{{ entry.company.name }}</a></td>
                         <td>{{ entry.amount|int if entry.amount == entry.amount|int else entry.amount }}</td>
                         <td>{{ entry.date.strftime('%d.%m.%Y') }}</td>
                         <td>{% if entry.valuation %}{{ entry.valuation|int if entry.valuation == entry.valuation|int else entry.valuation }}{% else %}—{% endif %}</td>
@@ -122,7 +122,7 @@
                       </tr>
                     {% endfor %}
                   {% else %}
-                    <tr><td colspan="5" class="text-muted">Нет стартапов в портфеле.</td></tr>
+                    <tr><td colspan="5" class="text-muted">Нет компаний в портфеле.</td></tr>
                   {% endif %}
                 </tbody>
               </table>
@@ -205,9 +205,9 @@ document.getElementById('investor-type-select').addEventListener('change', updat
 window.addEventListener('DOMContentLoaded', function() {
   updateInvestorTabs();
   // --- DEBUG: Проверка наличия поля ---
-  console.log('init autocomplete', $('#startup-autocomplete').length);
+  console.log('init autocomplete', $('#company-autocomplete').length);
   // --- jQuery UI Autocomplete для стартапа ---
-  $('#startup-autocomplete').autocomplete({
+  $('#company-autocomplete').autocomplete({
     minLength: 0,
     source: function(request, response) {
       console.log('autocomplete source called', request.term);
@@ -216,8 +216,8 @@ window.addEventListener('DOMContentLoaded', function() {
       if (q && q.length >= 2) {
         params.q = q;
       }
-      $.getJSON('/admin/startup_search', params, function(data) {
-        console.log('startup_search response', data); // debug
+      $.getJSON('/admin/company_search', params, function(data) {
+        console.log('company_search response', data); // debug
         var items = data.results || [];
         if (!q || q.length < 2) items = items.slice(0, 5);
         if (items.length === 0) {
@@ -231,14 +231,14 @@ window.addEventListener('DOMContentLoaded', function() {
     },
     select: function(event, ui) {
       if (ui.item.id) {
-        $('#startup-id-hidden').val(ui.item.id);
+        $('#company-id-hidden').val(ui.item.id);
       } else {
         event.preventDefault();
       }
     },
     change: function(event, ui) {
       if (!ui.item || !ui.item.id) {
-        $('#startup-id-hidden').val('');
+        $('#company-id-hidden').val('');
       }
     }
   }).on('focus', function() {
@@ -272,10 +272,10 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   // --- AJAX добавление портфельной записи ---
   $('#portfolio-entry-form').on('submit', function(e) {
-    var startupId = $('#startup-id-hidden').val();
-    if (!startupId) {
+    var companyId = $('#company-id-hidden').val();
+    if (!companyId) {
       e.preventDefault();
-      $('#portfolio-entry-error').removeClass('d-none').text('Выберите стартап из списка');
+      $('#portfolio-entry-error').removeClass('d-none').text('Выберите компанию из списка');
       return false;
     }
     var dateVal = $('#date-input').val();
@@ -293,7 +293,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var amountRaw = AutoNumeric.getNumber('#amount-input');
     var valuationRaw = AutoNumeric.getNumber('#valuation-input');
     var data = {
-      startup_id: startupId,
+      company_id: companyId,
       amount: amountRaw,
       date: $form.find('[name="date"]').val(),
       valuation: valuationRaw || null
@@ -321,7 +321,7 @@ window.addEventListener('DOMContentLoaded', function() {
   // --- AJAX удаление портфельной записи ---
   $('#portfolio-table-body').on('click', '.portfolio-delete-btn', function() {
     var entryId = $(this).data('entry-id');
-    if (!confirm('Удалить стартап из портфеля?')) return;
+    if (!confirm('Удалить компанию из портфеля?')) return;
     $.ajax({
       url: '/admin/investors/{{ investor.id }}/portfolio/entry/delete/' + entryId,
       method: 'POST',
@@ -329,7 +329,7 @@ window.addEventListener('DOMContentLoaded', function() {
         if (resp.success) {
           $('tr[data-entry-id="' + entryId + '"]').remove();
           if ($('#portfolio-table-body tr').length === 0) {
-            $('#portfolio-table-body').append('<tr><td colspan="5" class="text-muted">Нет стартапов в портфеле.</td></tr>');
+            $('#portfolio-table-body').append('<tr><td colspan="5" class="text-muted">Нет компаний в портфеле.</td></tr>');
           }
         }
       }

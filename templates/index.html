@@ -1,18 +1,18 @@
 {% extends 'layout.html' %}
 
-{% block title %}StanBase - База стартапов и инвесторов Центральной Азии{% endblock %}
+{% block title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
 
-{% block meta_description %}StanBase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона. Поиск по стартапам, инвесторам и людям.{% endblock %}
+{% block meta_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона. Поиск по стартапам, инвесторам и людям.{% endblock %}
 
 {% block meta_keywords %}стартапы Центральной Азии, инвесторы, венчурные инвестиции, инновационные проекты, технологические стартапы, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан, поиск стартапов, стартап-экосистема{% endblock %}
 
-{% block og_title %}StanBase - База стартапов и инвесторов Центральной Азии{% endblock %}
+{% block og_title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
 
-{% block og_description %}StanBase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
+{% block og_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
 
-{% block twitter_title %}StanBase - База стартапов и инвесторов Центральной Азии{% endblock %}
+{% block twitter_title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
 
-{% block twitter_description %}StanBase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
+{% block twitter_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
 
 {% block head %}
 <style>
@@ -59,17 +59,26 @@
     margin-left: -50vw;
     margin-right: -50vw;
   }
+  .two-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.8em;
+    max-height: 2.8em;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mb-3">
   <div class="col-lg-8 text-center">
-    <h1 class="display-5 mb-2">StanBase</h1>
-    <p class="lead mb-3">База стартапов, инвесторов, сделок, новостей, подкастов, вакансий и мероприятий Центральной Азии</p>
-    <form action="/startups" method="get" class="mb-3">
+    <h1 class="display-5 mb-2" style="font-weight:700;">Stanbase</h1>
+    <p class="mb-3" style="font-size:1.25rem; font-weight:400;">База компаний, инвесторов, сделок, новостей, вакансий и мероприятий Центральной Азии</p>
+    <form action="/companies" method="get" class="mb-3">
       <div class="input-group input-group-lg shadow-sm">
-        <input type="text" name="q" class="form-control form-control-lg" placeholder="Поиск по стартапам, людям, инвесторам..." aria-label="Поиск">
+        <input type="text" name="q" class="form-control form-control-lg" placeholder="Поиск по компаниям, людям, инвесторам..." aria-label="Поиск">
         <button class="btn btn-primary px-4" type="submit">Найти</button>
       </div>
     </form>
@@ -78,21 +87,26 @@
 
 <div class="section-divider"></div>
 <div class="container-lg">
-  <div class="section-title">Стартапы</div>
+  <div class="section-title">Компании</div>
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for s in startups[:6] %}
+    {% for c in companies[:6] %}
     <div class="col">
       <div class="card card-google h-100">
         <div class="card-body">
-          <h5 class="card-title mb-1"><a href="/startup/{{ s.id }}">{{ s.name }}</a></h5>
-          <div class="mb-2 text-muted small">{{ s.country }}, {{ s.city }} | {{ s.stage }} | {{ s.industry }}</div>
-          <p class="card-text">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+          <div class="d-flex align-items-center mb-2">
+            <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ c.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            <div>
+              <h5 class="card-title mb-0"><a href="/company/{{ c.id }}">{{ c.name }}</a></h5>
+              <div class="text-muted small">{{ c.country }}, {{ c.city }} | {{ c.stage }} | {{ c.industry }}</div>
+            </div>
+          </div>
+          <p class="card-text mb-0 two-lines">{{ c.description }}</p>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/startups" class="btn btn-link">Все стартапы →</a></div>
+  <div class="text-end"><a href="/companies" class="btn btn-link">Все компании →</a></div>
 </div>
 
 <div class="section-divider"></div>

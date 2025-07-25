@@ -12,7 +12,7 @@ import subprocess
 from fastapi import APIRouter
 
 from db import SessionLocal, Base, engine
-from models import Startup, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, StartupStage, Category, Author, PortfolioEntry
+from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage
 from starlette.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from email.utils import parseaddr
@@ -40,7 +40,6 @@ async def login(request: Request):
         if user:
             request.session["user_id"] = user.id
             request.session["role"] = user.role
-            request.session["username"] = user.username or user.email
             print("LOGIN SESSION SET:", dict(request.session))
             return JSONResponse({"success": True})
         else:
@@ -136,14 +135,14 @@ async def logout(request: Request):
 def index(request: Request):
     print("INDEX SESSION:", dict(request.session))
     db = SessionLocal()
-    startups = db.query(Startup).order_by(Startup.id.desc()).limit(20).all()
+    companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
     investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
     news = db.query(News).order_by(News.date.desc()).limit(10).all()
     podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
     jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
     events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
     db.close()
-    return templates.TemplateResponse("index.html", {"request": request, "session": request.session, "startups": startups, "investors": investors, "news": news, "podcasts": podcasts, "jobs": jobs, "events": events})
+    return templates.TemplateResponse("index.html", {"request": request, "session": request.session, "companies": companies, "investors": investors, "news": news, "podcasts": podcasts, "jobs": jobs, "events": events})
 
 # robots.txt
 @app.get("/robots.txt")
@@ -155,42 +154,42 @@ def robots_txt():
 def sitemap_xml():
     return RedirectResponse(url="/static/sitemap.xml")
 
-@app.get("/startups", response_class=HTMLResponse)
-def startups(request: Request, q: str = Query('', alias='q'), country: str = Query('', alias='country'), stage: str = Query('', alias='stage'), industry: str = Query('', alias='industry')):
-    print("STARTUPS SESSION:", dict(request.session))
+@app.get("/companies", response_class=HTMLResponse)
+def companies(request: Request, q: str = Query('', alias='q'), country: str = Query('', alias='country'), stage: str = Query('', alias='stage'), industry: str = Query('', alias='industry')):
+    print("COMPANIES SESSION:", dict(request.session))
     db = SessionLocal()
-    query = db.query(Startup)
+    query = db.query(Company)
     if q:
-        query = query.filter(Startup.name.ilike(f'%{q}%'))
+        query = query.filter(Company.name.ilike(f'%{q}%'))
     if country:
         query = query.filter_by(country=country)
     if stage:
         query = query.filter_by(stage=stage)
     if industry:
         query = query.filter_by(industry=industry)
-    startups = query.order_by(Startup.name).all()
-    countries = [c[0] for c in db.query(Startup.country).distinct().order_by(Startup.country) if c[0]]
-    stages = [s[0] for s in db.query(Startup.stage).distinct().order_by(Startup.stage) if s[0]]
-    industries = [i[0] for i in db.query(Startup.industry).distinct().order_by(Startup.industry) if i[0]]
+    companies = query.order_by(Company.name).all()
+    countries = [c[0] for c in db.query(Company.country).distinct().order_by(Company.country) if c[0]]
+    stages = [s[0] for s in db.query(Company.stage).distinct().order_by(Company.stage) if s[0]]
+    industries = [i[0] for i in db.query(Company.industry).distinct().order_by(Company.industry) if i[0]]
     db.close()
-    return templates.TemplateResponse("public/startups/list.html", {"request": request, "session": request.session, "startups": startups, "countries": countries, "stages": stages, "industries": industries})
+    return templates.TemplateResponse("public/companies/list.html", {"request": request, "session": request.session, "companies": companies, "countries": countries, "stages": stages, "industries": industries})
 
-@app.get("/startup/{id}", response_class=HTMLResponse)
-def startup_profile(request: Request, id: int = Path(...)):
+@app.get("/company/{id}", response_class=HTMLResponse)
+def company_profile(request: Request, id: int = Path(...)):
     db = SessionLocal()
-    startup = db.query(Startup).get(id)
-    if not startup:
+    company = db.query(Company).get(id)
+    if not company:
         db.close()
         raise HTTPException(status_code=404)
-    team = list(startup.team)
-    deals = list(startup.deals)
-    jobs = list(startup.jobs)
+    team = list(company.team)
+    deals = list(company.deals)
+    jobs = list(company.jobs)
     investors = db.query(Investor).all()
     investor_dict = {inv.name: inv for inv in investors}
     db.close()
     return templates.TemplateResponse(
-        "public/startups/detail.html",
-        {"request": request, "startup": startup, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session}
+        "public/companies/detail.html",
+        {"request": request, "company": company, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session}
     )
 
 @app.get("/investors", response_class=HTMLResponse)
@@ -266,7 +265,7 @@ def event_detail(request: Request, id: int = Path(...)):
     return templates.TemplateResponse("public/events/detail.html", {"request": request, "session": request.session, "event": event})
 
 @app.get("/jobs", response_class=HTMLResponse)
-def jobs_list(request: Request, q: str = Query('', alias='q'), city: str = Query('', alias='city'), job_type: str = Query('', alias='job_type'), startup: str = Query('', alias='startup')):
+def jobs_list(request: Request, q: str = Query('', alias='q'), city: str = Query('', alias='city'), job_type: str = Query('', alias='job_type'), company: str = Query('', alias='company')):
     db = SessionLocal()
     query = db.query(Job)
     if q:
@@ -275,22 +274,22 @@ def jobs_list(request: Request, q: str = Query('', alias='q'), city: str = Query
         query = query.filter_by(city=city)
     if job_type:
         query = query.filter_by(job_type=job_type)
-    if startup:
-        query = query.filter_by(startup_id=startup)
+    if company:
+        query = query.filter_by(company_id=company)
     jobs = query.order_by(Job.id.desc()).all()
     cities = [c[0] for c in db.query(Job.city).distinct().order_by(Job.city) if c[0]]
     job_types = [t[0] for t in db.query(Job.job_type).distinct().order_by(Job.job_type) if t[0]]
-    startups = db.query(Startup).order_by(Startup.name).all()
+    companies = db.query(Company).order_by(Company.name).all()
     db.close()
-    return templates.TemplateResponse("public/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "cities": cities, "job_types": job_types, "startups": startups})
+    return templates.TemplateResponse("public/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "cities": cities, "job_types": job_types, "companies": companies})
 
 @app.get("/job/{id}", response_class=HTMLResponse)
 def job_detail(request: Request, id: int = Path(...)):
     db = SessionLocal()
     job = db.query(Job).get(id)
-    startup = job.startup if job else None
+    company = job.company if job else None
     db.close()
-    return templates.TemplateResponse("public/jobs/detail.html", {"request": request, "session": request.session, "job": job, "startup": startup})
+    return templates.TemplateResponse("public/jobs/detail.html", {"request": request, "session": request.session, "job": job, "company": company})
 
 @app.get("/podcasts", response_class=HTMLResponse)
 def podcasts_list(request: Request):
@@ -367,105 +366,105 @@ async def edit_investor(request: Request):
 # --- Стартапер: редактирование профиля ---
 @app.route("/dashboard/startuper/edit", methods=["GET", "POST"])
 async def edit_startuper(request: Request):
-    from models import User, Startup
+    from models import User, Company
     if not request.session.get('user_id') or request.session.get('role') != 'startuper':
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     user = db.query(User).get(request.session['user_id'])
-    startup = db.query(Startup).get(user.startup_id)
+    company = db.query(Company).get(user.company_id)
     db.close()
-    if not startup:
+    if not company:
         return HTMLResponse("Стартап не найден", status_code=404)
     if request.method == "POST":
         form = await request.form()
-        startup.name = form.get('name')
-        startup.description = form.get('description')
-        startup.country = form.get('country')
-        startup.city = form.get('city')
-        startup.stage = form.get('stage')
-        startup.industry = form.get('industry')
-        startup.website = form.get('website')
+        company.name = form.get('name')
+        company.description = form.get('description')
+        company.country = form.get('country')
+        company.city = form.get('city')
+        company.stage = form.get('stage')
+        company.industry = form.get('industry')
+        company.website = form.get('website')
         db.commit()
         return RedirectResponse(url="/dashboard/startuper", status_code=302)
-    return templates.TemplateResponse("edit_startuper.html", {"request": request, "startup": startup})
+    return templates.TemplateResponse("edit_startuper.html", {"request": request, "company": company})
 
 # --- Стартапер: добавление члена команды ---
 @app.post("/dashboard/startuper/team/add")
 async def add_team_member(request: Request):
-    from models import User, Startup, Person
+    from models import User, Company, Person
     if not request.session.get('user_id') or request.session.get('role') != 'startuper':
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     user = db.query(User).get(request.session['user_id'])
-    startup = db.query(Startup).get(user.startup_id)
+    company = db.query(Company).get(user.company_id)
     db.close()
-    if not startup:
+    if not company:
         return HTMLResponse("Стартап не найден", status_code=404)
     form = await request.form()
     name = form.get('name')
     role = form.get('role')
     linkedin = form.get('linkedin')
-    person = Person(name=name, role=role, linkedin=linkedin, country=startup.country)
+    person = Person(name=name, role=role, linkedin=linkedin, country=company.country)
     db.add(person)
     db.commit()
-    startup.team.append(person)
+    company.team.append(person)
     db.commit()
     return RedirectResponse(url="/dashboard/startuper", status_code=302)
 
 # --- Стартапер: удаление члена команды ---
 @app.post("/dashboard/startuper/team/delete/{person_id}")
 async def delete_team_member(request: Request, person_id: int):
-    from models import User, Startup, Person
+    from models import User, Company, Person
     if not request.session.get('user_id') or request.session.get('role') != 'startuper':
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     user = db.query(User).get(request.session['user_id'])
-    startup = db.query(Startup).get(user.startup_id)
+    company = db.query(Company).get(user.company_id)
     person = db.query(Person).get(person_id)
     db.close()
-    if not startup or not person or person not in startup.team:
+    if not company or not person or person not in company.team:
         return HTMLResponse("Член команды не найден", status_code=404)
-    startup.team.remove(person)
+    company.team.remove(person)
     db.commit()
     return RedirectResponse(url="/dashboard/startuper", status_code=302)
 
 # --- Инвестор: добавление стартапа в портфель ---
 @app.post("/dashboard/investor/portfolio/add")
 async def add_portfolio(request: Request):
-    from models import User, Investor, Startup
+    from models import User, Investor, Company
     if not request.session.get('user_id') or request.session.get('role') != 'investor':
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     user = db.query(User).get(request.session['user_id'])
     investor = db.query(Investor).get(user.investor_id)
     form = await request.form()
-    startup_id = int(form.get('startup_id'))
-    startup = db.query(Startup).get(startup_id)
+    company_id = int(form.get('company_id'))
+    company = db.query(Company).get(company_id)
     db.close()
-    if startup and startup not in investor.portfolio:
-        investor.portfolio.append(startup)
+    if company and company not in investor.portfolio:
+        investor.portfolio.append(company)
         db.commit()
     return RedirectResponse(url="/dashboard/investor", status_code=302)
 
 # --- Инвестор: удаление стартапа из портфеля ---
-@app.post("/dashboard/investor/portfolio/delete/{startup_id}")
-async def delete_portfolio(request: Request, startup_id: int):
-    from models import User, Investor, Startup
+@app.post("/dashboard/investor/portfolio/delete/{company_id}")
+async def delete_portfolio(request: Request, company_id: int):
+    from models import User, Investor, Company
     if not request.session.get('user_id') or request.session.get('role') != 'investor':
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     user = db.query(User).get(request.session['user_id'])
     investor = db.query(Investor).get(user.investor_id)
-    startup = db.query(Startup).get(startup_id)
+    company = db.query(Company).get(company_id)
     db.close()
-    if startup and startup in investor.portfolio:
-        investor.portfolio.remove(startup)
+    if company and company in investor.portfolio:
+        investor.portfolio.remove(company)
         db.commit()
     return RedirectResponse(url="/dashboard/investor", status_code=302)
 
 @app.get("/analytics", response_class=HTMLResponse)
 async def analytics(request: Request, year: int = Query(None)):
-    from models import Deal, Startup
+    from models import Deal, Company
     import datetime
     # Получаем все года, в которых были сделки
     db = SessionLocal()
@@ -478,11 +477,12 @@ async def analytics(request: Request, year: int = Query(None)):
     # Считаем по странам
     stats = {}
     db = SessionLocal()
-    deals = db.query(Deal).filter(Deal.date != None).all()
+    from sqlalchemy.orm import joinedload
+    deals = db.query(Deal).options(joinedload(Deal.company)).filter(Deal.date != None).all()
     db.close()
     for d in deals:
         if d.date.year == year:
-            country = d.startup.country if d.startup else 'Неизвестно'
+            country = d.company.country if d.company else 'Неизвестно'
             if country not in stats:
                 stats[country] = {'sum': 0, 'count': 0}
             stats[country]['sum'] += d.amount or 0
@@ -497,19 +497,18 @@ def admin_required(request: Request):
 
 @app.get("/admin", response_class=HTMLResponse, name="admin_dashboard")
 async def admin_dashboard(request: Request):
-    from models import User, Investor, Startup, News, Event, Job, Deal
+    from models import User, Investor, News, Event, Job, Deal
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     users = db.query(User).all()
     investors = db.query(Investor).all()
-    startups = db.query(Startup).all()
     news = db.query(News).all()
     events = db.query(Event).all()
     jobs = db.query(Job).all()
     deals = db.query(Deal).all()
     db.close()
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "session": request.session, "users": users, "investors": investors, "startups": startups, "news": news, "events": events, "jobs": jobs, "deals": deals})
+    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "session": request.session, "users": users, "investors": investors, "news": news, "events": events, "jobs": jobs, "deals": deals})
 
 # --- Users CRUD ---
 @app.get("/admin/users", response_class=HTMLResponse, name="admin_users")
@@ -551,7 +550,6 @@ async def admin_create_user(request: Request):
         phone = form.get('phone')
         telegram = form.get('telegram')
         linkedin = form.get('linkedin')
-        admin_email = request.session.get('username') or request.session.get('user_email')
         db = SessionLocal()
         if db.query(User).filter_by(email=email).first():
             error = 'Пользователь с таким email уже существует'
@@ -559,7 +557,7 @@ async def admin_create_user(request: Request):
             if not password:
                 error = 'Пароль обязателен при создании пользователя'
             else:
-                user = User(email=email, password=password, role=role, status=status_val, first_name=first_name, last_name=last_name, country_id=country_id, city=city, phone=phone, telegram=telegram, linkedin=linkedin, created_by=admin_email)
+                user = User(email=email, password=password, role=role, status=status_val, first_name=first_name, last_name=last_name, country_id=country_id, city=city, phone=phone, telegram=telegram, linkedin=linkedin)
                 db.add(user)
                 db.commit()
                 db.close()
@@ -602,8 +600,7 @@ async def admin_edit_user_post(request: Request, user_id: int):
     user.phone = form.get('phone')
     user.telegram = form.get('telegram')
     user.linkedin = form.get('linkedin')
-    admin_email = request.session.get('username') or request.session.get('user_email')
-    user.updated_by = admin_email
+    user.updated_by = request.session.get('username') or request.session.get('user_email')
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/users", status_code=302)
@@ -622,23 +619,23 @@ async def admin_delete_user(request: Request, user_id: int):
 # --- Startups CRUD ---
 @app.get("/admin/startups", response_class=HTMLResponse, name="admin_startups")
 async def admin_startups(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import Startup
+    from models import Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    query = db.query(Startup)
+    query = db.query(Company)
     if q:
-        query = query.filter(Startup.name.ilike(f'%{q}%'))
+        query = query.filter(Company.name.ilike(f'%{q}%'))
     if status:
-        query = query.filter(Startup.status == status)
+        query = query.filter(Company.status == status)
     total = query.count()
-    startups = query.order_by(Startup.id).offset((page-1)*per_page).limit(per_page).all()
+    companies = query.order_by(Company.id).offset((page-1)*per_page).limit(per_page).all()
     db.close()
-    return templates.TemplateResponse("admin/startups/list.html", {"request": request, "startups": startups, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+    return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
 
 @app.route("/admin/startups/create", methods=["GET", "POST"], name="admin_create_startup")
 async def admin_create_startup(request: Request):
-    from models import Startup, Country, City, StartupStage, Category
+    from models import Company, Country, City
     import datetime
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -646,8 +643,6 @@ async def admin_create_startup(request: Request):
     db = SessionLocal()
     countries = db.query(Country).order_by(Country.name).all()
     cities = db.query(City).order_by(City.name).all()
-    stages = db.query(StartupStage).order_by(StartupStage.name).all()
-    industries = db.query(Category).order_by(Category.name).all()
     db.close()
     if request.method == "POST":
         form = await request.form()
@@ -655,8 +650,6 @@ async def admin_create_startup(request: Request):
         description = form.get('description')
         country_id = int(form.get('country')) if form.get('country') else None
         city_id = int(form.get('city')) if form.get('city') else None
-        stage_id = int(form.get('stage')) if form.get('stage') else None
-        industry_id = int(form.get('industry')) if form.get('industry') else None
         status = form.get('status')
         founded_date_str = form.get('founded_date') or None
         website = form.get('website')
@@ -669,87 +662,80 @@ async def admin_create_startup(request: Request):
         db = SessionLocal()
         country = db.query(Country).get(country_id) if country_id else None
         city = db.query(City).get(city_id) if city_id else None
-        stage = db.query(StartupStage).get(stage_id) if stage_id else None
-        industry = db.query(Category).get(industry_id) if industry_id else None
         created_by = request.session.get('username') if request.session.get('username') else None
         if not error:
-            startup = Startup(
+            company = Company(
                 name=name,
                 description=description,
                 country=country.name if country else '',
                 city=city.name if city else '',
-                stage=stage.name if stage else '',
-                industry=industry.name if industry else '',
                 status=status,
                 founded_date=founded_date,
                 website=website,
                 created_by=created_by
             )
-            db.add(startup)
+            db.add(company)
             db.commit()
             db.close()
             return RedirectResponse(url="/admin/startups", status_code=302)
         db.close()
-    return templates.TemplateResponse("admin/startups/form.html", {"request": request, "error": error, "startup": None, "countries": countries, "cities": cities, "stages": stages, "industries": industries})
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": None, "countries": countries, "cities": cities})
 
-@app.post("/admin/startups/delete/{startup_id}", name="admin_delete_startup")
-async def admin_delete_startup(request: Request, startup_id: int):
-    from models import Startup
+@app.post("/admin/startups/delete/{company_id}", name="admin_delete_startup")
+async def admin_delete_startup(request: Request, company_id: int):
+    from models import Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    startup = db.query(Startup).get(startup_id)
-    if startup:
-        db.delete(startup)
+    company = db.query(Company).get(company_id)
+    if company:
+        db.delete(company)
         db.commit()
     db.close()
     return RedirectResponse(url="/admin/startups", status_code=302)
 
 # --- Startups ---
-@app.get("/admin/startups/edit/{startup_id}", response_class=HTMLResponse, name="admin_edit_startup")
-async def admin_edit_startup(request: Request, startup_id: int):
-    from models import Startup, Country, City, StartupStage, Category
+@app.get("/admin/startups/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_startup")
+async def admin_edit_startup(request: Request, company_id: int):
+    from models import Company, Country, City
     from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    startup = db.query(Startup).get(startup_id)
+    company = db.query(Company).get(company_id)
     countries = db.query(Country).order_by(Country.name).all()
     cities = db.query(City).options(joinedload(City.country)).order_by(City.name).all()
-    stages = db.query(StartupStage).order_by(StartupStage.name).all()
-    industries = db.query(Category).order_by(Category.name).all()
     error = None
-    team = startup.team if startup else []
-    deals = startup.deals if startup else []
-    jobs = startup.jobs if startup else []
+    team = company.team if company else []
+    deals = company.deals if company else []
+    jobs = company.jobs if company else []
     db.close()
-    return templates.TemplateResponse("admin/startups/form.html", {"request": request, "error": error, "startup": startup, "team": team, "deals": deals, "jobs": jobs, "countries": countries, "cities": cities, "stages": stages, "industries": industries})
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": company, "team": team, "deals": deals, "jobs": jobs, "countries": countries, "cities": cities})
 
-@app.post("/admin/startups/edit/{startup_id}", name="admin_edit_startup_post")
-async def admin_edit_startup_post(request: Request, startup_id: int):
-    from models import Startup
+@app.post("/admin/startups/edit/{company_id}", name="admin_edit_startup_post")
+async def admin_edit_startup_post(request: Request, company_id: int):
+    from models import Company
     import datetime
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    startup = db.query(Startup).get(startup_id)
+    company = db.query(Company).get(company_id)
     form = await request.form()
-    startup.name = form.get('name')
-    startup.description = form.get('description')
-    startup.country = form.get('country')
-    startup.city = form.get('city')
-    startup.stage = form.get('stage')
-    startup.industry = form.get('industry')
+    company.name = form.get('name')
+    company.description = form.get('description')
+    company.country = form.get('country')
+    company.city = form.get('city')
+    company.status = form.get('status')
     founded_date_str = form.get('founded_date') or None
     if founded_date_str:
         try:
-            startup.founded_date = datetime.datetime.strptime(founded_date_str, "%Y-%m-%d").date()
+            company.founded_date = datetime.datetime.strptime(founded_date_str, "%Y-%m-%d").date()
         except Exception:
-            startup.founded_date = None
+            company.founded_date = None
     else:
-        startup.founded_date = None
-    startup.website = form.get('website')
-    startup.updated_at = datetime.datetime.utcnow()
+        company.founded_date = None
+    company.website = form.get('website')
+    company.updated_at = datetime.datetime.utcnow()
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/startups", status_code=302)
@@ -906,79 +892,6 @@ async def admin_delete_city(request: Request, city_id: int):
     db.close()
     return RedirectResponse(url="/admin/cities", status_code=302)
 
-# --- Stages CRUD ---
-@app.get("/admin/stages", response_class=HTMLResponse, name="admin_stages")
-async def admin_stages(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import StartupStage
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    query = db.query(StartupStage)
-    if q:
-        query = query.filter(StartupStage.name.ilike(f'%{q}%'))
-    if status:
-        query = query.filter(StartupStage.status == status)
-    total = query.count()
-    stages = query.order_by(StartupStage.id).offset((page-1)*per_page).limit(per_page).all()
-    db.close()
-    return templates.TemplateResponse("admin/stages/list.html", {"request": request, "stages": stages, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
-
-@app.route("/admin/stages/create", methods=["GET", "POST"], name="admin_create_stage")
-async def admin_create_stage(request: Request):
-    from models import StartupStage
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    error = None
-    if request.method == "POST":
-        form = await request.form()
-        name = form.get('name')
-        status = form.get('status')
-        db = SessionLocal()
-        if db.query(StartupStage).filter_by(name=name).first():
-            error = 'Этап с таким названием уже существует'
-        else:
-            stage = StartupStage(name=name, status=status)
-            db.add(stage)
-            db.commit()
-            return RedirectResponse(url="/admin/stages", status_code=302)
-    return templates.TemplateResponse("admin/stages/form.html", {"request": request, "error": error, "stage": None})
-
-@app.get("/admin/stages/edit/{stage_id}", response_class=HTMLResponse, name="admin_edit_stage")
-async def admin_edit_stage(request: Request, stage_id: int):
-    from models import StartupStage
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    stage = db.query(StartupStage).get(stage_id)
-    error = None
-    db.close()
-    return templates.TemplateResponse("admin/stages/form.html", {"request": request, "error": error, "stage": stage})
-
-@app.post("/admin/stages/edit/{stage_id}", name="admin_edit_stage_post")
-async def admin_edit_stage_post(request: Request, stage_id: int):
-    from models import StartupStage
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    stage = db.query(StartupStage).get(stage_id)
-    form = await request.form()
-    stage.name = form.get('name')
-    db.commit()
-    db.close()
-    return RedirectResponse(url="/admin/stages", status_code=302)
-
-@app.post("/admin/stages/delete/{stage_id}", name="admin_delete_stage")
-async def admin_delete_stage(request: Request, stage_id: int):
-    from models import StartupStage
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    stage = db.query(StartupStage).get(stage_id)
-    db.delete(stage)
-    db.commit()
-    db.close()
-    return RedirectResponse(url="/admin/stages", status_code=302)
-
 # --- Categories CRUD ---
 @app.get("/admin/categories", response_class=HTMLResponse, name="admin_categories")
 async def admin_categories(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
@@ -1129,7 +1042,7 @@ async def admin_delete_author(request: Request, author_id: int):
 # --- Jobs CRUD ---
 @app.get("/admin/jobs", response_class=HTMLResponse, name="admin_jobs")
 def admin_jobs(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import Job, Startup
+    from models import Job, Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
@@ -1138,61 +1051,65 @@ def admin_jobs(request: Request, q: str = Query('', alias='q'), per_page: int = 
         query = query.filter(Job.title.ilike(f'%{q}%'))
     total = query.count()
     jobs = query.order_by(Job.id).offset((page-1)*per_page).limit(per_page).all()
-    startups_list = db.query(Startup).all()
-    startups = {s.id: s for s in startups_list}
+    companies_list = db.query(Company).all()
+    companies = {s.id: s for s in companies_list}
     db.close()
-    return templates.TemplateResponse("admin/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "q": q, "per_page": per_page, "page": page, "total": total, "startups": startups})
+    return templates.TemplateResponse("admin/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "q": q, "per_page": per_page, "page": page, "total": total, "companies": companies})
 
 @app.route("/admin/jobs/create", methods=["GET", "POST"], name="admin_create_job")
 async def admin_create_job(request: Request):
-    from models import Job, Startup, City
+    from models import Job, Company, City
     from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     error = None
-    startup_id = request.query_params.get('startup_id')
+    company_id = request.query_params.get('company_id')
     db = SessionLocal()
-    startups = db.query(Startup).order_by(Startup.name).all()
+    companies = db.query(Company).order_by(Company.name).all()
     cities = db.query(City).options(joinedload(City.country)).order_by(City.name).all()
     db.close()
     if request.method == "POST":
         form = await request.form()
         title = form.get('title')
         description = form.get('description')
-        city_id = int(form.get('city')) if form.get('city') else None
+        city = form.get('city')
         job_type = form.get('job_type')
-        startup_id_post = int(form.get('startup_id')) if form.get('startup_id') else None
+        company_id_post = int(form.get('company_id')) if form.get('company_id') else None
+        status = form.get('status')
+        contact = form.get('contact')
         db = SessionLocal()
-        if db.query(Job).filter_by(title=title, city_id=city_id, job_type=job_type, startup_id=startup_id_post).first():
+        if db.query(Job).filter_by(title=title, city=city, job_type=job_type, company_id=company_id_post).first():
             error = 'Вакансия с такими параметрами уже существует'
         else:
             job = Job(
                 title=title,
                 description=description,
-                city_id=city_id,
+                city=city,
                 job_type=job_type,
-                startup_id=startup_id_post
+                company_id=company_id_post,
+                status=status,
+                contact=contact
             )
             db.add(job)
             db.commit()
             db.close()
             return RedirectResponse(url="/admin/jobs", status_code=302)
         db.close()
-    return templates.TemplateResponse("admin/jobs/form.html", {"request": request, "session": request.session, "error": error, "job": None, "startups": startups, "cities": cities, "startup_id": int(startup_id) if startup_id else None})
+    return templates.TemplateResponse("admin/jobs/form.html", {"request": request, "session": request.session, "error": error, "job": None, "companies": companies, "cities": cities, "company_id": int(company_id) if company_id else None})
 
 @app.get("/admin/jobs/edit/{job_id}", response_class=HTMLResponse, name="admin_edit_job")
 async def admin_edit_job(request: Request, job_id: int):
-    from models import Job, Startup, City
+    from models import Job, Company, City
     from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    job = db.query(Job).options(joinedload(Job.startup)).get(job_id)
-    startups = db.query(Startup).order_by(Startup.name).all()
+    job = db.query(Job).options(joinedload(Job.company)).get(job_id)
+    companies = db.query(Company).order_by(Company.name).all()
     cities = db.query(City).order_by(City.name).all()
     error = None
     import starlette.background
-    response = templates.TemplateResponse("admin/jobs/form.html", {"request": request, "session": request.session, "error": error, "job": job, "startups": startups, "cities": cities})
+    response = templates.TemplateResponse("admin/jobs/form.html", {"request": request, "session": request.session, "error": error, "job": job, "companies": companies, "cities": cities})
     response.background = starlette.background.BackgroundTask(db.close)
     return response
 
@@ -1206,11 +1123,12 @@ async def admin_edit_job_post(request: Request, job_id: int):
     form = await request.form()
     job.title = form.get('title')
     job.description = form.get('description')
-    city_val = form.get('city')
-    job.city_id = int(city_val) if city_val else None
+    job.city = form.get('city')
     job.job_type = form.get('job_type')
-    startup_val = form.get('startup_id')
-    job.startup_id = int(startup_val) if startup_val else None
+    company_val = form.get('company_id')
+    job.company_id = int(company_val) if company_val else None
+    job.status = form.get('status')
+    job.contact = form.get('contact')
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/jobs", status_code=302)
@@ -1334,10 +1252,10 @@ async def admin_create_deal(request: Request):
         description = form.get('description')
         date = form.get('date')
         amount = form.get('amount')
-        startup_id = int(form.get('startup_id'))
+        company_id = int(form.get('company_id'))
         investor_id = int(form.get('investor_id'))
         db = SessionLocal()
-        if db.query(Deal).filter_by(title=title, startup_id=startup_id, investor_id=investor_id).first():
+        if db.query(Deal).filter_by(title=title, company_id=company_id, investor_id=investor_id).first():
             error = 'Сделка с такими параметрами уже существует'
         else:
             deal = Deal(
@@ -1345,7 +1263,7 @@ async def admin_create_deal(request: Request):
                 description=description,
                 date=date,
                 amount=amount,
-                startup_id=startup_id,
+                company_id=company_id,
                 investor_id=investor_id
             )
             db.add(deal)
@@ -1376,7 +1294,7 @@ async def admin_edit_deal_post(request: Request, deal_id: int):
     deal.description = form.get('description')
     deal.date = form.get('date')
     deal.amount = form.get('amount')
-    deal.startup_id = int(form.get('startup_id'))
+    deal.company_id = int(form.get('company_id'))
     deal.investor_id = int(form.get('investor_id'))
     db.commit()
     db.close()
@@ -1448,7 +1366,7 @@ async def admin_edit_investor(request: Request, investor_id: int):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     investor = db.query(Investor)\
-        .options(joinedload(Investor.portfolio_entries).joinedload(PortfolioEntry.startup), joinedload(Investor.team))\
+        .options(joinedload(Investor.portfolio_entries).joinedload(PortfolioEntry.company), joinedload(Investor.team))\
         .get(investor_id)
     error = None
     today = datetime.date.today()
@@ -1491,12 +1409,12 @@ async def admin_delete_investor(request: Request, investor_id: int):
 @app.get("/admin/startup_search")
 async def admin_startup_search(q: str = Query('', alias='q')):
     db = SessionLocal()
-    query = db.query(Startup)
+    query = db.query(Company)
     if q:
-        query = query.filter(Startup.name.ilike(f"%{q}%"))
-    startups = query.order_by(Startup.name).limit(20).all()
+        query = query.filter(Company.name.ilike(f"%{q}%"))
+    companies = query.order_by(Company.name).limit(20).all()
     results = []
-    for s in startups:
+    for s in companies:
         country_code = (s.country or '').strip().upper()[:2]
         text = f"{s.name}, {country_code}" if country_code else s.name
         results.append({"id": s.id, "text": text})
@@ -1523,25 +1441,25 @@ async def admin_city_search(q: str = Query('', alias='q')):
 # --- Добавление участника команды из админки ---
 @app.post("/admin/team/create", name="admin_create_team_member")
 async def admin_create_team_member(request: Request):
-    from models import Person, Startup
+    from models import Person, Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     form = await request.form()
     name = form.get('name')
     role = form.get('role')
     linkedin = form.get('linkedin')
-    startup_id = int(request.query_params.get('startup_id')) if request.query_params.get('startup_id') else None
+    company_id = int(request.query_params.get('company_id')) if request.query_params.get('company_id') else None
     db = SessionLocal()
     person = Person(name=name, role=role, linkedin=linkedin)
     db.add(person)
     db.commit()
-    if startup_id:
-        startup = db.query(Startup).get(startup_id)
-        if startup:
-            startup.team.append(person)
+    if company_id:
+        company = db.query(Company).get(company_id)
+        if company:
+            company.team.append(person)
             db.commit()
     db.close()
-    return RedirectResponse(url=f"/admin/startups/edit/{startup_id}", status_code=302)
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
 
 @app.get("/admin/admins", response_class=HTMLResponse, name="admin_admins")
 def admin_admins(request: Request):
@@ -1564,7 +1482,7 @@ Base.metadata.create_all(bind=engine)
 # --- Автоматическое создание тестовых данных для всех сущностей ---
 def create_full_test_data():
     from db import SessionLocal
-    from models import User, Startup, Country, City, Category, StartupStage, Author, Investor, News, Podcast, Event, Deal, Person
+    from models import User, Company, Country, City, Category, Author, Investor, News, Podcast, Event, Deal, Person
     session = SessionLocal()
     # Country
     if not session.query(Country).first():
@@ -1590,28 +1508,18 @@ def create_full_test_data():
         cats = [Category(name=n) for n in ["Fintech", "HealthTech", "HRTech", "E-commerce", "SaaS"]]
         session.add_all(cats)
         session.commit()
-    # StartupStage
-    if not session.query(StartupStage).first():
-        stages = [StartupStage(name=n) for n in ["Seed", "Growth", "Scale", "Idea"]]
-        session.add_all(stages)
-        session.commit()
-    # Author
-    if not session.query(Author).first():
-        authors = [Author(name=n, description=f"Автор {n}") for n in ["Иванов", "Петров", "Сидоров"]]
-        session.add_all(authors)
-        session.commit()
     # Startup (реальные примеры ЦА, максимально живые)
-    if not session.query(Startup).first():
-        startups = [
-            Startup(name="CerebraAI", description="Платформа на базе искусственного интеллекта для диагностики инсульта и других заболеваний по КТ/МРТ. Используется более чем в 50 больницах, финалист TechCrunch Battlefield.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
-            Startup(name="Uzum", description="Крупнейшая цифровая экосистема в Узбекистане: маркетплейс, финтех, BNPL, логистика, онлайн-банк. Более 15 млн пользователей.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
-            Startup(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
-            Startup(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
-            Startup(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
-            Startup(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com"),
-            Startup(name="BILLZ", description="Программа для магазина, складского и товарного учёта, автоматизации продаж.", country="Казахстан", city="Алматы", stage="Growth", industry="SaaS, RetailTech", website="https://billz.io/")
+    if not session.query(Company).first():
+        companies = [
+            Company(name="CerebraAI", description="Платформа на базе искусственного интеллекта для диагностики инсульта и других заболеваний по КТ/МРТ. Используется более чем в 50 больницах, финалист TechCrunch Battlefield.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
+            Company(name="Uzum", description="Крупнейшая цифровая экосистема в Узбекистане: маркетплейс, финтех, BNPL, логистика, онлайн-банк. Более 15 млн пользователей.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
+            Company(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
+            Company(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
+            Company(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
+            Company(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com"),
+            Company(name="BILLZ", description="Программа для магазина, складского и товарного учёта, автоматизации продаж.", country="Казахстан", city="Алматы", stage="Growth", industry="SaaS, RetailTech", website="https://billz.io/")
         ]
-        session.add_all(startups)
+        session.add_all(companies)
         session.commit()
     # News (реальные/реалистичные)
     if not session.query(News).first():
@@ -1638,9 +1546,9 @@ def create_full_test_data():
             session.add(moderator_user)
             session.commit()
         if not session.query(User).filter_by(username="startuper").first():
-            if startups:
+            if companies:
                 print(f"Создаём startuper с country_id={kz_id}")
-                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startups[0].id, status="active")
+                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", company_id=companies[0].id, status="active")
                 session.add(startuper_user)
                 session.commit()
     except Exception as e:
@@ -1662,6 +1570,183 @@ def run_migration():
     return {"stdout": result.stdout, "stderr": result.stderr}
 
 app.include_router(router)
+
+@app.get("/admin/company_stages", response_class=HTMLResponse, name="admin_company_stages")
+async def admin_company_stages(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    from models import CompanyStage
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    query = db.query(CompanyStage)
+    if q:
+        query = query.filter(CompanyStage.name.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(CompanyStage.status == status)
+    total = query.count()
+    stages = query.order_by(CompanyStage.id).offset((page-1)*per_page).limit(per_page).all()
+    db.close()
+    return templates.TemplateResponse("admin/company_stages/list.html", {"request": request, "stages": stages, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+
+@app.route("/admin/company_stages/create", methods=["GET", "POST"], name="admin_create_company_stage")
+async def admin_create_company_stage(request: Request):
+    from models import CompanyStage
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    error = None
+    if request.method == "POST":
+        form = await request.form()
+        name = form.get('name')
+        status = form.get('status')
+        db = SessionLocal()
+        if db.query(CompanyStage).filter_by(name=name).first():
+            error = 'Стадия с таким названием уже существует.'
+        else:
+            stage = CompanyStage(name=name, status=status)
+            db.add(stage)
+            db.commit()
+            db.close()
+            return RedirectResponse(url="/admin/company_stages", status_code=302)
+        db.close()
+        return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": None, "error": error})
+    return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": None, "error": error})
+
+@app.route("/admin/company_stages/edit/{stage_id}", methods=["GET", "POST"], name="admin_edit_company_stage")
+async def admin_edit_company_stage(request: Request, stage_id: int):
+    from models import CompanyStage
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    stage = db.query(CompanyStage).get(stage_id)
+    error = None
+    if not stage:
+        db.close()
+        return HTMLResponse("Стадия не найдена", status_code=404)
+    if request.method == "POST":
+        form = await request.form()
+        stage.name = form.get('name')
+        stage.status = form.get('status')
+        db.commit()
+        db.close()
+        return RedirectResponse(url="/admin/company_stages", status_code=302)
+    db.close()
+    return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": stage, "error": error})
+
+@app.post("/admin/company_stages/delete/{stage_id}", name="admin_delete_company_stage")
+async def admin_delete_company_stage(request: Request, stage_id: int):
+    from models import CompanyStage
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    stage = db.query(CompanyStage).get(stage_id)
+    if stage:
+        db.delete(stage)
+        db.commit()
+    db.close()
+    return RedirectResponse(url="/admin/company_stages", status_code=302)
+
+@app.get("/admin/companies", response_class=HTMLResponse, name="admin_companies")
+async def admin_companies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    from models import Company
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    query = db.query(Company)
+    if q:
+        query = query.filter(Company.name.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(Company.status == status)
+    total = query.count()
+    companies = query.order_by(Company.id).offset((page-1)*per_page).limit(per_page).all()
+    db.close()
+    return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+
+@app.route("/admin/companies/create", methods=["GET", "POST"], name="admin_create_company")
+async def admin_create_company(request: Request):
+    from models import Company, Country, City
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    error = None
+    db = SessionLocal()
+    countries = db.query(Country).order_by(Country.name).all()
+    cities = db.query(City).order_by(City.name).all()
+    db.close()
+    if request.method == "POST":
+        form = await request.form()
+        name = form.get('name')
+        description = form.get('description')
+        country = form.get('country')
+        city = form.get('city')
+        status = form.get('status')
+        stage = form.get('stage')
+        industry = form.get('industry')
+        website = form.get('website')
+        db = SessionLocal()
+        company = Company(
+            name=name,
+            description=description,
+            country=country,
+            city=city,
+            status=status,
+            stage=stage,
+            industry=industry,
+            website=website
+        )
+        db.add(company)
+        db.commit()
+        db.close()
+        return RedirectResponse(url="/admin/companies", status_code=302)
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": None, "countries": countries, "cities": cities, "error": error})
+
+@app.post("/admin/companies/delete/{company_id}", name="admin_delete_company")
+async def admin_delete_company(request: Request, company_id: int):
+    from models import Company
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    company = db.query(Company).get(company_id)
+    if company:
+        db.delete(company)
+        db.commit()
+    db.close()
+    return RedirectResponse(url="/admin/companies", status_code=302)
+
+@app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
+async def admin_edit_company(request: Request, company_id: int):
+    from models import Company, Country, City
+    from sqlalchemy.orm import joinedload
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    company = db.query(Company).get(company_id)
+    countries = db.query(Country).order_by(Country.name).all()
+    cities = db.query(City).options(joinedload(City.country)).order_by(City.name).all()
+    error = None
+    team = company.team if company else []
+    db.close()
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team})
+
+@app.post("/admin/companies/edit/{company_id}", name="admin_edit_company_post")
+async def admin_edit_company_post(request: Request, company_id: int):
+    from models import Company
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    company = db.query(Company).get(company_id)
+    form = await request.form()
+    company.name = form.get('name')
+    company.description = form.get('description')
+    company.country = form.get('country')
+    company.city = form.get('city')
+    company.status = form.get('status')
+    company.stage = form.get('stage')
+    company.industry = form.get('industry')
+    company.website = form.get('website')
+    company.updated_at = datetime.datetime.utcnow()
+    db.commit()
+    db.close()
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
 
 if __name__ == "__main__":
     print('SERVER STARTED')

@@ -6,8 +6,8 @@
     <title>{% block title %}Stanbase{% endblock %}</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{% block meta_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов и актуальные новости стартап-экосистемы региона.{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}стартапы, инвесторы, Центральная Азия, венчурные инвестиции, инновации, технологические проекты, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Stanbase - ведущая платформа для компаний и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов и актуальные новости экосистемы региона.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}компании, инвесторы, Центральная Азия, венчурные инвестиции, инновации, технологические проекты, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}">
     <meta name="author" content="Stanbase">
     <meta name="robots" content="noindex, nofollow">
     
@@ -54,10 +54,9 @@
         </button>
         <div class="collapse navbar-collapse" id="mainNavbar">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/startups">Стартапы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/companies">Компании</a></li>
             <li class="nav-item"><a class="nav-link" href="/investors">Инвесторы</a></li>
             <li class="nav-item"><a class="nav-link" href="/news">Новости</a></li>
-            <li class="nav-item"><a class="nav-link" href="/podcasts">Подкасты</a></li>
             <li class="nav-item"><a class="nav-link" href="/events">Мероприятия</a></li>
             <!-- Кнопка Войти/Добавить запись -->
             {% if session is defined and session.get('user_id') %}
@@ -102,8 +101,8 @@
           <div class="modal-body">
             <form id="loginForm" method="post" action="/login">
               <div class="mb-3">
-                <label for="login-username" class="form-label">Email</label>
-                <input type="email" class="form-control" id="login-username" name="email" required autofocus>
+                <label for="login-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="login-email" name="email" required autofocus>
               </div>
               <div class="mb-3">
                 <label for="login-password" class="form-label">Пароль</label>

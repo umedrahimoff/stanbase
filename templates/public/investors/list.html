@@ -28,7 +28,7 @@
   {% if request.query_params.get('country') %}{{ request.query_params.get('country') }}, {% endif %}
   {% if request.query_params.get('focus') %}{{ request.query_params.get('focus') }}, {% endif %}
   {% if request.query_params.get('stages') %}{{ request.query_params.get('stages') }}, {% endif %}
-  инвесторы Центральной Азии, венчурные фонды, ангельские инвесторы, инвестиции в стартапы, венчурный капитал, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
+  инвесторы Центральной Азии, венчурные фонды, ангельские инвесторы, инвестиции в компании, венчурный капитал, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
 {% endblock %}
 
 {% block og_title %}
@@ -143,7 +143,7 @@
           <div class="mb-2 text-muted small">{{ inv.focus }} | {{ inv.stages }}</div>
           <p class="card-text">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
           {% if inv.type in ['angel', 'venture'] and inv.portfolio %}
-            <div class="mt-2 small text-muted">Портфель: {{ inv.portfolio|length }} стартап(ов)</div>
+            <div class="mt-2 small text-muted">Портфель: {{ inv.portfolio|length }} компания(й)</div>
           {% endif %}
         </div>
       </div>

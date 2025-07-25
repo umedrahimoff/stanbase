@@ -1,0 +1,6 @@
+id,email,password,role,first_name,last_name,country_id,city,phone,telegram,linkedin,investor_id,startup_id,status,created_at,updated_at,created_by,updated_by
+1,admin@stanbase.test,admin123,admin,Admin,StanBase,1,"Алматы",+77001234567,,,,,active,"2025-07-25 08:10:28.731246","2025-07-25 08:10:28.731250",,
+2,moderator@stanbase.test,mod123,moderator,Mod,StanBase,1,"Алматы",+77001234568,,,,,active,"2025-07-25 08:10:28.732162","2025-07-25 08:10:28.732163",,
+3,startuper@stanbase.test,VTeVYpyEc#,startuper,Start,StanBase,1,"Алматы",+77001234569,"","",,1,active,"2025-07-25 08:10:28.732972","2025-07-25 09:28:29.763795",,admin
+4,,thisisumed@gmail.com,8%MpxuwfR5,admin,"Умед","Рахимов",2,"Ташкент",+998947374746,@umedrahimoff,https://www.linkedin.com/in/umedrahimoff/,,,active,"2025-07-25 09:31:43.652982","2025-07-25 09:42:32.928817",,admin
+5,,example@email.com,CzdsiLguoG,investor,Test,Test,3,"Бишкек",+996987654321,,,,,active,"2025-07-25 09:45:13.651847","2025-07-25 09:45:13.651857",,

@@ -1,0 +1,4 @@
+id,type,amount,valuation,date,currency,company_id,investors,status
+1,Seed,500000.0,2000000.0,2022-06-01,USD,1,"MOST Ventures",active
+2,Seed,750000.0,2500000.0,2022-06-02,USD,2,"Big Sky Capital",active
+3,Seed,1000000.0,3000000.0,2022-06-03,USD,3,"Quest Ventures",active

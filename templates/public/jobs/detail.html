@@ -2,17 +2,17 @@
 
 {% block title %}{{ job.title }} — Вакансия в {{ job.city }} | StanBase{% endblock %}
 
-{% block meta_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.startup %} Вакансия в стартапе {{ job.startup.name }}.{% endif %}{% endblock %}
+{% block meta_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.company %} Вакансия в компании {{ job.company.name }}.{% endif %}{% endblock %}
 
 {% block meta_keywords %}{{ job.title }}, {{ job.job_type }}, {{ job.city }}, вакансия, работа в стартапе, карьера в IT, Центральная Азия{% endblock %}
 
 {% block og_title %}{{ job.title }} — Вакансия в {{ job.city }} | StanBase{% endblock %}
 
-{% block og_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.startup %} Вакансия в стартапе {{ job.startup.name }}.{% endif %}{% endblock %}
+{% block og_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.company %} Вакансия в компании {{ job.company.name }}.{% endif %}{% endblock %}
 
 {% block twitter_title %}{{ job.title }} — Вакансия в {{ job.city }} | StanBase{% endblock %}
 
-{% block twitter_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.startup %} Вакансия в стартапе {{ job.startup.name }}.{% endif %}{% endblock %}
+{% block twitter_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.company %} Вакансия в компании {{ job.company.name }}.{% endif %}{% endblock %}
 {% block content %}
 <div class="mb-4">
   <h2>{{ job.title }}</h2>
@@ -34,8 +34,8 @@
       —
     {% endif %}
   </div>
-  {% if job.startup %}
-    <div class="mt-3"><b>Стартап:</b> <a href="/startup/{{ job.startup.id }}">{{ job.startup.name }}</a></div>
+  {% if job.company %}
+    <div class="mt-3"><b>Компания:</b> <a href="/company/{{ job.company.id }}">{{ job.company.name }}</a></div>
   {% endif %}
 </div>
 <a href="/jobs" class="btn btn-outline-secondary">← К списку вакансий</a>

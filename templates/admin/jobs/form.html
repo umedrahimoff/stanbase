@@ -1,10 +1,10 @@
 {% extends 'admin/layout.html' %}
 {% block content %}
-<div class="row justify-content-center g-2">
-  <div class="col-lg-9">
-    <div class="card mb-3">
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card mb-4">
       <div class="card-body">
-        <h3 class="mb-3">{% if job %}Редактировать вакансию{% else %}Создать вакансию{% endif %}</h3>
+        <h3 class="mb-4">{% if job %}Редактировать вакансию{% else %}Создать вакансию{% endif %}</h3>
         <ul class="nav nav-tabs mb-3" id="jobTab" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
@@ -24,21 +24,16 @@
               </div>
               <div class="mb-2">
                 <label class="form-label">Компания <span class="text-danger">*</span></label>
-                <select name="startup_id" id="startup-select" class="form-select" required>
+                <select name="company_id" id="company-select" class="form-select" required>
                   <option value=""></option>
-                  {% for s in startups %}
-                    <option value="{{ s.id }}" {% if (job and job.startup_id == s.id) or (not job and startup_id and s.id == startup_id) %}selected{% endif %}>{{ s.name }}{% if s.country %}, {{ s.country[:2]|upper }}{% endif %}</option>
+                  {% for c in companies %}
+                    <option value="{{ c.id }}" {% if (job and job.company_id == c.id) or (not job and company_id and c.id == company_id) %}selected{% endif %}>{{ c.name }}{% if c.country %}, {{ c.country[:2]|upper }}{% endif %}</option>
                   {% endfor %}
                 </select>
               </div>
               <div class="mb-2">
                 <label class="form-label">Город <span class="text-danger">*</span></label>
-                <select name="city" id="city-select" class="form-select" required>
-                  <option value=""></option>
-                  {% for c in cities %}
-                    <option value="{{ c.id }}" {% if job and job.city_id == c.id %}selected{% endif %}>{{ c.name }}{% if c.country %}, {{ c.country.name[:2]|upper }}{% endif %}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="city" class="form-control" value="{{ job.city if job else '' }}" required>
               </div>
               <div class="mb-2">
                 <label class="form-label">Тип <span class="text-danger">*</span></label>
@@ -52,8 +47,8 @@
                 </select>
               </div>
               <div class="mb-2">
-                <label class="form-label">Контакт</label>
-                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}" placeholder="Email или t.me/username" pattern="(^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$)|(^t\.me\/[\w_]+$)" title="Введите email или ссылку на Telegram (t.me/username)">
+                <label class="form-label">Контакт <span class="text-danger">*</span></label>
+                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}" placeholder="Email или ссылка на Telegram (t.me/username)" required>
               </div>
               <div class="mb-2">
                 <label class="form-label">Статус <span class="text-danger">*</span></label>
@@ -66,29 +61,37 @@
               </div>
             </div>
           </div>
-          <div class="d-flex justify-content-between mt-3">
+          <div class="d-flex justify-content-between mt-4">
             <button type="submit" class="btn btn-primary">Сохранить</button>
-            <a href="{{ url_for('admin_jobs') }}" class="btn btn-link">Отмена</a>
+            <a href="{{ url_for('admin_jobs') }}" class="btn btn-outline-secondary">Отмена</a>
           </div>
         </form>
       </div>
     </div>
   </div>
-  {% if job %}
-  <div class="col-lg-3">
-    <div class="card mb-3">
-      <div class="card-body py-3 px-3">
-        <h6 class="text-muted mb-2">Мета-информация</h6>
-        <div class="mb-1"><b>ID:</b> {{ job.id }}</div>
-        <div class="mb-1"><b>Стартап:</b> {% if job.startup %}<a href="/admin/startups/edit/{{ job.startup.id }}">{{ job.startup.name }}</a>{% else %}—{% endif %}</div>
-        <div class="mb-1"><b>Город:</b> {{ job.city or '—' }}</div>
-        <div class="mb-1"><b>Тип:</b> {{ job.job_type or '—' }}</div>
-        <div class="mb-1"><b>Контакт:</b> {{ job.contact or '—' }}</div>
+  <div class="col-lg-4">
+    <div class="card mb-4 user-meta-card">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Тех. информация</h6>
+        {% if job %}
+          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ job.id }}</span></div>
+          <div class="meta-row"><span class="meta-label">Компания:</span> <span class="meta-value">{% if job.company %}<a href="/admin/companies/edit/{{ job.company.id }}">{{ job.company.name }}</a>{% else %}—{% endif %}</span></div>
+          <div class="meta-row"><span class="meta-label">Город:</span> <span class="meta-value">{{ job.city or '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Тип:</span> <span class="meta-value">{{ job.job_type or '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Контакт:</span> <span class="meta-value">{{ job.contact or '—' }}</span></div>
+          <div class="meta-row"><a href="/job/{{ job.id }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Открыть на сайте</a></div>
+        {% endif %}
       </div>
     </div>
   </div>
-  {% endif %}
 </div>
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -98,10 +101,10 @@
 <script>
 $(function() {
   // --- Автозаполнение города при выборе компании (оставляем для совместимости) ---
-  $('#startup-select').on('change', function() {
+  $('#company-select').on('change', function() {
     var companyId = $(this).val();
     if (companyId) {
-      $.getJSON('/admin/startup_info/' + companyId, function(data) {
+      $.getJSON('/admin/company_info/' + companyId, function(data) {
         if (data && data.city && $('#city-select').length) {
           $('#city-select').val(data.city);
         }

@@ -1,0 +1,213 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h3 class="mb-4">{% if company %}Редактировать компанию{% else %}Создать компанию{% endif %}</h3>
+          <ul class="nav nav-tabs mb-4" id="companyTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">Команда</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="rounds-tab" data-bs-toggle="tab" data-bs-target="#rounds" type="button" role="tab">Раунды</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs" type="button" role="tab">Вакансии</button>
+            </li>
+          </ul>
+          {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+          <form method="post">
+            <div class="tab-content" id="companyTabContent">
+              <div class="tab-pane fade show active" id="main" role="tabpanel">
+                <div class="mb-3">
+                  <label for="name" class="form-label">Название компании</label>
+                  <input type="text" class="form-control" id="name" name="name" value="{{ company.name if company else '' }}" required>
+                </div>
+                <div class="mb-3">
+                  <label for="description" class="form-label">Описание</label>
+                  <textarea class="form-control" id="description" name="description" rows="3">{{ company.description if company else '' }}</textarea>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label for="country" class="form-label">Страна</label>
+                    <select class="form-select" id="country" name="country">
+                      <option value="">Выберите страну</option>
+                      {% for c in countries %}
+                        <option value="{{ c.name }}" {% if company and company.country == c.name %}selected{% endif %}>{{ c.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="city" class="form-label">Город</label>
+                    <select class="form-select" id="city" name="city">
+                      <option value="">Выберите город</option>
+                      {% for city in cities %}
+                        <option value="{{ city.name }}" {% if company and company.city == city.name %}selected{% endif %}>{{ city.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="status" class="form-label">Статус</label>
+                    <select class="form-select" id="status" name="status">
+                      <option value="active" {% if company and company.status == 'active' %}selected{% endif %}>Активна</option>
+                      <option value="inactive" {% if company and company.status == 'inactive' %}selected{% endif %}>Неактивна</option>
+                      <option value="archived" {% if company and company.status == 'archived' %}selected{% endif %}>Архив</option>
+                      <option value="draft" {% if company and company.status == 'draft' %}selected{% endif %}>Черновик</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label for="stage" class="form-label">Стадия</label>
+                    <input type="text" class="form-control" id="stage" name="stage" value="{{ company.stage if company else '' }}">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="industry" class="form-label">Отрасль</label>
+                    <input type="text" class="form-control" id="industry" name="industry" value="{{ company.industry if company else '' }}">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="website" class="form-label">Сайт</label>
+                    <input type="url" class="form-control" id="website" name="website" value="{{ company.website if company else '' }}">
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="submit" class="btn btn-primary">Сохранить</button>
+                  <a href="{{ url_for('admin_companies') }}" class="btn btn-outline-secondary">Отмена</a>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="team" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Команда</h5>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addTeamMemberModal">Добавить</button>
+                </div>
+                <table class="table table-sm table-hover">
+                  <thead><tr><th>Имя</th><th>Должность</th><th>LinkedIn</th></tr></thead>
+                  <tbody>
+                    {% if team and team|length > 0 %}
+                      {% for person in team %}
+                        <tr>
+                          <td>{{ person.name }}</td>
+                          <td>{{ person.role }}</td>
+                          <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="3" class="text-muted">Нет данных о команде.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="tab-pane fade" id="rounds" role="tabpanel">
+                <div class="text-muted">Раздел "Раунды" в разработке.</div>
+              </div>
+              <div class="tab-pane fade" id="jobs" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Вакансии</h5>
+                  <a href="/admin/jobs/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Создать вакансию</a>
+                </div>
+                <table class="table table-sm table-hover">
+                  <thead><tr><th>Должность</th><th>Город</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
+                  <tbody>
+                    {% if jobs and jobs|length > 0 %}
+                      {% for job in jobs %}
+                        <tr>
+                          <td>{{ job.title }}</td>
+                          <td>{{ job.city }}</td>
+                          <td>{{ job.job_type }}</td>
+                          <td>{{ job.status }}</td>
+                          <td><a href="/admin/jobs/edit/{{ job.id }}" class="btn btn-sm btn-outline-secondary">Редактировать</a></td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="5" class="text-muted">Нет вакансий.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-4 user-meta-card">
+        <div class="card-body">
+          <h6 class="text-muted mb-3">Тех. информация</h6>
+          {% if company %}
+            <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ company.id }}</span></div>
+            <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ company.status }}</span></div>
+            <div class="meta-row"><span class="meta-label">Дата создания:</span> <span class="meta-value">{{ company.created_at.strftime('%d.%m.%Y %H:%M') if company.created_at else '—' }}</span></div>
+            <div class="meta-row"><span class="meta-label">Дата изменения:</span> <span class="meta-value">{{ company.updated_at.strftime('%d.%m.%Y %H:%M') if company.updated_at else '—' }}</span></div>
+            <div class="meta-row"><span class="meta-label">Создатель:</span> <span class="meta-value">{{ company.created_by or '—' }}</span></div>
+            <div class="meta-row"><a href="/company/{{ company.id }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Открыть на сайте</a></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Модалка добавления члена команды (вынесена вне основной формы) -->
+<div class="modal fade" id="addTeamMemberModal" tabindex="-1" aria-labelledby="addTeamMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTeamMemberModalLabel">Добавить члена команды</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <form id="team-member-form" method="post" action="/admin/team/create?company_id={{ company.id }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Имя и фамилия <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Должность <span class="text-danger">*</span></label>
+            <input type="text" name="role" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">LinkedIn</label>
+            <input type="url" name="linkedin" class="form-control" placeholder="https://linkedin.com/in/username">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Добавить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+// Сохраняем активный таб в localStorage
+const tabKey = 'adminCompanyTabActive';
+document.addEventListener('DOMContentLoaded', function() {
+  // Восстановить активный таб
+  const savedTab = localStorage.getItem(tabKey);
+  if (savedTab && document.querySelector(savedTab)) {
+    var tab = new bootstrap.Tab(document.querySelector(savedTab));
+    tab.show();
+  }
+  // Сохранять активный таб при переключении
+  document.querySelectorAll('#companyTab button[data-bs-toggle="tab"]').forEach(function(btn) {
+    btn.addEventListener('shown.bs.tab', function(e) {
+      localStorage.setItem(tabKey, '#' + e.target.getAttribute('id'));
+    });
+  });
+});
+</script>
+{% endblock %} 

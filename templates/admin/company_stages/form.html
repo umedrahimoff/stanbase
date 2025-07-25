@@ -1,0 +1,23 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <h2>{% if stage %}Редактировать стадию{% else %}Добавить стадию{% endif %}</h2>
+  <form method="post">
+    <div class="mb-3">
+      <label for="name" class="form-label">Название стадии</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ stage.name if stage else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label">Статус</label>
+      <select class="form-select" id="status" name="status">
+        <option value="active" {% if stage and stage.status == 'active' %}selected{% endif %}>Активная</option>
+        <option value="inactive" {% if stage and stage.status == 'inactive' %}selected{% endif %}>Неактивная</option>
+        <option value="archived" {% if stage and stage.status == 'archived' %}selected{% endif %}>Архив</option>
+        <option value="draft" {% if stage and stage.status == 'draft' %}selected{% endif %}>Черновик</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{{ url_for('admin_company_stages') }}" class="btn btn-secondary ms-2">Отмена</a>
+  </form>
+</div>
+{% endblock %} 

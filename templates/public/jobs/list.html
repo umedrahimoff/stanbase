@@ -1,11 +1,11 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} | {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} | {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}
+    {% if request.query_params.get('company') %} | {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}
     — Вакансии | StanBase
   {% else %}
     Вакансии в стартапах Центральной Азии — Работа в инновационных проектах | StanBase
@@ -13,11 +13,11 @@
 {% endblock %}
 
 {% block meta_description %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Найдите вакансии по запросу "{{ request.query_params.get('q') }}"{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} типа {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} в стартапе {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
+    {% if request.query_params.get('company') %} в стартапе {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
   {% else %}
     Вакансии в стартапах Центральной Азии. Найдите работу в инновационных проектах Казахстана, Узбекистана, Кыргызстана, Таджикистана и Туркменистана. Фильтры по городу, типу работы и компании.
   {% endif %}
@@ -27,15 +27,15 @@
   {% if request.query_params.get('q') %}{{ request.query_params.get('q') }}, {% endif %}
   {% if request.query_params.get('city') %}{{ request.query_params.get('city') }}, {% endif %}
   {% if request.query_params.get('job_type') %}{{ request.query_params.get('job_type') }}, {% endif %}
-  {% if request.query_params.get('startup') %}{{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}, {% endif %}
+  {% if request.query_params.get('company') %}{{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}, {% endif %}
   вакансии в стартапах, работа в стартапах, карьера в IT, технологические вакансии, Центральная Азия, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
 {% endblock %}
 {% block og_title %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} | {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} | {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}
+    {% if request.query_params.get('company') %} | {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}
     — Вакансии | StanBase
   {% else %}
     Вакансии в стартапах Центральной Азии — Работа в инновационных проектах | StanBase
@@ -43,22 +43,22 @@
 {% endblock %}
 
 {% block og_description %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Найдите вакансии по запросу "{{ request.query_params.get('q') }}"{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} типа {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} в стартапе {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
+    {% if request.query_params.get('company') %} в стартапе {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
   {% else %}
     Вакансии в стартапах Центральной Азии. Найдите работу в инновационных проектах Казахстана, Узбекистана, Кыргызстана, Таджикистана и Туркменистана. Фильтры по городу, типу работы и компании.
   {% endif %}
 {% endblock %}
 
 {% block twitter_title %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} | {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} | {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}
+    {% if request.query_params.get('company') %} | {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}
     — Вакансии | StanBase
   {% else %}
     Вакансии в стартапах Центральной Азии — Работа в инновационных проектах | StanBase
@@ -66,11 +66,11 @@
 {% endblock %}
 
 {% block twitter_description %}
-  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('startup') %}
+  {% if request.query_params.get('q') or request.query_params.get('city') or request.query_params.get('job_type') or request.query_params.get('company') %}
     {% if request.query_params.get('q') %}Найдите вакансии по запросу "{{ request.query_params.get('q') }}"{% endif %}
     {% if request.query_params.get('city') %} в {{ request.query_params.get('city') }}{% endif %}
     {% if request.query_params.get('job_type') %} типа {{ request.query_params.get('job_type') }}{% endif %}
-    {% if request.query_params.get('startup') %} в стартапе {{ startups|selectattr('id', 'equalto', request.query_params.get('startup')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
+    {% if request.query_params.get('company') %} в стартапе {{ companies|selectattr('id', 'equalto', request.query_params.get('company')|int)|first|attr('name', 'default') }}{% endif %}. Вакансии в стартапах Центральной Азии.
   {% else %}
     Вакансии в стартапах Центральной Азии. Найдите работу в инновационных проектах региона.
   {% endif %}
@@ -98,10 +98,10 @@
     </select>
   </div>
   <div class="col-md-3">
-    <select name="startup" class="form-select">
+    <select name="company" class="form-select">
       <option value="">Стартап</option>
-      {% for s in startups %}
-        <option value="{{ s.id }}" {% if s.id|string == request.query_params.get('startup') %}selected{% endif %}>{{ s.name }}</option>
+      {% for c in companies %}
+        <option value="{{ c.id }}" {% if c.id|string == request.query_params.get('company') %}selected{% endif %}>{{ c.name }}</option>
       {% endfor %}
     </select>
   </div>

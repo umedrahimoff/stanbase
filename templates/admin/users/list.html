@@ -15,7 +15,6 @@
     <thead class="table-light">
       <tr>
         <th>ID</th>
-        <th>Логин</th>
         <th>Email</th>
         <th>Роль</th>
         <th>Статус</th>
@@ -26,7 +25,6 @@
       {% for u in admins %}
       <tr class="table-primary">
         <td>{{ u.id }}</td>
-        <td>{{ u.username }}</td>
         <td>{{ u.email }}</td>
         <td>{{ u.role }}</td>
         <td>{{ u.status }}</td>

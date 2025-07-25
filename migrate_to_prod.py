@@ -1,7 +1,7 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Startup, Investor, News, Country, City, Category, StartupStage, Author, Podcast, Event, Deal, Person, Job, PortfolioEntry
+from models import Base, User, Company, Investor, News, Country, City, Category, CompanyStage, Author, Podcast, Event, Deal, Person, Job, PortfolioEntry
 
 # Укажите строку подключения к прод-базе (например, из переменной окружения или напрямую)
 PROD_DB_URL = os.getenv("DATABASE_URL")
@@ -28,7 +28,7 @@ def main():
     try:
         print(f"Подключение к прод-базе: {PROD_DB_URL}")
         # Порядок важен из-за внешних ключей
-        for model in [Country, City, Category, StartupStage, Author, Startup, Investor, User, News, Podcast, Event, Deal, Person, Job, PortfolioEntry]:
+        for model in [Country, City, Category, CompanyStage, Author, Company, Investor, User, News, Podcast, Event, Deal, Person, Job, PortfolioEntry]:
             copy_table(local_session, prod_session, model)
     finally:
         local_session.close()

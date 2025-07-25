@@ -1,8 +1,8 @@
 {% extends 'admin/layout.html' %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0">Стартапы</h2>
-  <a href="{{ url_for('admin_create_startup') }}" class="btn btn-primary">Создать стартап</a>
+  <h2 class="mb-0">Компании</h2>
+  <a href="{{ url_for('admin_create_company') }}" class="btn btn-primary">Создать компанию</a>
 </div>
 <form class="row g-3 mb-3" method="get" action="">
   <div class="col-md-4">
@@ -11,10 +11,10 @@
   <div class="col-md-2">
     <select name="status" class="form-select" onchange="this.form.submit()">
       <option value="">Все статусы</option>
-      <option value="active" {% if request.query_params.get('status')=='active' %}selected{% endif %}>Активен</option>
-      <option value="inactive" {% if request.query_params.get('status')=='inactive' %}selected{% endif %}>Неактивен</option>
-      <option value="archived" {% if request.query_params.get('status')=='archived' %}selected{% endif %}>Архив</option>
-      <option value="draft" {% if request.query_params.get('status')=='draft' %}selected{% endif %}>Черновик</option>
+      <option value="active" {% if status=='active' %}selected{% endif %}>Активна</option>
+      <option value="inactive" {% if status=='inactive' %}selected{% endif %}>Неактивна</option>
+      <option value="archived" {% if status=='archived' %}selected{% endif %}>Архив</option>
+      <option value="draft" {% if status=='draft' %}selected{% endif %}>Черновик</option>
     </select>
   </div>
   <div class="col-md-2">
@@ -36,24 +36,24 @@
       <th>Страна</th>
       <th>Город</th>
       <th>Стадия</th>
-      <th>Индустрия</th>
+      <th>Отрасль</th>
       <th>Статус</th>
       <th class="text-end">Действия</th>
     </tr>
   </thead>
   <tbody>
-    {% for s in startups %}
+    {% for c in companies %}
       <tr>
-        <td>{{ s.id }}</td>
-        <td>{{ s.name }}</td>
-        <td>{{ s.country }}</td>
-        <td>{{ s.city }}</td>
-        <td>{{ s.stage }}</td>
-        <td>{{ s.industry }}</td>
-        <td>{{ s.status }}</td>
+        <td>{{ c.id }}</td>
+        <td>{{ c.name }}</td>
+        <td>{{ c.country }}</td>
+        <td>{{ c.city }}</td>
+        <td>{{ c.stage }}</td>
+        <td>{{ c.industry }}</td>
+        <td>{{ c.status }}</td>
         <td class="text-end">
-          <a href="{{ url_for('admin_edit_startup', startup_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
-          <form action="{{ url_for('admin_delete_startup', startup_id=s.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить стартап?');">
+          <a href="{{ url_for('admin_edit_company', company_id=c.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+          <form action="{{ url_for('admin_delete_company', company_id=c.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить компанию?');">
             <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
           </form>
         </td>

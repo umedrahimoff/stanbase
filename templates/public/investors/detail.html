@@ -41,13 +41,13 @@
         <h5 class="mb-2">Портфель</h5>
         {% if investor.portfolio %}
           <ul class="list-group mb-3">
-            {% for startup in investor.portfolio %}
+            {% for company in investor.portfolio %}
               <li class="list-group-item">
                 {% if session is defined and session.get('user_id') %}
-                  <a href="/startup/{{ startup.id }}"><b>{{ startup.name }}</b></a><br>
-                  <span class="text-muted small">{{ startup.country }}, {{ startup.city }} | {{ startup.industry }}</span>
+                  <a href="/company/{{ company.id }}"><b>{{ company.name }}</b></a><br>
+                  <span class="text-muted small">{{ company.country }}, {{ company.city }} | {{ company.industry }}</span>
                 {% else %}
-                  <span>{{ startup.name[:2] }}****</span>
+                  <span>{{ company.name[:2] }}****</span>
                 {% endif %}
               </li>
             {% endfor %}
