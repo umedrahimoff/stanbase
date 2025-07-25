@@ -217,7 +217,7 @@ function shareNews() {
   const url = window.location.href;
   const text = "{{ news.summary or news.title }}";
   
-  // Проверяем поддержку Web Share API
+  // Используем только Web Share API
   if (navigator.share) {
     navigator.share({
       title: title,
@@ -227,21 +227,8 @@ function shareNews() {
       console.log('Поделились успешно');
     }).catch((error) => {
       console.log('Ошибка при попытке поделиться:', error);
-      fallbackShare();
     });
-  } else {
-    // Fallback для браузеров без поддержки Web Share API
-    fallbackShare();
   }
-}
-
-function fallbackShare() {
-  const title = "{{ news.title }}";
-  const url = window.location.href;
-  const text = "{{ news.summary or news.title }}";
-  
-  // Открываем системный share через email
-  window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n\n' + url)}`);
 }
 </script>
 {% endblock %} 
