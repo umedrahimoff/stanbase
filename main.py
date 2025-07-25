@@ -1335,6 +1335,19 @@ async def admin_create_news(request: Request):
         # Обработка author_id
         author_id = int(author_id) if author_id else None
         
+        # Валидация длины контента
+        if content and len(content) > 5000:
+            error = 'Текст новости не может превышать 5000 символов. Текущая длина: {} символов.'.format(len(content))
+            db.close()
+            return templates.TemplateResponse("admin/news/form.html", {
+                "request": request, 
+                "session": request.session, 
+                "error": error, 
+                "success_message": None,
+                "news_item": None,
+                "authors": authors
+            })
+        
         # Обработка изображения
         image_path = None
         files = await request.form()
@@ -1446,6 +1459,20 @@ async def admin_edit_news_post(request: Request, news_id: int):
     
     # Обработка author_id
     author_id = int(author_id) if author_id else None
+    
+    # Валидация длины контента
+    if content and len(content) > 5000:
+        error = 'Текст новости не может превышать 5000 символов. Текущая длина: {} символов.'.format(len(content))
+        authors = db.query(Author).filter(Author.status == 'active').all()
+        db.close()
+        return templates.TemplateResponse("admin/news/form.html", {
+            "request": request, 
+            "session": request.session, 
+            "error": error, 
+            "success_message": None,
+            "news_item": news,
+            "authors": authors
+        })
     
     # Обработка изображения
     files = await request.form()
