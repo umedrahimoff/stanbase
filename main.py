@@ -1598,16 +1598,35 @@ def create_full_test_data():
         authors = [Author(name=n, description=f"Автор {n}") for n in ["Иванов", "Петров", "Сидоров"]]
         session.add_all(authors)
         session.commit()
-    # Startup
+    # Startup (реальные примеры ЦА)
     if not session.query(Startup).first():
-        startups = [Startup(name=f"Startup {i}", description=f"Описание {i}", country="Казахстан", city="Алматы", stage="Seed", industry="Fintech", website=f"https://startup{i}.com") for i in range(1, 4)]
+        startups = [
+            Startup(name="CerebraAI", description="AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
+            Startup(name="Uzum", description="Крупнейшая цифровая экосистема — маркетплейс, финтех, BNPL, логистика.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
+            Startup(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в ЦА.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
+            Startup(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech")
+        ]
         session.add_all(startups)
         session.commit()
-    startup = session.query(Startup).first()
-    # Investor
+    # Investor (реальные фонды ЦА)
     if not session.query(Investor).first():
-        investors = [Investor(name=f"Investor {i}", description=f"Инвестор {i}", country="Казахстан", focus="Fintech", stages="Seed", website=f"https://investor{i}.com", type="angel") for i in range(1, 4)]
+        investors = [
+            Investor(name="MOST Ventures", description="Один из крупнейших венчурных фондов ЦА, инвестирует в IT и DeepTech.", country="Казахстан", focus="IT, DeepTech", stages="Seed, Growth", website="https://mostventures.kz", type="venture"),
+            Investor(name="Quest Ventures", description="Международный фонд, активен в ЦА, инвестирует в AI, SaaS, Fintech.", country="Казахстан", focus="AI, SaaS, Fintech", stages="Seed, Series A", website="https://www.questventures.com", type="venture"),
+            Investor(name="Big Sky Capital", description="Фонд, инвестирующий в стартапы на ранних стадиях в ЦА.", country="Казахстан", focus="IT, HealthTech", stages="Pre-seed, Seed", website="https://bigskycapital.vc", type="venture")
+        ]
         session.add_all(investors)
+        session.commit()
+    # News (реальные/реалистичные)
+    if not session.query(News).first():
+        news = [
+            News(title="CerebraAI привлекла $2 млн от Quest Ventures и Big Sky Capital", summary="Казахстанский HealthTech-стартап получил инвестиции от ведущих фондов региона.", date="2024-06-01", content="CerebraAI, ведущий AI-стартап в сфере медицины, объявил о привлечении $2 млн от Quest Ventures и Big Sky Capital.", status="active"),
+            News(title="Uzum стал первым единорогом в Узбекистане", summary="Оценка Uzum превысила $1 млрд — это первый единорог страны.", date="2024-05-15", content="Экосистема Uzum объявила о достижении оценки $1 млрд и планах по экспансии.", status="active"),
+            News(title="Tezbus запускает сервис онлайн-бронирования билетов в Кыргызстане", summary="Tezbus расширяет сервисы по всей Центральной Азии.", date="2024-04-20", content="Tezbus Group запустила новый сервис для онлайн-бронирования междугородних поездок.", status="active"),
+            News(title="Voicy внедряет распознавание казахской речи в госуслугах", summary="Voicy помогает цифровизации госуслуг в Казахстане.", date="2024-03-10", content="Voicy интегрировала свою AI-платформу в ряд государственных сервисов Казахстана.", status="active"),
+            News(title="MOST Ventures инвестирует в HealthTech-стартапы Казахстана", summary="Фонд MOST Ventures объявил о новом раунде инвестиций.", date="2024-02-28", content="MOST Ventures инвестировал в три новых HealthTech-проекта в Казахстане.", status="active")
+        ]
+        session.add_all(news)
         session.commit()
     # User
     try:
@@ -1622,33 +1641,13 @@ def create_full_test_data():
             session.add(moderator_user)
             session.commit()
         if not session.query(User).filter_by(username="startuper").first():
-            if startup:
+            if startups:
                 print(f"Создаём startuper с country_id={kz_id}")
-                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
+                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startups[0].id, status="active")
                 session.add(startuper_user)
                 session.commit()
     except Exception as e:
         print(f"Ошибка при создании тестовых пользователей: {e}")
-    # News
-    if not session.query(News).first():
-        news = [News(title=f"Новость {i}", summary=f"Кратко {i}", date="2024-01-0{}".format(i), content=f"Текст новости {i}", status="active") for i in range(1, 4)]
-        session.add_all(news)
-        session.commit()
-    # Podcast
-    if not session.query(Podcast).first():
-        podcasts = [Podcast(title=f"Подкаст {i}", description=f"Описание подкаста {i}", youtube_url="https://youtube.com/", date="2024-01-0{}".format(i), status="active") for i in range(1, 4)]
-        session.add_all(podcasts)
-        session.commit()
-    # Event
-    if not session.query(Event).first():
-        events = [Event(title=f"Мероприятие {i}", description=f"Описание события {i}", date="2024-01-0{}".format(i), format="Онлайн", location="Алматы", registration_url="https://event.com/", status="active") for i in range(1, 4)]
-        session.add_all(events)
-        session.commit()
-    # Deal
-    if not session.query(Deal).first():
-        deals = [Deal(type="investment", amount=10000*i, date="2024-01-0{}".format(i), currency="USD", startup_id=startup.id if startup else None, investors="Investor 1", status="active") for i in range(1, 4)]
-        session.add_all(deals)
-        session.commit()
     # Person
     if not session.query(Person).first():
         persons = [Person(name=f"Person {i}", country="Казахстан", linkedin="https://linkedin.com/in/person{i}", role="CEO", status="active") for i in range(1, 4)]
