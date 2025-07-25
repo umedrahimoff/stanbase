@@ -1719,6 +1719,39 @@ def import_data(data: dict):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@router.get("/test-db")
+def test_db():
+    """Тестовый эндпоинт для проверки базы данных"""
+    db = SessionLocal()
+    try:
+        # Проверяем количество записей
+        companies_count = db.query(Company).count()
+        investors_count = db.query(Investor).count()
+        news_count = db.query(News).count()
+        events_count = db.query(Event).count()
+        
+        # Проверяем структуру таблиц
+        company_columns = [c.name for c in Company.__table__.columns]
+        investor_columns = [c.name for c in Investor.__table__.columns]
+        
+        return {
+            "success": True,
+            "counts": {
+                "companies": companies_count,
+                "investors": investors_count,
+                "news": news_count,
+                "events": events_count
+            },
+            "columns": {
+                "company": company_columns,
+                "investor": investor_columns
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    finally:
+        db.close()
+
 app.include_router(router)
 
 @app.get("/admin/currencies", response_class=HTMLResponse, name="admin_currencies")
