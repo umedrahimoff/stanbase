@@ -9,7 +9,7 @@ from typing import Optional
 from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from db import SessionLocal
+from db import SessionLocal, Base, engine
 from models import Startup, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, StartupStage, Category, Author, PortfolioEntry
 from starlette.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -1558,4 +1558,5 @@ def root():
 
 if __name__ == "__main__":
     print('SERVER STARTED')
+    Base.metadata.create_all(bind=engine)
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
