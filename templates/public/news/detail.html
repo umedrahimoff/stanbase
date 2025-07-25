@@ -33,11 +33,9 @@
                                 <div class="d-flex align-items-center text-muted mb-3">
                         <i class="bi bi-calendar3 me-2"></i>
                         <span>{{ news.date.strftime('%d.%m.%Y') }}</span>
-                        {% if news.author %}
                         <span class="mx-2">•</span>
                         <i class="bi bi-person me-1"></i>
-                        <span>{{ news.author.name }}</span>
-                        {% endif %}
+                        <span>{{ news.author.name if news.author else 'Редакция' }}</span>
                         <span class="mx-2">•</span>
                         <i class="bi bi-eye me-1"></i>
                         <span>{{ news.views|default(0) }}</span>
