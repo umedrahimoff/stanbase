@@ -76,13 +76,30 @@ def migrate_production_database():
         """)
         
         if not cursor.fetchone():
-            print("Добавляем колонку currency_id в таблицу deal...")
-            cursor.execute("ALTER TABLE deal ADD COLUMN currency_id INTEGER REFERENCES currency(id)")
-            print("Колонка currency_id успешно добавлена")
+            # Проверяем, что таблица currency существует
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_name = 'currency'
+            """)
             
-            # Устанавливаем USD как валюту по умолчанию для существующих сделок
-            cursor.execute("UPDATE deal SET currency_id = 1 WHERE currency_id IS NULL")
-            print("Установлена валюта по умолчанию для существующих сделок")
+            if cursor.fetchone():
+                print("Добавляем колонку currency_id в таблицу deal...")
+                cursor.execute("ALTER TABLE deal ADD COLUMN currency_id INTEGER REFERENCES currency(id)")
+                print("Колонка currency_id успешно добавлена")
+                
+                # Получаем ID валюты USD
+                cursor.execute("SELECT id FROM currency WHERE code = 'USD'")
+                usd_result = cursor.fetchone()
+                if usd_result:
+                    usd_id = usd_result[0]
+                    # Устанавливаем USD как валюту по умолчанию для существующих сделок
+                    cursor.execute("UPDATE deal SET currency_id = %s WHERE currency_id IS NULL", (usd_id,))
+                    print(f"Установлена валюта USD (id={usd_id}) по умолчанию для существующих сделок")
+                else:
+                    print("Внимание: Валюта USD не найдена, сделки останутся без валюты")
+            else:
+                print("Внимание: Таблица currency не существует, пропускаем добавление currency_id")
         else:
             print("Колонка currency_id уже существует")
         
