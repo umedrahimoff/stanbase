@@ -1632,6 +1632,90 @@ def create_test_startups_and_users():
 
 create_test_startups_and_users()
 
+# --- Автоматическое создание тестовых данных для всех сущностей ---
+def create_full_test_data():
+    from db import SessionLocal
+    from models import User, Startup, Country, City, Category, StartupStage, Author, Investor, News, Podcast, Event, Deal, Person
+    session = SessionLocal()
+    # Country
+    if not session.query(Country).first():
+        countries = [Country(name=n) for n in ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]]
+        session.add_all(countries)
+        session.commit()
+    # City
+    if not session.query(City).first():
+        cities = [City(name=n, country_id=1) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
+        session.add_all(cities)
+        session.commit()
+    # Category
+    if not session.query(Category).first():
+        cats = [Category(name=n) for n in ["Fintech", "HealthTech", "HRTech", "E-commerce", "SaaS"]]
+        session.add_all(cats)
+        session.commit()
+    # StartupStage
+    if not session.query(StartupStage).first():
+        stages = [StartupStage(name=n) for n in ["Seed", "Growth", "Scale", "Idea"]]
+        session.add_all(stages)
+        session.commit()
+    # Author
+    if not session.query(Author).first():
+        authors = [Author(name=n, description=f"Автор {n}") for n in ["Иванов", "Петров", "Сидоров"]]
+        session.add_all(authors)
+        session.commit()
+    # Startup
+    if not session.query(Startup).first():
+        startups = [Startup(name=f"Startup {i}", description=f"Описание {i}", country="Казахстан", city="Алматы", stage="Seed", industry="Fintech", website=f"https://startup{i}.com") for i in range(1, 4)]
+        session.add_all(startups)
+        session.commit()
+    # Investor
+    if not session.query(Investor).first():
+        investors = [Investor(name=f"Investor {i}", description=f"Инвестор {i}", country="Казахстан", focus="Fintech", stages="Seed", website=f"https://investor{i}.com", type="angel") for i in range(1, 4)]
+        session.add_all(investors)
+        session.commit()
+    # User
+    if not session.query(User).filter_by(username="admin").first():
+        admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234567", status="active")
+        session.add(admin_user)
+        session.commit()
+    if not session.query(User).filter_by(username="moderator").first():
+        moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234568", status="active")
+        session.add(moderator_user)
+        session.commit()
+    if not session.query(User).filter_by(username="startuper").first():
+        startup = session.query(Startup).first()
+        if startup:
+            startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=1, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
+            session.add(startuper_user)
+            session.commit()
+    # News
+    if not session.query(News).first():
+        news = [News(title=f"Новость {i}", summary=f"Кратко {i}", date="2024-01-0{}".format(i), content=f"Текст новости {i}", status="active") for i in range(1, 4)]
+        session.add_all(news)
+        session.commit()
+    # Podcast
+    if not session.query(Podcast).first():
+        podcasts = [Podcast(title=f"Подкаст {i}", description=f"Описание подкаста {i}", youtube_url="https://youtube.com/", date="2024-01-0{}".format(i), status="active") for i in range(1, 4)]
+        session.add_all(podcasts)
+        session.commit()
+    # Event
+    if not session.query(Event).first():
+        events = [Event(title=f"Мероприятие {i}", description=f"Описание события {i}", date="2024-01-0{}".format(i), format="Онлайн", location="Алматы", registration_url="https://event.com/", status="active") for i in range(1, 4)]
+        session.add_all(events)
+        session.commit()
+    # Deal
+    if not session.query(Deal).first():
+        deals = [Deal(type="investment", amount=10000*i, date="2024-01-0{}".format(i), currency="USD", startup_id=1, investors="Investor 1", status="active") for i in range(1, 4)]
+        session.add_all(deals)
+        session.commit()
+    # Person
+    if not session.query(Person).first():
+        persons = [Person(name=f"Person {i}", country="Казахстан", linkedin="https://linkedin.com/in/person{i}", role="CEO", status="active") for i in range(1, 4)]
+        session.add_all(persons)
+        session.commit()
+    session.close()
+
+create_full_test_data()
+
 if __name__ == "__main__":
     print('SERVER STARTED')
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
