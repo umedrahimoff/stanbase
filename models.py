@@ -30,7 +30,6 @@ class Company(Base):
     founded_date = Column(Date)
     website = Column(String(256))
     logo = Column(String(256), nullable=True)  # путь к файлу логотипа
-    tech_park = Column(String(64), nullable=True)  # IT Park, Astana Hub, ПВТ и т.д.
     team = relationship('Person', secondary=company_person, backref='companies')
     deals = relationship('Deal', backref='company')
     jobs = relationship('Job', backref='company')

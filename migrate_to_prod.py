@@ -103,20 +103,6 @@ def migrate_production_database():
         else:
             print("Колонка currency_id уже существует")
         
-        # Проверяем, существует ли колонка tech_park в таблице company
-        cursor.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'company' AND column_name = 'tech_park'
-        """)
-        
-        if not cursor.fetchone():
-            print("Добавляем колонку tech_park в таблицу company...")
-            cursor.execute("ALTER TABLE company ADD COLUMN tech_park VARCHAR(64)")
-            print("Колонка tech_park успешно добавлена")
-        else:
-            print("Колонка tech_park уже существует")
-        
         cursor.close()
         conn.close()
         print("Миграция завершена успешно")
