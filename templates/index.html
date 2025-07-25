@@ -195,18 +195,36 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for n in news[:6] %}
     <div class="col">
-      <a href="/news/{{ n.slug }}" class="card-google-link">
-        <div class="card card-google h-100">
-          {% if n.image %}
-          <img src="{{ n.image }}" class="card-img-top" alt="{{ n.title }}" style="height: 160px; object-fit: cover;">
-          {% endif %}
-          <div class="card-body">
-            <h5 class="card-title mb-1">{{ n.title }}</h5>
-            <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>
-            <p class="card-text">{{ n.summary }}</p>
+      <div class="card card-google h-100">
+        {% if n.image %}
+        <img src="{{ n.image }}" class="card-img-top" alt="{{ n.title }}" style="height: 160px; object-fit: cover;">
+        {% endif %}
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-2">
+            <a href="/news/{{ n.slug }}" class="text-decoration-none">{{ n.title }}</a>
+          </h5>
+          
+          <!-- Один ряд: дата, просмотры, автор -->
+          <div class="d-flex align-items-center gap-3 mb-3 text-muted small">
+            <span>{{ n.date.strftime('%d.%m.%Y') }}</span>
+            <span class="d-flex align-items-center gap-1">
+              <i class="bi bi-eye"></i>
+              <span>{{ n.views or 0 }}</span>
+            </span>
+            {% if n.author %}
+            <span>{{ n.author.name }}</span>
+            {% endif %}
           </div>
+          
+          <!-- Короткое описание -->
+          {% if n.summary %}
+          <p class="card-text flex-grow-1">{{ n.summary }}</p>
+          {% endif %}
+          
+          <!-- Кнопка -->
+          <a href="/news/{{ n.slug }}" class="btn btn-outline-primary btn-sm mt-auto">Читать далее</a>
         </div>
-      </a>
+      </div>
     </div>
     {% endfor %}
   </div>
