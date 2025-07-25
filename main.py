@@ -1559,79 +1559,6 @@ def root():
 # Гарантируем создание таблиц при любом запуске
 Base.metadata.create_all(bind=engine)
 
-# --- Автоматическое создание тестовых стартапов и пользователей ---
-def create_test_startups_and_users():
-    from db import SessionLocal
-    from models import User, Startup, Country
-    session = SessionLocal()
-    # Создать тестовый стартап, если его нет
-    if not session.query(Startup).first():
-        startup = Startup(
-            name="CerebraAI",
-            description="AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.",
-            country="Казахстан",
-            city="Алматы",
-            stage="Growth",
-            industry="HealthTech",
-            website="https://cerebraai.ai"
-        )
-        session.add(startup)
-        session.commit()
-    # Админ
-    if not session.query(User).filter_by(username="admin").first():
-        admin_user = User(
-            username="admin",
-            email="admin@stanbase.test",
-            password="admin123",
-            role="admin",
-            first_name="Admin",
-            last_name="Stanbase",
-            country_id=1,
-            city="Алматы",
-            phone="+77001234567",
-            status="active"
-        )
-        session.add(admin_user)
-        session.commit()
-    # Модератор
-    if not session.query(User).filter_by(username="moderator").first():
-        moderator_user = User(
-            username="moderator",
-            email="moderator@stanbase.test",
-            password="mod123",
-            role="moderator",
-            first_name="Mod",
-            last_name="Stanbase",
-            country_id=1,
-            city="Алматы",
-            phone="+77001234568",
-            status="active"
-        )
-        session.add(moderator_user)
-        session.commit()
-    # Стартапер
-    if not session.query(User).filter_by(username="startuper").first():
-        startup = session.query(Startup).first()
-        if startup:
-            startuper_user = User(
-                username="startuper",
-                email="startuper@stanbase.test",
-                password="startuper123",
-                role="startuper",
-                first_name="Start",
-                last_name="Stanbase",
-                country_id=1,
-                city="Алматы",
-                phone="+77001234569",
-                startup_id=startup.id,
-                status="active"
-            )
-            session.add(startuper_user)
-            session.commit()
-    session.close()
-
-create_test_startups_and_users()
-
 # --- Автоматическое создание тестовых данных для всех сущностей ---
 def create_full_test_data():
     from db import SessionLocal
@@ -1648,6 +1575,7 @@ def create_full_test_data():
         session.close()
         return
     kz_id = country_dict.get("Казахстан") or list(country_dict.values())[0]
+    print(f"country_id для тестовых пользователей: {kz_id}")
     # City
     if not session.query(City).first():
         cities = [City(name=n, country_id=kz_id) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
@@ -1683,15 +1611,18 @@ def create_full_test_data():
         session.commit()
     # User
     if not session.query(User).filter_by(username="admin").first():
+        print(f"Создаём admin с country_id={kz_id}")
         admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
         session.add(admin_user)
         session.commit()
     if not session.query(User).filter_by(username="moderator").first():
+        print(f"Создаём moderator с country_id={kz_id}")
         moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
         session.add(moderator_user)
         session.commit()
     if not session.query(User).filter_by(username="startuper").first():
         if startup:
+            print(f"Создаём startuper с country_id={kz_id}")
             startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
             session.add(startuper_user)
             session.commit()
