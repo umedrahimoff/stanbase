@@ -52,11 +52,15 @@
         {% endif %}
 
                             <footer class="border-top pt-4">
-                      <div class="d-flex justify-content-start">
+                      <div class="d-flex justify-content-between align-items-center">
                         <a href="/news" class="btn btn-outline-secondary">
                           <i class="bi bi-arrow-left me-1"></i>
                           К списку новостей
                         </a>
+                        <button class="btn btn-outline-primary" onclick="shareNews()">
+                          <i class="bi bi-share me-1"></i>
+                          Поделиться
+                        </button>
                       </div>
                     </footer>
       </article>
@@ -206,4 +210,52 @@
   }
 }
 </style>
+
+<script>
+function shareNews() {
+  const title = "{{ news.title }}";
+  const url = window.location.href;
+  const text = "{{ news.summary or news.title }}";
+  
+  // Проверяем поддержку Web Share API
+  if (navigator.share) {
+    navigator.share({
+      title: title,
+      text: text,
+      url: url
+    }).then(() => {
+      console.log('Поделились успешно');
+    }).catch((error) => {
+      console.log('Ошибка при попытке поделиться:', error);
+      fallbackShare();
+    });
+  } else {
+    // Fallback для браузеров без поддержки Web Share API
+    fallbackShare();
+  }
+}
+
+function fallbackShare() {
+  const title = "{{ news.title }}";
+  const url = window.location.href;
+  const text = "{{ news.summary or news.title }}";
+  
+  // Создаем временный textarea для копирования ссылки
+  const textarea = document.createElement('textarea');
+  textarea.value = `${title}\n\n${text}\n\n${url}`;
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    alert('Ссылка скопирована в буфер обмена!');
+  } catch (err) {
+    console.error('Не удалось скопировать ссылку:', err);
+    // Альтернативный способ - открыть в новом окне
+    window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n\n' + url)}`);
+  }
+  
+  document.body.removeChild(textarea);
+}
+</script>
 {% endblock %} 
