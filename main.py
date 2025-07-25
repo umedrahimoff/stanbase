@@ -1610,22 +1610,25 @@ def create_full_test_data():
         session.add_all(investors)
         session.commit()
     # User
-    if not session.query(User).filter_by(username="admin").first():
-        print(f"Создаём admin с country_id={kz_id}")
-        admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
-        session.add(admin_user)
-        session.commit()
-    if not session.query(User).filter_by(username="moderator").first():
-        print(f"Создаём moderator с country_id={kz_id}")
-        moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
-        session.add(moderator_user)
-        session.commit()
-    if not session.query(User).filter_by(username="startuper").first():
-        if startup:
-            print(f"Создаём startuper с country_id={kz_id}")
-            startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
-            session.add(startuper_user)
+    try:
+        if not session.query(User).filter_by(username="admin").first():
+            print(f"Создаём admin с country_id={kz_id}")
+            admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
+            session.add(admin_user)
             session.commit()
+        if not session.query(User).filter_by(username="moderator").first():
+            print(f"Создаём moderator с country_id={kz_id}")
+            moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
+            session.add(moderator_user)
+            session.commit()
+        if not session.query(User).filter_by(username="startuper").first():
+            if startup:
+                print(f"Создаём startuper с country_id={kz_id}")
+                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
+                session.add(startuper_user)
+                session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании тестовых пользователей: {e}")
     # News
     if not session.query(News).first():
         news = [News(title=f"Новость {i}", summary=f"Кратко {i}", date="2024-01-0{}".format(i), content=f"Текст новости {i}", status="active") for i in range(1, 4)]
