@@ -4,3 +4,4 @@ gunicorn
 sqlalchemy
 itsdangerous
 jinja2
+psycopg2-binary
