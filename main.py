@@ -1730,6 +1730,15 @@ def run_migration():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@router.post("/import-data")
+def import_data(data: dict):
+    try:
+        import import_data
+        import_data.import_data_from_dict(data)
+        return {"success": True, "message": "Данные импортированы успешно"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 app.include_router(router)
 
 @app.get("/admin/currencies", response_class=HTMLResponse, name="admin_currencies")
