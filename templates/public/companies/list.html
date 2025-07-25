@@ -1,62 +1,18 @@
 {% extends 'layout.html' %}
 
-{% block title %}Компании | StanBase{% endblock %}
+{% block title %}Companies | StanBase{% endblock %}
 
-{% block meta_description %}Компании Центральной Азии — Каталог инновационных проектов | StanBase{% endblock %}
+{% block meta_description %}Catalog of innovative companies and startups from around the world. Search by country, stage, industry. Find global tech projects, SaaS, AI, and more.{% endblock %}
 
-{% block meta_keywords %}
-  {% if request.query_params.get('q') %}{{ request.query_params.get('q') }}, {% endif %}
-  {% if request.query_params.get('country') %}{{ request.query_params.get('country') }}, {% endif %}
-  {% if request.query_params.get('stage') %}{{ request.query_params.get('stage') }}, {% endif %}
-  {% if request.query_params.get('industry') %}{{ request.query_params.get('industry') }}, {% endif %}
-  компании Центральной Азии, инновационные проекты, технологические компании, венчурные инвестиции, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
-{% endblock %}
+{% block meta_keywords %}companies, startups, innovation, technology, SaaS, AI, global, business, catalog, international, funding, venture capital{% endblock %}
 
-{% block og_title %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
-    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('stage') %} | Стадия: {{ request.query_params.get('stage') }}{% endif %}
-    {% if request.query_params.get('industry') %} | Индустрия: {{ request.query_params.get('industry') }}{% endif %}
-    — Компании | StanBase
-  {% else %}
-    Компании Центральной Азии — Каталог инновационных проектов | StanBase
-  {% endif %}
-{% endblock %}
+{% block og_title %}Companies — Global Catalog | StanBase{% endblock %}
 
-{% block og_description %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
-    {% if request.query_params.get('q') %}Найдите компании по запросу "{{ request.query_params.get('q') }}"{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('stage') %} на стадии {{ request.query_params.get('stage') }}{% endif %}
-    {% if request.query_params.get('industry') %} в сфере {{ request.query_params.get('industry') }}{% endif %}. Полный каталог компаний Центральной Азии с фильтрами по стране, стадии и индустрии.
-  {% else %}
-    Каталог компаний Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане. Фильтры по стране, стадии развития и индустрии.
-  {% endif %}
-{% endblock %}
+{% block og_description %}Catalog of innovative companies and startups from around the world. Search by country, stage, industry. Find global tech projects, SaaS, AI, and more.{% endblock %}
 
-{% block twitter_title %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
-    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('stage') %} | Стадия: {{ request.query_params.get('stage') }}{% endif %}
-    {% if request.query_params.get('industry') %} | Индустрия: {{ request.query_params.get('industry') }}{% endif %}
-    — Компании | StanBase
-  {% else %}
-    Компании Центральной Азии — Каталог инновационных проектов | StanBase
-  {% endif %}
-{% endblock %}
+{% block twitter_title %}Companies | StanBase{% endblock %}
 
-{% block twitter_description %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
-    {% if request.query_params.get('q') %}Найдите компании по запросу "{{ request.query_params.get('q') }}"{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('stage') %} на стадии {{ request.query_params.get('stage') }}{% endif %}
-    {% if request.query_params.get('industry') %} в сфере {{ request.query_params.get('industry') }}{% endif %}. Полный каталог компаний Центральной Азии.
-  {% else %}
-    Каталог компаний Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.
-  {% endif %}
-{% endblock %}
+{% block twitter_description %}Catalog of innovative companies and startups from around the world. Search by country, stage, industry. Find global tech projects, SaaS, AI, and more.{% endblock %}
 {% block head %}
 <style>
   .card-google {

@@ -9,256 +9,68 @@ Base.metadata.create_all(bind=engine)
 
 # Заполнить тестовыми данными, если база пуста
 session = SessionLocal()
-real_companies = [
-    {
-        "name": "CerebraAI",
-        "description": "AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Growth",
-        "industry": "HealthTech",
-        "website": "https://cerebraai.ai"
-    },
-    {
-        "name": "Clockster",
-        "description": "HRTech-платформа для учета рабочего времени и автоматизации HR-процессов.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Scale",
-        "industry": "HRTech",
-        "website": "https://clockster.com"
-    },
-    {
-        "name": "ChocoFamily",
-        "description": "Крупнейшая экосистема сервисов: доставка, финтех, маркетплейсы.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Growth",
-        "industry": "E-commerce",
-        "website": "https://chocofamily.kz"
-    },
-    {
-        "name": "Documentolog",
-        "description": "Электронный документооборот для бизнеса и госорганов.",
-        "country": "Казахстан",
-        "city": "Астана",
-        "stage": "Scale",
-        "industry": "SaaS",
-        "website": "https://documentolog.kz"
-    },
-    {
-        "name": "Alem School",
-        "description": "IT-школа нового поколения для обучения программистов.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Growth",
-        "industry": "EdTech",
-        "website": "https://alem.school"
-    },
-    {
-        "name": "MyTaxi",
-        "description": "Сервис заказа такси в Узбекистане.",
-        "country": "Узбекистан",
-        "city": "Ташкент",
-        "stage": "Growth",
-        "industry": "Mobility",
-        "website": "https://mytaxi.uz"
-    },
-    {
-        "name": "Express24",
-        "description": "Доставка еды и товаров в Узбекистане.",
-        "country": "Узбекистан",
-        "city": "Ташкент",
-        "stage": "Growth",
-        "industry": "Delivery",
-        "website": "https://express24.uz"
-    },
-    {
-        "name": "Billz",
-        "description": "Облачная касса и автоматизация ритейла.",
-        "country": "Узбекистан",
-        "city": "Ташкент",
-        "stage": "Seed",
-        "industry": "RetailTech",
-        "website": "https://billz.uz"
-    },
-    {
-        "name": "Oquda",
-        "description": "EdTech-платформа для поиска зарубежных вузов и подачи заявок.",
-        "country": "Узбекистан",
-        "city": "Ташкент",
-        "stage": "Seed",
-        "industry": "EdTech",
-        "website": "https://oquda.com"
-    },
-    {
-        "name": "TezSum",
-        "description": "Финтех: электронные кошельки и платежи.",
-        "country": "Узбекистан",
-        "city": "Ташкент",
-        "stage": "Growth",
-        "industry": "Fintech",
-        "website": "https://tezsum.uz"
-    },
-    {
-        "name": "Dostavista",
-        "description": "Служба доставки для бизнеса и частных лиц.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Growth",
-        "industry": "Delivery",
-        "website": "https://dostavista.kz"
-    },
-    {
-        "name": "Tumar",
-        "description": "Финтех и мобильные платежи в Кыргызстане.",
-        "country": "Кыргызстан",
-        "city": "Бишкек",
-        "stage": "Seed",
-        "industry": "Fintech",
-        "website": "https://tumar.vc"
-    },
-    {
-        "name": "SalamPay",
-        "description": "Финтех-сервис для онлайн-платежей в Таджикистане.",
-        "country": "Таджикистан",
-        "city": "Душанбе",
-        "stage": "Seed",
-        "industry": "Fintech",
-        "website": "https://salampay.tj"
-    },
-    {
-        "name": "M-Doc",
-        "description": "Телемедицина и онлайн-консультации врачей.",
-        "country": "Казахстан",
-        "city": "Алматы",
-        "stage": "Seed",
-        "industry": "HealthTech",
-        "website": "https://mdoc.kz"
-    },
-    {
-        "name": "SmartPay",
-        "description": "Финтех-платформа для платежей и переводов.",
-        "country": "Казахстан",
-        "city": "Астана",
-        "stage": "Growth",
-        "industry": "Fintech",
-        "website": "https://smartpay.kz"
-    }
+
+# --- Вымышленные компании ЦА ---
+ca_countries = [
+    ("Казахстан", ["Алматы", "Астана", "Шымкент", "Караганда", "Актобе"]),
+    ("Узбекистан", ["Ташкент", "Самарканд", "Бухара", "Наманган", "Андижан"]),
+    ("Кыргызстан", ["Бишкек", "Ош", "Джалал-Абад", "Каракол", "Токмок"]),
+    ("Таджикистан", ["Душанбе", "Худжанд", "Бохтар", "Куляб", "Истаравшан"]),
+    ("Туркменистан", ["Ашхабад", "Туркменабад", "Дашогуз", "Мары", "Балканабад"])
+]
+industries = ["Fintech", "SaaS", "AgriTech", "HealthTech", "Mobility", "CleanTech", "AI", "EdTech", "RetailTech", "LogisticsTech"]
+stages = ["Seed", "Growth", "Scale", "Series A", "Series B"]
+
+# Вымышленные названия компаний без географических привязок
+company_names = [
+    "TechFlow Labs", "InnovateHub", "DigitalBridge", "SmartCore", "FutureTech",
+    "CloudMatrix", "DataVault", "GreenSolutions", "MobileFirst", "AI Nexus",
+    "EduTech Pro", "RetailSmart", "LogiTech", "HealthSync", "AgroTech"
 ]
 
-real_funds = [
-    {
-        "name": "MOST Ventures",
-        "description": "Венчурный фонд, поддерживающий стартапы Центральной Евразии.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://mostfund.vc",
-        "type": "venture"
-    },
-    {
-        "name": "Big Sky Capital",
-        "description": "Фонд, инвестирующий в технологические компании региона.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://bigskycapital.kz",
-        "type": "venture"
-    },
-    {
-        "name": "Quest Ventures",
-        "description": "Один из крупнейших фондов Центральной Азии и Сингапура.",
-        "country": "Казахстан",
-        "focus": "AI, Fintech, SaaS",
-        "stages": "Seed, Series A",
-        "website": "https://www.questventures.com",
-        "type": "venture"
-    },
-    {
-        "name": "Tumar Venture Fund",
-        "description": "Фонд из Кыргызстана, инвестирующий в стартапы региона.",
-        "country": "Кыргызстан",
-        "focus": "Fintech, SaaS",
-        "stages": "Seed, Series A",
-        "website": "https://tumar.vc",
-        "type": "venture"
-    },
-    {
-        "name": "UMAY Angels Club",
-        "description": "Ангельский клуб для инвесторов и стартапов Центральной Азии.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Pre-seed, Seed",
-        "website": "https://umay.vc",
-        "type": "angel"
-    },
-    {
-        "name": "QazAngels",
-        "description": "Казахстанский клуб бизнес-ангелов.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Pre-seed, Seed",
-        "website": "https://qazangels.com",
-        "type": "angel"
-    },
-    {
-        "name": "White Hill Capital",
-        "description": "Венчурный фонд, инвестирующий в стартапы Казахстана.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://whitehillcapital.com",
-        "type": "venture"
-    },
-    {
-        "name": "Astana Hub Ventures",
-        "description": "Фонд при Astana Hub для поддержки стартапов.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://astanahub.com",
-        "type": "venture"
-    },
-    {
-        "name": "AloqaVentures",
-        "description": "Венчурный фонд из Узбекистана.",
-        "country": "Узбекистан",
-        "focus": "Fintech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://aloqaventures.com",
-        "type": "venture"
-    },
-    {
-        "name": "Sturgeon Capital",
-        "description": "Международный фонд, инвестирующий в стартапы Узбекистана и региона.",
-        "country": "Узбекистан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Seed, Series A",
-        "website": "https://sturgeoncapital.com",
-        "type": "venture"
-    },
-    {
-        "name": "CentrAsia Angels",
-        "description": "Региональный клуб бизнес-ангелов Центральной Азии.",
-        "country": "Казахстан",
-        "focus": "Tech, SaaS, AI",
-        "stages": "Pre-seed, Seed",
-        "website": "https://centrasiaangels.com",
-        "type": "angel"
-    }
+companies_data = []
+for i in range(15):
+    country, cities = ca_countries[i % len(ca_countries)]
+    city = cities[i % len(cities)]
+    industry = industries[i % len(industries)]
+    stage = stages[i % len(stages)]
+    name = company_names[i]
+    companies_data.append({
+        "name": name,
+        "description": f"Ведущий проект в сфере {industry.lower()} для региона.",
+        "country": country,
+        "city": city,
+        "stage": stage,
+        "industry": industry,
+        "website": f"https://{name.lower().replace(' ', '')}.com"
+    })
+
+# Вымышленные названия фондов без географических привязок
+fund_names = [
+    "Steppe Angels", "Turan Ventures", "UzStart Capital", "Bishkek Angels", "Samarkand Fund",
+    "Dushanbe Capital", "Ashgabat Ventures", "Kyrgyz Fund", "Tajik Capital", "Uzbek Angels",
+    "Central Asia Fund", "Silk Road Ventures", "Nomad Capital", "Oasis Fund", "Desert Angels"
 ]
 
-# Оставляем только стартапы и фонды из Центральной Азии
-central_asia_countries = ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]
-real_companies = [s for s in real_companies if s["country"] in central_asia_countries]
-real_funds = [f for f in real_funds if f["country"] in central_asia_countries]
+funds_data = []
+for i in range(15):
+    country, _ = ca_countries[i % len(ca_countries)]
+    type_ = "angel" if i % 2 == 0 else "venture"
+    focus = ", ".join([industries[(i+j)%len(industries)] for j in range(2)])
+    name = fund_names[i]
+    funds_data.append({
+        "name": name,
+        "description": f"{type_.capitalize()} фонд для поддержки {focus}.",
+        "country": country,
+        "focus": focus,
+        "stages": ", ".join(stages[:2]),
+        "website": f"https://{name.lower().replace(' ', '')}.com",
+        "type": type_
+    })
 
-# --- Заполнение реальными стартапами ---
-company_objs = []
-investor_objs = []
+# --- Компании ---
 if not session.query(Company).first():
-    for s in real_companies:
+    for s in companies_data:
         company = Company(
             name=s["name"],
             description=s["description"],
@@ -266,16 +78,17 @@ if not session.query(Company).first():
             city=s["city"],
             stage=s["stage"],
             industry=s["industry"],
-            founded_date=date(2021, 1, 1),
+            founded_date=date(2020, 1, 1),
             website=s["website"]
         )
         session.add(company)
-        company_objs.append(company)
     session.commit()
 
-# --- Заполнение реальными фондами ---
+company_objs = session.query(Company).all()
+
+# --- Инвесторы ---
 if not session.query(Investor).first():
-    for f in real_funds:
+    for f in funds_data:
         investor = Investor(
             name=f["name"],
             description=f["description"],
@@ -286,118 +99,124 @@ if not session.query(Investor).first():
             type=f["type"]
         )
         session.add(investor)
-        investor_objs.append(investor)
     session.commit()
 
-# --- Добавляем или обновляем команды, раунды и портфели для части стартапов и инвесторов ---
-company_objs = session.query(Company).order_by(Company.id).all()
-investor_objs = session.query(Investor).order_by(Investor.id).all()
-if company_objs and investor_objs:
-    # Команды для первых 5 стартапов
-    team_names = [
-        ["Айдар Ахметов", "CEO"],
-        ["Мария Иванова", "CTO"],
-        ["Данияр Ермеков", "COO"],
-        ["Светлана Петрова", "CMO"],
-        ["Азамат Садыков", "Product Manager"]
+investor_objs = session.query(Investor).all()
+
+# --- Команды компаний ---
+team_roles = ["CEO", "CTO", "COO", "CMO", "Product Manager", "Lead Engineer", "HR", "Designer", "QA", "Data Scientist", "DevOps", "Sales", "Support", "Growth", "Finance"]
+for i, company in enumerate(company_objs):
+    if not company.team:
+        for j in range(3):
+            p = Person(name=f"Person {i*3+j+1}", role=team_roles[(i*3+j)%len(team_roles)], country=company.country)
+            session.add(p)
+            company.team.append(p)
+session.commit()
+
+# --- Вакансии для каждой компании ---
+if not session.query(Job).first():
+    job_titles = ["Backend Developer", "Frontend Developer", "Product Manager", "Data Scientist", "QA Engineer", "DevOps", "UI/UX Designer", "Sales Manager", "Support Specialist", "HR Manager", "Business Analyst", "Growth Hacker", "Finance Analyst", "Content Manager", "Marketing Specialist"]
+    for i, company in enumerate(company_objs):
+        session.add(Job(
+            title=job_titles[i % len(job_titles)],
+            description="Работа в инновационной команде. Гибкий график, международные проекты.",
+            company_id=company.id,
+            city=company.city,
+            job_type="Full-time" if i % 2 == 0 else "Remote",
+            contact=f"hr@{company.website.split('//')[1]}",
+            status="active"
+        ))
+session.commit()
+
+# --- Валюты ---
+if not session.query(Currency).first():
+    currencies = [
+        Currency(code="USD", name="Доллар США", symbol="$", status="active"),
+        Currency(code="EUR", name="Евро", symbol="€", status="active"),
+        Currency(code="KZT", name="Тенге", symbol="₸", status="active"),
+        Currency(code="RUB", name="Рубль", symbol="₽", status="active"),
+        Currency(code="UZS", name="Сум", symbol="so'm", status="active"),
+        Currency(code="GBP", name="Фунт стерлингов", symbol="£", status="active"),
+        Currency(code="CNY", name="Юань", symbol="¥", status="active"),
     ]
-    for i, company in enumerate(company_objs[:5]):
-        # Добавлять только если у стартапа нет команды
-        if not company.team:
-            for j in range(3):
-                p = Person(name=team_names[(i+j)%5][0], role=team_names[(i+j)%5][1], country=company.country)
-                session.add(p)
-                company.team.append(p)
-    session.commit()
-    # Инвестиционные раунды для первых 3 стартапов
-    for i, company in enumerate(company_objs[:3]):
-        # Добавлять только если у стартапа нет раундов
-        if not company.deals:
-            deal = Deal(
-                type="Seed",
-                amount=500000 + i*250000,
-                valuation=2000000 + i*500000,
-                date=date(2022, 6, 1+i),
-                currency="USD",
-                investors=investor_objs[i % len(investor_objs)].name,
-                status="active",
-                company_id=company.id
-            )
-            session.add(deal)
-            # Добавлять в портфель инвестора только если его там нет
-            if company not in investor_objs[i % len(investor_objs)].portfolio:
-                investor_objs[i % len(investor_objs)].portfolio.append(company)
+    for currency in currencies:
+        session.add(currency)
     session.commit()
 
+# --- Сделки и портфели ---
+if not session.query(Deal).first():
+    usd = session.query(Currency).filter_by(code="USD").first()
+    eur = session.query(Currency).filter_by(code="EUR").first()
+    for i, company in enumerate(company_objs):
+        invs = investor_objs[i % len(investor_objs): (i % len(investor_objs)) + 2]
+        deal = Deal(
+            type=stages[i % len(stages)],
+            amount=500000 + i*100000,
+            valuation=2000000 + i*500000,
+            date=date(2023, 3, 15 + i),
+            currency_id=usd.id if i % 2 == 0 else eur.id,
+            company_id=company.id,
+            investors=", ".join([inv.name for inv in invs]),
+            status="active"
+        )
+        session.add(deal)
+        for inv in invs:
+            if company not in inv.portfolio:
+                inv.portfolio.append(company)
+session.commit()
+
+# --- Новости ---
 if not session.query(News).first():
-    news_titles = [
-        'Стартап FinSight привлек $1 млн инвестиций', 'Astana Ventures запускает новый фонд',
-        'PayFlow выходит на рынок Узбекистана', 'HealthBridge внедряет AI в медицину',
-        'AgroNext расширяет команду', 'Steppe Capital инвестирует в EdTech',
-        'UrbanAI открывает офис в Бишкеке', 'Cloudify запускает облачный сервис',
-        'HRBoost внедряет новые HR-технологии', 'LegalMind запускает платформу для юристов'
-    ]
-    for i, title in enumerate(news_titles):
-        author = session.query(Author).order_by(func.random()).first()
+    for i in range(15):
+        company = company_objs[i % len(company_objs)]
         session.add(News(
-            title=title,
-            summary=f'Краткое описание: {title}',
+            title=f"{company.name} анонсировал новый продукт {i+1}",
+            summary=f"Краткое описание новости о {company.name} и инновациях.",
             date=date.today() - timedelta(days=i),
-            content=f'Полная статья: {title} — подробности и аналитика.',
-            author_id=author.id if author else None,
+            content=f"Подробности о запуске, инвестициях и планах {company.name}.",
             status='active'
         ))
     session.commit()
 
+# --- Подкасты ---
 if not session.query(Podcast).first():
-    podcast_titles = [
-        'Инвестиции в Центральной Азии', 'Тренды Fintech 2024', 'Как строить EdTech-стартап',
-        'AI в реальном бизнесе', 'Истории успеха: AgroNext', 'Женщины в IT',
-        'Венчурные фонды региона', 'Будущее HRTech', 'Юридические стартапы',
-        'Экология и технологии', 'Медицинские инновации'
-    ]
-    for i, title in enumerate(podcast_titles):
+    for i in range(15):
+        company = company_objs[i % len(company_objs)]
         session.add(Podcast(
-            title=title,
-            description=f'{title} — обсуждаем тренды и кейсы.',
+            title=f"TechTalk {company.name} — выпуск {i+1}",
+            description=f"Обсуждаем тренды и кейсы {company.name} и рынка.",
             youtube_url='https://www.youtube.com/embed/dQw4w9WgXcQ',
             date=date.today() - timedelta(days=i*2),
             status='active'
         ))
     session.commit()
 
+# --- События ---
 if not session.query(Event).first():
-    event_titles = [
-        'Startup Battle Astana', 'Tech Meetup Tashkent', 'Invest Day Almaty',
-        'AI Conference Bishkek', 'Agro Forum Samarkand', 'Fintech Summit Nur-Sultan',
-        'EdTech Expo', 'HealthTech Days', 'Logistics Innovation', 'HRTech Forum', 'LegalTech Meetup'
-    ]
-    for i, title in enumerate(event_titles):
-        city = session.query(City).order_by(func.random()).first()
+    for i in range(15):
+        city = company_objs[i % len(company_objs)].city
         session.add(Event(
-            title=title,
-            description=f'{title} — встреча профессионалов и экспертов.',
+            title=f"Tech Event {city} {i+1}",
+            description=f"Международное мероприятие по инновациям и технологиям в {city}.",
             date=datetime.now() + timedelta(days=i),
-            format='Онлайн' if i % 2 == 0 else 'Оффлайн',
-            location=city.name if city else 'Алматы',
+            format='Online' if i % 2 == 0 else 'Offline',
+            location=city,
             registration_url=f'https://event{i+1}.com',
             status='active'
         ))
     session.commit()
 
-# --- Добавление тестовых пользователей-админов ---
-kz = session.query(Country).filter_by(name="Казахстан").first()
-kz_id = kz.id if kz else 1
+# --- Тестовые пользователи ---
 if not session.query(User).filter_by(email="admin@stanbase.test").first():
     admin_user = User(
         email="admin@stanbase.test",
-        password="admin123",  # для теста, в проде обязательно хешировать!
+        password="admin123",
         role="admin",
-        first_name="Admin",
-        last_name="StanBase",
+        first_name="Alice",
+        last_name="Johnson",
         country_id=1,
-        city="Алматы",
-        phone="+77001234567",
+        city="London",
+        phone="+441234567890",
         status="active"
     )
     session.add(admin_user)
@@ -407,16 +226,15 @@ if not session.query(User).filter_by(email="moderator@stanbase.test").first():
         email="moderator@stanbase.test",
         password="mod123",
         role="moderator",
-        first_name="Mod",
-        last_name="StanBase",
-        country_id=1,
-        city="Алматы",
-        phone="+77001234568",
+        first_name="Bob",
+        last_name="Smith",
+        country_id=2,
+        city="Berlin",
+        phone="+491234567890",
         status="active"
     )
     session.add(moderator_user)
     session.commit()
-# --- Добавление тестового пользователя-стартапера ---
 if not session.query(User).filter_by(email="company_owner@stanbase.test").first():
     company = session.query(Company).first()
     if company:
@@ -424,11 +242,11 @@ if not session.query(User).filter_by(email="company_owner@stanbase.test").first(
             email="company_owner@stanbase.test",
             password="company_owner123",
             role="company_owner",
-            first_name="Start",
-            last_name="StanBase",
-            country_id=kz_id,
-            city="Алматы",
-            phone="+77001234569",
+            first_name="Charlie",
+            last_name="Brown",
+            country_id=3,
+            city="Toronto",
+            phone="+14161234567",
             company_id=company.id,
             status="active"
         )

@@ -7,7 +7,7 @@
         <h4 class="mb-3">Статистика</h4>
         <ul class="list-unstyled mb-0">
           <li><b>Пользователи:</b> {{ users|length }}</li>
-          <li><b>Стартапы:</b> {{ companies|length }}</li>
+          <li><b>Компании:</b> {{ companies|length }}</li>
           <li><b>Инвесторы:</b> {{ investors|length }}</li>
           <li><b>Сделки:</b> {{ deals|length }}</li>
           <li><b>Вакансии:</b> {{ jobs|length }}</li>
@@ -23,7 +23,7 @@
         <h4 class="mb-3">Разделы управления</h4>
         <div class="d-flex flex-wrap gap-3">
           <a class="btn btn-outline-primary" href="{{ url_for('admin_users') }}">Пользователи</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('admin_companies') }}">Стартапы</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_companies') }}">Компании</a>
           <a class="btn btn-outline-primary" href="{{ url_for('admin_investors') }}">Инвесторы</a>
           <a class="btn btn-outline-primary" href="{{ url_for('admin_news') }}">Новости</a>
           <a class="btn btn-outline-primary disabled" href="#">Сделки</a>

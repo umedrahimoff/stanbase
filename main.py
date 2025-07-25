@@ -178,7 +178,7 @@ def companies(request: Request, q: str = Query('', alias='q'), country: str = Qu
 @app.get("/company/{id}", response_class=HTMLResponse)
 def company_profile(request: Request, id: int = Path(...)):
     db = SessionLocal()
-    company = db.query(Company).get(id)
+    company = db.query(Company).options(joinedload(Company.deals).joinedload(Deal.currency)).get(id)
     if not company:
         db.close()
         raise HTTPException(status_code=404)
@@ -512,18 +512,19 @@ def admin_required(request: Request):
 
 @app.get("/admin", response_class=HTMLResponse, name="admin_dashboard")
 async def admin_dashboard(request: Request):
-    from models import User, Investor, News, Event, Job, Deal
+    from models import User, Investor, News, Event, Job, Deal, Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     users = db.query(User).all()
+    companies = db.query(Company).all()
     investors = db.query(Investor).all()
     news = db.query(News).all()
     events = db.query(Event).all()
     jobs = db.query(Job).all()
     deals = db.query(Deal).all()
     db.close()
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "session": request.session, "users": users, "investors": investors, "news": news, "events": events, "jobs": jobs, "deals": deals})
+    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "session": request.session, "users": users, "companies": companies, "investors": investors, "news": news, "events": events, "jobs": jobs, "deals": deals})
 
 # --- Users CRUD ---
 @app.get("/admin/users", response_class=HTMLResponse, name="admin_users")
@@ -534,7 +535,7 @@ async def admin_users(request: Request, q: str = Query('', alias='q'), per_page:
     db = SessionLocal()
     query = db.query(User)
     if q:
-        query = query.filter(User.username.ilike(f'%{q}%'))
+        query = query.filter(User.email.ilike(f'%{q}%'))
     if status_:
         query = query.filter(User.status == status_)
     total = query.count()
@@ -615,7 +616,7 @@ async def admin_edit_user_post(request: Request, user_id: int):
     user.phone = form.get('phone')
     user.telegram = form.get('telegram')
     user.linkedin = form.get('linkedin')
-    user.updated_by = request.session.get('username') or request.session.get('user_email')
+    user.updated_by = request.session.get('user_email')
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/users", status_code=302)
@@ -677,7 +678,7 @@ async def admin_create_startup(request: Request):
         db = SessionLocal()
         country = db.query(Country).get(country_id) if country_id else None
         city = db.query(City).get(city_id) if city_id else None
-        created_by = request.session.get('username') if request.session.get('username') else None
+        created_by = request.session.get('user_email')
         if not error:
             company = Company(
                 name=name,
@@ -741,19 +742,27 @@ async def admin_edit_startup_post(request: Request, company_id: int):
     company.country = form.get('country')
     company.city = form.get('city')
     company.status = form.get('status')
-    founded_date_str = form.get('founded_date') or None
-    if founded_date_str:
-        try:
-            company.founded_date = datetime.datetime.strptime(founded_date_str, "%Y-%m-%d").date()
-        except Exception:
-            company.founded_date = None
-    else:
-        company.founded_date = None
+    company.stage = form.get('stage')
+    company.industry = form.get('industry')
     company.website = form.get('website')
     company.updated_at = datetime.datetime.utcnow()
+
+    # --- обработка логотипа ---
+    logo_file = form.get('logo')
+    if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
+        filename = f"company_{company_id}_{logo_file.filename}"
+        save_dir = os.path.join("static", "logos")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await logo_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        company.logo = f"/static/logos/{filename}"
+
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/startups", status_code=302)
+    active_tab = form.get('active_tab') or 'main'
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab={active_tab}", status_code=302)
 
 # --- Countries CRUD ---
 @app.get("/admin/countries", response_class=HTMLResponse, name="admin_countries")
@@ -1242,60 +1251,84 @@ async def admin_delete_news(request: Request, news_id: int):
 
 # --- Deals CRUD ---
 @app.get("/admin/deals", response_class=HTMLResponse, name="admin_deals")
-def admin_deals(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+def admin_deals(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
     from models import Deal
+    from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    query = db.query(Deal)
+    query = db.query(Deal).options(joinedload(Deal.company), joinedload(Deal.currency))
     if q:
-        query = query.filter(Deal.title.ilike(f'%{q}%'))
+        query = query.filter(Deal.type.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(Deal.status == status)
     total = query.count()
     deals = query.order_by(Deal.id).offset((page-1)*per_page).limit(per_page).all()
     db.close()
-    return templates.TemplateResponse("admin/deals/list.html", {"request": request, "session": request.session, "deals": deals, "q": q, "per_page": per_page, "page": page, "total": total})
+    return templates.TemplateResponse("admin/deals/list.html", {"request": request, "session": request.session, "deals": deals, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
 
 @app.route("/admin/deals/create", methods=["GET", "POST"], name="admin_create_deal")
 async def admin_create_deal(request: Request):
-    from models import Deal
+    from models import Deal, Company, Investor, Currency
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     error = None
+    db = SessionLocal()
+    companies = db.query(Company).all()
+    investors = db.query(Investor).all()
+    currencies = db.query(Currency).filter_by(status='active').all()
+    
     if request.method == "POST":
         form = await request.form()
-        title = form.get('title')
-        description = form.get('description')
+        deal_type = form.get('type')
+        amount_str = form.get('amount', '').replace(' ', '').replace(',', '')
+        valuation_str = form.get('valuation', '').replace(' ', '').replace(',', '')
         date = form.get('date')
-        amount = form.get('amount')
+        currency_id = int(form.get('currency_id')) if form.get('currency_id') else None
         company_id = int(form.get('company_id'))
-        investor_id = int(form.get('investor_id'))
-        db = SessionLocal()
-        if db.query(Deal).filter_by(title=title, company_id=company_id, investor_id=investor_id).first():
+        investors_list = form.getlist('investors')  # Множественный выбор
+        investors_str = ', '.join(investors_list) if investors_list else ''
+        status = form.get('status')
+        
+        # Преобразуем строки в числа
+        amount = int(amount_str) if amount_str else None
+        valuation = int(valuation_str) if valuation_str else None
+        
+        if db.query(Deal).filter_by(type=deal_type, company_id=company_id).first():
             error = 'Сделка с такими параметрами уже существует'
         else:
             deal = Deal(
-                title=title,
-                description=description,
-                date=date,
+                type=deal_type,
                 amount=amount,
+                valuation=valuation,
+                date=date,
+                currency_id=currency_id,
                 company_id=company_id,
-                investor_id=investor_id
+                investors=investors_str,
+                status=status
             )
             db.add(deal)
             db.commit()
+            db.close()
             return RedirectResponse(url="/admin/deals", status_code=302)
-    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": None})
+    
+    db.close()
+    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": None, "companies": companies, "investors": investors, "currencies": currencies})
 
 @app.get("/admin/deals/edit/{deal_id}", response_class=HTMLResponse, name="admin_edit_deal")
 async def admin_edit_deal(request: Request, deal_id: int):
-    from models import Deal
+    from models import Deal, Company, Investor, Currency
+    from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
+    deal = db.query(Deal).options(joinedload(Deal.company), joinedload(Deal.currency)).get(deal_id)
+    companies = db.query(Company).all()
+    investors = db.query(Investor).all()
+    currencies = db.query(Currency).filter_by(status='active').all()
     error = None
     db.close()
-    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": deal})
+    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": deal, "companies": companies, "investors": investors, "currencies": currencies})
 
 @app.post("/admin/deals/edit/{deal_id}", name="admin_edit_deal_post")
 async def admin_edit_deal_post(request: Request, deal_id: int):
@@ -1305,12 +1338,20 @@ async def admin_edit_deal_post(request: Request, deal_id: int):
     db = SessionLocal()
     deal = db.query(Deal).get(deal_id)
     form = await request.form()
-    deal.title = form.get('title')
-    deal.description = form.get('description')
+    deal.type = form.get('type')
+    
+    # Обработка чисел с разделителями
+    amount_str = form.get('amount', '').replace(' ', '').replace(',', '')
+    valuation_str = form.get('valuation', '').replace(' ', '').replace(',', '')
+    
+    deal.amount = int(amount_str) if amount_str else None
+    deal.valuation = int(valuation_str) if valuation_str else None
     deal.date = form.get('date')
-    deal.amount = form.get('amount')
+    deal.currency_id = int(form.get('currency_id')) if form.get('currency_id') else None
     deal.company_id = int(form.get('company_id'))
-    deal.investor_id = int(form.get('investor_id'))
+    investors_list = form.getlist('investors')  # Множественный выбор
+    deal.investors = ', '.join(investors_list) if investors_list else ''
+    deal.status = form.get('status')
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/deals", status_code=302)
@@ -1564,20 +1605,21 @@ def create_full_test_data():
         session.commit()
     # User
     try:
-        if not session.query(User).filter_by(username="admin").first():
+        if not session.query(User).filter_by(email="admin@stanbase.test").first():
             print(f"Создаём admin с country_id={kz_id}")
-            admin_user = User(username="admin", email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
+            admin_user = User(email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
             session.add(admin_user)
             session.commit()
-        if not session.query(User).filter_by(username="moderator").first():
+        if not session.query(User).filter_by(email="moderator@stanbase.test").first():
             print(f"Создаём moderator с country_id={kz_id}")
-            moderator_user = User(username="moderator", email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
+            moderator_user = User(email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
             session.add(moderator_user)
             session.commit()
-        if not session.query(User).filter_by(username="startuper").first():
+        if not session.query(User).filter_by(email="startuper@stanbase.test").first():
+            companies = session.query(Company).all()
             if companies:
                 print(f"Создаём startuper с country_id={kz_id}")
-                startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", company_id=companies[0].id, status="active")
+                startuper_user = User(email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", company_id=companies[0].id, status="active")
                 session.add(startuper_user)
                 session.commit()
     except Exception as e:
@@ -1599,6 +1641,84 @@ def run_migration():
     return {"stdout": result.stdout, "stderr": result.stderr}
 
 app.include_router(router)
+
+@app.get("/admin/currencies", response_class=HTMLResponse, name="admin_currencies")
+async def admin_currencies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    from models import Currency
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    query = db.query(Currency)
+    if q:
+        query = query.filter(Currency.name.ilike(f'%{q}%') | Currency.code.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(Currency.status == status)
+    total = query.count()
+    currencies = query.order_by(Currency.code).offset((page-1)*per_page).limit(per_page).all()
+    db.close()
+    return templates.TemplateResponse("admin/currencies/list.html", {"request": request, "session": request.session, "currencies": currencies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+
+@app.route("/admin/currencies/create", methods=["GET", "POST"], name="admin_create_currency")
+async def admin_create_currency(request: Request):
+    from models import Currency
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    error = None
+    if request.method == "POST":
+        form = await request.form()
+        code = form.get('code').upper()
+        name = form.get('name')
+        symbol = form.get('symbol')
+        db = SessionLocal()
+        if db.query(Currency).filter_by(code=code).first():
+            error = 'Валюта с таким кодом уже существует'
+        else:
+            currency = Currency(code=code, name=name, symbol=symbol)
+            db.add(currency)
+            db.commit()
+            db.close()
+            return RedirectResponse(url="/admin/currencies", status_code=302)
+        db.close()
+    return templates.TemplateResponse("admin/currencies/form.html", {"request": request, "session": request.session, "error": error, "currency": None})
+
+@app.get("/admin/currencies/edit/{currency_id}", response_class=HTMLResponse, name="admin_edit_currency")
+async def admin_edit_currency(request: Request, currency_id: int):
+    from models import Currency
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    currency = db.query(Currency).get(currency_id)
+    error = None
+    db.close()
+    return templates.TemplateResponse("admin/currencies/form.html", {"request": request, "session": request.session, "error": error, "currency": currency})
+
+@app.post("/admin/currencies/edit/{currency_id}", name="admin_edit_currency_post")
+async def admin_edit_currency_post(request: Request, currency_id: int):
+    from models import Currency
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    currency = db.query(Currency).get(currency_id)
+    form = await request.form()
+    currency.code = form.get('code').upper()
+    currency.name = form.get('name')
+    currency.symbol = form.get('symbol')
+    currency.status = form.get('status')
+    db.commit()
+    db.close()
+    return RedirectResponse(url="/admin/currencies", status_code=302)
+
+@app.post("/admin/currencies/delete/{currency_id}", name="admin_delete_currency")
+async def admin_delete_currency(request: Request, currency_id: int):
+    from models import Currency
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    currency = db.query(Currency).get(currency_id)
+    db.delete(currency)
+    db.commit()
+    db.close()
+    return RedirectResponse(url="/admin/currencies", status_code=302)
 
 @app.get("/admin/company_stages", response_class=HTMLResponse, name="admin_company_stages")
 async def admin_company_stages(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
@@ -1752,8 +1872,9 @@ async def admin_edit_company(request: Request, company_id: int):
     cities = db.query(City).options(joinedload(City.country)).order_by(City.name).all()
     error = None
     team = company.team if company else []
+    jobs = company.jobs if company else []
     db.close()
-    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team})
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team, "jobs": jobs})
 
 @app.post("/admin/companies/edit/{company_id}", name="admin_edit_company_post")
 async def admin_edit_company_post(request: Request, company_id: int):
@@ -1789,7 +1910,8 @@ async def admin_edit_company_post(request: Request, company_id: int):
 
     db.commit()
     db.close()
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
+    active_tab = form.get('active_tab') or 'main'
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab={active_tab}", status_code=302)
 
 if __name__ == "__main__":
     print('SERVER STARTED')

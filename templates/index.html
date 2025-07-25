@@ -1,21 +1,22 @@
 {% extends 'layout.html' %}
 
-{% block title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
+{% block title %}Stanbase — Global Startup & Investor Database{% endblock %}
 
-{% block meta_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона. Поиск по стартапам, инвесторам и людям.{% endblock %}
+{% block meta_description %}Stanbase — global platform for startups, investors, deals, jobs, news and events. Find innovative projects, investors, news and opportunities from around the world. Search by startup, investor, people.{% endblock %}
 
-{% block meta_keywords %}стартапы Центральной Азии, инвесторы, венчурные инвестиции, инновационные проекты, технологические стартапы, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан, поиск стартапов, стартап-экосистема{% endblock %}
+{% block meta_keywords %}startups, investors, venture capital, innovation, technology, SaaS, AI, global, jobs, news, events, funding, business, international, database{% endblock %}
 
-{% block og_title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
-
-{% block og_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
-
-{% block twitter_title %}Stanbase - База стартапов и инвесторов Центральной Азии{% endblock %}
-
-{% block twitter_description %}Stanbase - ведущая платформа для стартапов и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов, актуальные новости и мероприятия стартап-экосистемы региона.{% endblock %}
+{% block og_title %}Stanbase — Global Startup & Investor Database{% endblock %}
+{% block og_description %}Stanbase — global platform for startups, investors, deals, jobs, news and events. Find innovative projects, investors, news and opportunities from around the world.{% endblock %}
+{% block twitter_title %}Stanbase — Global Startup & Investor Database{% endblock %}
+{% block twitter_description %}Stanbase — global platform for startups, investors, deals, jobs, news and events. Find innovative projects, investors, news and opportunities from around the world.{% endblock %}
 
 {% block head %}
 <style>
+  html, body {
+    font-size: 16px;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  }
   .card-google {
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
@@ -38,7 +39,7 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   }
   .section-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 1.2rem;
     letter-spacing: 0.01em;
@@ -79,17 +80,53 @@
     min-height: 2.8em;
     max-height: 2.8em;
   }
+  .main-link {
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2563eb;
+    text-decoration: none;
+    border-bottom: 2px solid #2563eb;
+    padding-bottom: 2px;
+    transition: color 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .main-link:hover {
+    color: #1d4ed8;
+    border-bottom: 2px solid #1d4ed8;
+    text-decoration: none;
+    transform: translateY(-2px) scale(1.04);
+  }
+  .card-title {
+    font-size: 1.08rem;
+    font-weight: 500;
+    margin-bottom: 0;
+  }
+  .display-5 {
+    font-size: 2.2rem;
+    font-weight: 700;
+  }
+  .hero-bg, .section-divider {
+    font-size: 1rem;
+  }
+  .text-muted, .small, .form-text {
+    font-size: 0.95rem;
+  }
+  input.form-control, .input-group-lg > .form-control {
+    font-size: 1rem;
+    height: auto;
+    padding: 0.5rem 1rem;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mb-3">
   <div class="col-lg-8 text-center">
-    <h1 class="display-5 mb-2" style="font-weight:700;">Stanbase</h1>
-    <p class="mb-3" style="font-size:1.25rem; font-weight:400;">База компаний, инвесторов, сделок, новостей, вакансий и мероприятий Центральной Азии</p>
+    <h1 class="display-5 mb-2">Stanbase</h1>
+    <p class="mb-3">База компаний, инвесторов, сделок, новостей, вакансий и мероприятий Центральной Азии</p>
     <form action="/companies" method="get" class="mb-3">
-      <div class="input-group input-group-lg shadow-sm">
-        <input type="text" name="q" class="form-control form-control-lg" placeholder="Поиск по компаниям, людям, инвесторам..." aria-label="Поиск">
+      <div class="input-group shadow-sm">
+        <input type="text" name="q" class="form-control" placeholder="Поиск по компаниям, людям, инвесторам..." aria-label="Поиск">
         <button class="btn btn-primary px-4" type="submit">Найти</button>
       </div>
     </form>
@@ -121,7 +158,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/companies" class="btn btn-link">Все компании →</a></div>
+  <div class="text-end"><a href="/companies" class="main-link">Все компании &rarr;</a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -151,7 +188,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/investors" class="btn btn-link">Все инвесторы →</a></div>
+  <div class="text-end"><a href="/investors" class="main-link">Все инвесторы &rarr;</a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -172,7 +209,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/news" class="btn btn-link">Все новости →</a></div>
+  <div class="text-end"><a href="/news" class="main-link">Все новости &rarr;</a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -193,7 +230,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/events" class="btn btn-link">Все мероприятия →</a></div>
+  <div class="text-end"><a href="/events" class="main-link">Все мероприятия &rarr;</a></div>
 </div>
 
 {% endblock %} 

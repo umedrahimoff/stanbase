@@ -1,81 +1,18 @@
 {% extends 'layout.html' %}
 
-{% block title %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} | Фокус: {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} | Стадии: {{ request.query_params.get('stages') }}{% endif %}
-    — Инвесторы | StanBase
-  {% else %}
-    Инвесторы Центральной Азии — Венчурные фонды и ангельские инвесторы | StanBase
-  {% endif %}
-{% endblock %}
+{% block title %}Investors | StanBase{% endblock %}
 
-{% block meta_description %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Найдите инвесторов по запросу "{{ request.query_params.get('q') }}"{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} с фокусом на {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} инвестирующих в стадии {{ request.query_params.get('stages') }}{% endif %}. Каталог инвесторов Центральной Азии.
-  {% else %}
-    Каталог инвесторов Центральной Азии. Венчурные фонды, ангельские инвесторы и инвестиционные компании в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.
-  {% endif %}
-{% endblock %}
+{% block meta_description %}Catalog of global investors, venture funds, and angel investors. Find partners for your startup, search by focus, stage, country.{% endblock %}
 
-{% block meta_keywords %}
-  {% if request.query_params.get('q') %}{{ request.query_params.get('q') }}, {% endif %}
-  {% if request.query_params.get('country') %}{{ request.query_params.get('country') }}, {% endif %}
-  {% if request.query_params.get('focus') %}{{ request.query_params.get('focus') }}, {% endif %}
-  {% if request.query_params.get('stages') %}{{ request.query_params.get('stages') }}, {% endif %}
-  инвесторы Центральной Азии, венчурные фонды, ангельские инвесторы, инвестиции в компании, венчурный капитал, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
-{% endblock %}
+{% block meta_keywords %}investors, venture capital, angel investors, global, funding, startups, technology, SaaS, AI, business, international{% endblock %}
 
-{% block og_title %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} | Фокус: {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} | Стадии: {{ request.query_params.get('stages') }}{% endif %}
-    — Инвесторы | StanBase
-  {% else %}
-    Инвесторы Центральной Азии — Венчурные фонды и ангельские инвесторы | StanBase
-  {% endif %}
-{% endblock %}
+{% block og_title %}Investors — Global Catalog | StanBase{% endblock %}
 
-{% block og_description %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Найдите инвесторов по запросу "{{ request.query_params.get('q') }}"{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} с фокусом на {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} инвестирующих в стадии {{ request.query_params.get('stages') }}{% endif %}. Каталог инвесторов Центральной Азии.
-  {% else %}
-    Каталог инвесторов Центральной Азии. Венчурные фонды, ангельские инвесторы и инвестиционные компании в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.
-  {% endif %}
-{% endblock %}
+{% block og_description %}Catalog of global investors, venture funds, and angel investors. Find partners for your startup, search by focus, stage, country.{% endblock %}
 
-{% block twitter_title %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} | Фокус: {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} | Стадии: {{ request.query_params.get('stages') }}{% endif %}
-    — Инвесторы | StanBase
-  {% else %}
-    Инвесторы Центральной Азии — Венчурные фонды и ангельские инвесторы | StanBase
-  {% endif %}
-{% endblock %}
+{% block twitter_title %}Investors | StanBase{% endblock %}
 
-{% block twitter_description %}
-  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('focus') or request.query_params.get('stages') %}
-    {% if request.query_params.get('q') %}Найдите инвесторов по запросу "{{ request.query_params.get('q') }}"{% endif %}
-    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
-    {% if request.query_params.get('focus') %} с фокусом на {{ request.query_params.get('focus') }}{% endif %}
-    {% if request.query_params.get('stages') %} инвестирующих в стадии {{ request.query_params.get('stages') }}{% endif %}. Каталог инвесторов Центральной Азии.
-  {% else %}
-    Каталог инвесторов Центральной Азии. Венчурные фонды, ангельские инвесторы и инвестиционные компании в регионе.
-  {% endif %}
-{% endblock %}
+{% block twitter_description %}Catalog of global investors, venture funds, and angel investors. Find partners for your startup, search by focus, stage, country.{% endblock %}
 {% block head %}
 <style>
   .card-google {

@@ -65,9 +65,9 @@
           <ul class="list-group mb-4">
             {% for deal in deals %}
               <li class="list-group-item">
-                <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ deal.amount|int }} {{ deal.currency }}{% else %}{{ (deal.amount|string)[:2] }}**** {{ deal.currency }}{% endif %}
+                <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ "{:,}".format(deal.amount|int) }} {{ deal.currency.code if deal.currency else '—' }}{% else %}{{ (deal.amount|string)[:2] }}**** {{ deal.currency.code if deal.currency else '—' }}{% endif %}
                 <span class="text-muted small">({{ deal.date.strftime('%d.%m.%Y') if deal.date else '' }})</span><br>
-                <span class="text-muted small">Оценка: {% if session is defined and session.get('user_id') %}{{ deal.valuation|int if deal.valuation else '—' }}{% else %}{{ (deal.valuation|string)[:2] if deal.valuation else '--' }}****{% endif %}</span><br>
+                <span class="text-muted small">Оценка: {% if session is defined and session.get('user_id') %}{{ "{:,}".format(deal.valuation|int) if deal.valuation else '—' }}{% else %}{{ (deal.valuation|string)[:2] if deal.valuation else '--' }}****{% endif %}</span><br>
                 <span class="text-muted small">Инвестор(ы):
                   {% set inv_names = deal.investors.split(',') if deal.investors else [] %}
                   {% for inv in inv_names %}

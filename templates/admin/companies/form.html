@@ -14,7 +14,7 @@
               <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">Команда</button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="rounds-tab" data-bs-toggle="tab" data-bs-target="#rounds" type="button" role="tab">Раунды</button>
+              <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">Сделки</button>
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs" type="button" role="tab">Вакансии</button>
@@ -22,6 +22,7 @@
           </ul>
           {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
           <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="active_tab" id="active_tab_input" value="main">
             <div class="tab-content" id="companyTabContent">
               <div class="tab-pane fade show active" id="main" role="tabpanel">
                 <div class="mb-3">
@@ -112,8 +113,34 @@
                   </tbody>
                 </table>
               </div>
-              <div class="tab-pane fade" id="rounds" role="tabpanel">
-                <div class="text-muted">Раздел "Раунды" в разработке.</div>
+              <div class="tab-pane fade" id="deals" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Сделки</h5>
+                  <a href="#" class="btn btn-outline-primary btn-sm">Добавить сделку</a>
+                </div>
+                <form class="row g-2 mb-3">
+                  <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" placeholder="Поиск по сделкам..." name="q">
+                  </div>
+                  <div class="col-md-3">
+                    <select class="form-select form-select-sm" name="status">
+                      <option value="">Статус (все)</option>
+                      <option value="active">Активна</option>
+                      <option value="inactive">Неактивна</option>
+                      <option value="archived">Архив</option>
+                      <option value="draft">Черновик</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Фильтр</button>
+                  </div>
+                </form>
+                <table class="table table-sm table-hover">
+                  <thead><tr><th>ID</th><th>Тип</th><th>Сумма</th><th>Оценка</th><th>Дата</th><th>Инвесторы</th><th>Статус</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td colspan="8" class="text-muted">Нет сделок.</td></tr>
+                  </tbody>
+                </table>
               </div>
               <div class="tab-pane fade" id="jobs" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -203,20 +230,38 @@
 {% block scripts %}
 {{ super() }}
 <script>
-// Сохраняем активный таб в localStorage
+// Сохраняем активный таб в localStorage и hidden input
 const tabKey = 'adminCompanyTabActive';
 document.addEventListener('DOMContentLoaded', function() {
-  // Восстановить активный таб
-  const savedTab = localStorage.getItem(tabKey);
-  if (savedTab && document.querySelector(savedTab)) {
-    var tab = new bootstrap.Tab(document.querySelector(savedTab));
+  // Восстановить активный таб из query-параметра
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  if (tabFromUrl && document.querySelector(`#${tabFromUrl}-tab`)) {
+    var tab = new bootstrap.Tab(document.querySelector(`#${tabFromUrl}-tab`));
     tab.show();
+    document.getElementById('active_tab_input').value = tabFromUrl;
+  } else {
+    // Восстановить активный таб из localStorage
+    const savedTab = localStorage.getItem(tabKey);
+    if (savedTab && document.querySelector(savedTab)) {
+      var tab = new bootstrap.Tab(document.querySelector(savedTab));
+      tab.show();
+      document.getElementById('active_tab_input').value = savedTab.replace('-tab','');
+    }
   }
   // Сохранять активный таб при переключении
   document.querySelectorAll('#companyTab button[data-bs-toggle="tab"]').forEach(function(btn) {
     btn.addEventListener('shown.bs.tab', function(e) {
       localStorage.setItem(tabKey, '#' + e.target.getAttribute('id'));
+      document.getElementById('active_tab_input').value = e.target.getAttribute('data-bs-target').replace('#','');
     });
+  });
+  // Перед сабмитом формы обновлять hidden input
+  document.querySelector('form').addEventListener('submit', function() {
+    var activeTab = document.querySelector('#companyTab .nav-link.active');
+    if (activeTab) {
+      document.getElementById('active_tab_input').value = activeTab.getAttribute('data-bs-target').replace('#', '');
+    }
   });
 });
 </script>

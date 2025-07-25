@@ -72,10 +72,11 @@ class Deal(Base):
     amount = Column(Float)
     valuation = Column(Float, nullable=True)
     date = Column(Date)
-    currency = Column(String(8))
+    currency_id = Column(Integer, ForeignKey('currency.id'))
     company_id = Column(Integer, ForeignKey('company.id'))
     investors = Column(String(256))
     status = Column(String(16), default='active')
+    currency = relationship('Currency', backref='deals')
 
 class Person(Base):
     __tablename__ = 'person'
@@ -182,4 +183,12 @@ class Author(Base):
     description = Column(Text)
     website = Column(String(256))
     status = Column(String(16), default='active')
-    news = relationship('News', backref='author') 
+    news = relationship('News', backref='author')
+
+class Currency(Base):
+    __tablename__ = 'currency'
+    id = Column(Integer, primary_key=True)
+    code = Column(String(8), unique=True, nullable=False)  # USD, EUR, KZT, etc.
+    name = Column(String(64), nullable=False)  # Доллар США, Евро, Тенге
+    symbol = Column(String(8))  # $, €, ₸
+    status = Column(String(16), default='active') 
