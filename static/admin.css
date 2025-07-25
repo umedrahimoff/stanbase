@@ -164,3 +164,10 @@ body.dark form {
   background: #23263a;
   color: #e5e9f2;
 } 
+/* Яркая подсветка активного пункта меню в админке */
+.nav-link.active {
+    background-color: #e3f0ff !important; /* светло-синий фон */
+    color: #0056b3 !important;            /* более тёмный синий текст */
+    border-left: 4px solid #007bff;       /* синяя полоска слева */
+    font-weight: 500;
+} 

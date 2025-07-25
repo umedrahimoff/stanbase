@@ -23,7 +23,7 @@
           <ul class="nav flex-column">
             <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Дашборд</a></li>
             <li class="nav-item">
-              <span class="nav-link fw-bold">Все пользователи</span>
+              <a class="nav-link {% if request.url.path.startswith('/admin/users') or request.url.path.startswith('/admin/admins') %}active{% endif %}" href="#">Все пользователи</a>
               <ul class="nav flex-column ms-3">
                 <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/users' %}active{% endif %}" href="/admin/users">Пользователи</a></li>
                 <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/admins' %}active{% endif %}" href="/admin/admins">Администраторы</a></li>
