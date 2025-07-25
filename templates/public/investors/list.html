@@ -109,11 +109,10 @@
             {% endif %}
             <div>
               <h5 class="card-title mb-0"><a href="/investor/{{ inv.id }}">{{ inv.name }}</a></h5>
-              <div class="text-muted small">{{ inv.country }} | {{ inv_type }}</div>
-              <div class="text-muted small">{{ inv.focus }} | {{ inv.stages }}</div>
+              <div class="text-muted small">{{ inv.country }} | {{ inv.focus }} | {{ inv.stages }}</div>
             </div>
           </div>
-          <p class="card-text mb-0 two-lines">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
+          <p class="card-text mb-0 two-lines">{{ inv.description }}</p>
         </div>
       </div>
     </div>
