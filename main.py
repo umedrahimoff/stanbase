@@ -1556,7 +1556,9 @@ async def not_found(request: Request, exc: StarletteHTTPException):
 def root():
     return "Stanbase API is running"
 
+# Гарантируем создание таблиц при любом запуске
+Base.metadata.create_all(bind=engine)
+
 if __name__ == "__main__":
     print('SERVER STARTED')
-    Base.metadata.create_all(bind=engine)
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
