@@ -297,10 +297,40 @@ def news_list(request: Request):
 
 @app.get("/news/{id}", response_class=HTMLResponse)
 def news_detail(request: Request, id: int = Path(...)):
+    from models import News, Event, Job, Company
+    from sqlalchemy import and_
+    from datetime import datetime
+    
     db = SessionLocal()
+    
+    # Основная новость
     news = db.query(News).get(id)
+    
+    # Другие новости (исключая текущую)
+    other_news = db.query(News).filter(News.id != id).order_by(News.date.desc()).limit(5).all()
+    
+    # Ближайшие мероприятия (будущие)
+    upcoming_events = db.query(Event).filter(
+        and_(Event.date >= datetime.now(), Event.status == 'active')
+    ).order_by(Event.date.asc()).limit(3).all()
+    
+    # Актуальные вакансии
+    recent_jobs = db.query(Job).filter(Job.status == 'active').order_by(Job.id.desc()).limit(3).all()
+    
+    # Популярные компании (по количеству сделок)
+    popular_companies = db.query(Company).filter(Company.status == 'active').order_by(Company.id.desc()).limit(3).all()
+    
     db.close()
-    return templates.TemplateResponse("public/news/detail.html", {"request": request, "session": request.session, "news": news})
+    
+    return templates.TemplateResponse("public/news/detail.html", {
+        "request": request, 
+        "session": request.session, 
+        "news": news,
+        "other_news": other_news,
+        "upcoming_events": upcoming_events,
+        "recent_jobs": recent_jobs,
+        "popular_companies": popular_companies
+    })
 
 @app.get("/events", response_class=HTMLResponse)
 def events_list(request: Request):
