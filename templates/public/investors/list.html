@@ -82,11 +82,37 @@
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     background: #fff;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     transition: box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: unset;
   }
-  .card-google:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  .card-google .card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0.9rem 1rem 0.8rem 1rem;
+  }
+  .card-text.two-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.7em;
+    max-height: 2.7em;
+    margin-bottom: 0;
+  }
+  .card-title {
+    font-size: 1.08rem;
+    font-weight: 500;
+    margin-bottom: 0;
+  }
+  .card-google .mb-2 {
+    margin-bottom: 0.3rem !important;
   }
 </style>
 {% endblock %}
@@ -138,10 +164,19 @@
     <div class="col">
       <div class="card card-google h-100">
         <div class="card-body">
-          <h5 class="card-title"><a href="/investor/{{ inv.id }}">{{ inv.name }}</a></h5>
-          <div class="mb-1 text-muted small">{{ inv.country }} | {{ inv_type }}</div>
-          <div class="mb-2 text-muted small">{{ inv.focus }} | {{ inv.stages }}</div>
-          <p class="card-text">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
+          <div class="d-flex align-items-center mb-2">
+            {% if inv.logo %}
+              <img src="{{ inv.logo }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% else %}
+              <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ inv.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% endif %}
+            <div>
+              <h5 class="card-title mb-0"><a href="/investor/{{ inv.id }}">{{ inv.name }}</a></h5>
+              <div class="text-muted small">{{ inv.country }} | {{ inv_type }}</div>
+              <div class="text-muted small">{{ inv.focus }} | {{ inv.stages }}</div>
+            </div>
+          </div>
+          <p class="card-text mb-0 two-lines">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
           {% if inv.type in ['angel', 'venture'] and inv.portfolio %}
             <div class="mt-2 small text-muted">Портфель: {{ inv.portfolio|length }} компания(й)</div>
           {% endif %}

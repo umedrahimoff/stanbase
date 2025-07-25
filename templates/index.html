@@ -22,6 +22,17 @@
     background: #fff;
     margin-bottom: 1.5rem;
     transition: box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: unset;
+  }
+  .card-google .card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0.9rem 1rem 0.8rem 1rem;
   }
   .card-google:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
@@ -94,7 +105,11 @@
       <div class="card card-google h-100">
         <div class="card-body">
           <div class="d-flex align-items-center mb-2">
-            <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ c.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% if c.logo %}
+              <img src="{{ c.logo }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% else %}
+              <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ c.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% endif %}
             <div>
               <h5 class="card-title mb-0"><a href="/company/{{ c.id }}">{{ c.name }}</a></h5>
               <div class="text-muted small">{{ c.country }}, {{ c.city }} | {{ c.stage }} | {{ c.industry }}</div>
@@ -118,9 +133,18 @@
       <a href="/investor/{{ i.id }}" class="card-google-link">
         <div class="card card-google h-100">
           <div class="card-body">
-            <h5 class="card-title mb-1">{{ i.name }}</h5>
-            <div class="mb-2 text-muted small">{{ i.country }} | {{ i.focus }} | {{ i.stages }}</div>
-            <p class="card-text">{{ i.description[:120] }}{% if i.description|length > 120 %}...{% endif %}</p>
+            <div class="d-flex align-items-center mb-2">
+              {% if i.logo %}
+                <img src="{{ i.logo }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+              {% else %}
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ i.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+              {% endif %}
+              <div>
+                <h5 class="card-title mb-0">{{ i.name }}</h5>
+                <div class="text-muted small">{{ i.country }} | {{ i.focus }} | {{ i.stages }}</div>
+              </div>
+            </div>
+            <p class="card-text mb-0 two-lines">{{ i.description[:120] }}{% if i.description|length > 120 %}...{% endif %}</p>
           </div>
         </div>
       </a>
@@ -149,27 +173,6 @@
     {% endfor %}
   </div>
   <div class="text-end"><a href="/news" class="btn btn-link">Все новости →</a></div>
-</div>
-
-<div class="section-divider"></div>
-<div class="container-lg">
-  <div class="section-title">Подкасты</div>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for p in podcasts[:6] %}
-    <div class="col">
-      <a href="#" class="card-google-link">
-        <div class="card card-google h-100">
-          <div class="card-body">
-            <h5 class="card-title mb-1">{{ p.title }}</h5>
-            <div class="mb-2 text-muted small">{{ p.date.strftime('%d.%m.%Y') }}</div>
-            <p class="card-text">{{ p.description }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-  <div class="text-end"><a href="/podcasts" class="btn btn-link">Все подкасты →</a></div>
 </div>
 
 <div class="section-divider"></div>

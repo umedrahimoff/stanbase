@@ -21,7 +21,7 @@
             </li>
           </ul>
           {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-          <form method="post">
+          <form method="post" enctype="multipart/form-data">
             <div class="tab-content" id="companyTabContent">
               <div class="tab-pane fade show active" id="main" role="tabpanel">
                 <div class="mb-3">
@@ -31,6 +31,16 @@
                 <div class="mb-3">
                   <label for="description" class="form-label">Описание</label>
                   <textarea class="form-control" id="description" name="description" rows="3">{{ company.description if company else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="logo" class="form-label">Логотип компании</label>
+                  {% if company and company.logo %}
+                    <div class="mb-2">
+                      <img src="{{ company.logo }}" alt="Логотип" style="max-width: 120px; max-height: 120px; border-radius: 8px; background: #f8f9fa;">
+                    </div>
+                  {% endif %}
+                  <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                  <div class="form-text">PNG, JPG, до 2 МБ</div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-4">

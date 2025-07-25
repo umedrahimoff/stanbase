@@ -63,6 +63,7 @@ class Investor(Base):
     website = Column(String(256))
     status = Column(String(16), default='active')
     type = Column(String(16), default='angel')
+    logo = Column(String(256), nullable=True)  # путь к файлу логотипа
 
 class Deal(Base):
     __tablename__ = 'deal'

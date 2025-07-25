@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import subprocess
 from fastapi import APIRouter
+from sqlalchemy import or_
 
 from db import SessionLocal, Base, engine
 from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage
@@ -186,10 +187,24 @@ def company_profile(request: Request, id: int = Path(...)):
     jobs = list(company.jobs)
     investors = db.query(Investor).all()
     investor_dict = {inv.name: inv for inv in investors}
+
+    # --- Логика подбора похожих компаний ---
+    similar_query = db.query(Company).filter(Company.id != company.id)
+    filters = []
+    if company.country:
+        filters.append(Company.country == company.country)
+    if company.stage:
+        filters.append(Company.stage == company.stage)
+    if company.industry:
+        filters.append(Company.industry == company.industry)
+    if filters:
+        similar_query = similar_query.filter(or_(*filters))
+    similar = similar_query.limit(6).all()
+
     db.close()
     return templates.TemplateResponse(
         "public/companies/detail.html",
-        {"request": request, "company": company, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session}
+        {"request": request, "company": company, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session, "similar": similar}
     )
 
 @app.get("/investors", response_class=HTMLResponse)
@@ -1390,9 +1405,23 @@ async def admin_edit_investor_post(request: Request, investor_id: int):
     investor.stages = form.get('stages')
     investor.website = form.get('website')
     investor.type = form.get('type')
+
+    # --- обработка логотипа ---
+    logo_file = form.get('logo')
+    if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
+        import os
+        filename = f"investor_{investor_id}_{logo_file.filename}"
+        save_dir = os.path.join("static", "logos")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await logo_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        investor.logo = f"/static/logos/{filename}"
+
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/investors", status_code=302)
+    return RedirectResponse(url=f"/admin/investors/edit/{investor_id}", status_code=302)
 
 @app.post("/admin/investors/delete/{investor_id}", name="admin_delete_investor")
 async def admin_delete_investor(request: Request, investor_id: int):
@@ -1730,6 +1759,7 @@ async def admin_edit_company(request: Request, company_id: int):
 async def admin_edit_company_post(request: Request, company_id: int):
     from models import Company
     import datetime
+    import os
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
@@ -1744,6 +1774,19 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.industry = form.get('industry')
     company.website = form.get('website')
     company.updated_at = datetime.datetime.utcnow()
+
+    # --- обработка логотипа ---
+    logo_file = form.get('logo')
+    if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
+        filename = f"company_{company_id}_{logo_file.filename}"
+        save_dir = os.path.join("static", "logos")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await logo_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        company.logo = f"/static/logos/{filename}"
+
     db.commit()
     db.close()
     return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
