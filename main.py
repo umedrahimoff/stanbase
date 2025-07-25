@@ -1608,7 +1608,8 @@ def create_full_test_data():
             Startup(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
             Startup(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
             Startup(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
-            Startup(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com")
+            Startup(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com"),
+            Startup(name="BILLZ", description="Программа для магазина, складского и товарного учёта, автоматизации продаж.", country="Казахстан", city="Алматы", stage="Growth", industry="SaaS, RetailTech", website="https://billz.io/")
         ]
         session.add_all(startups)
         session.commit()
