@@ -26,6 +26,7 @@ def main():
     local_session = LocalSession()
     prod_session = ProdSession()
     try:
+        print(f"Подключение к прод-базе: {PROD_DB_URL}")
         # Порядок важен из-за внешних ключей
         for model in [Country, City, Category, StartupStage, Author, Startup, Investor, User, News, Podcast, Event, Deal, Person, Job, PortfolioEntry]:
             copy_table(local_session, prod_session, model)
