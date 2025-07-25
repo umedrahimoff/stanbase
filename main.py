@@ -1684,8 +1684,12 @@ router = APIRouter()
 
 @router.get("/run-migration")
 def run_migration():
-    result = subprocess.run(["python3", "migrate_to_prod.py"], capture_output=True, text=True)
-    return {"stdout": result.stdout, "stderr": result.stderr}
+    try:
+        import migrate_to_prod
+        migrate_to_prod.migrate_production_database()
+        return {"success": True, "message": "Миграция выполнена успешно"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 app.include_router(router)
 
