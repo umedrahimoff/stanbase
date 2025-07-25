@@ -1643,6 +1643,10 @@ def create_full_test_data():
         session.add_all(countries)
         session.commit()
     country_dict = {c.name: c.id for c in session.query(Country).all()}
+    if not country_dict:
+        print("Нет ни одной страны в базе, пользователи не будут созданы!")
+        session.close()
+        return
     kz_id = country_dict.get("Казахстан") or list(country_dict.values())[0]
     # City
     if not session.query(City).first():
