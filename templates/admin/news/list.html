@@ -44,7 +44,7 @@
       <tr>
         <td>{{ n.id }}</td>
         <td>{{ n.title }}</td>
-        <td>{{ n.date }}</td>
+        <td>{{ n.date.strftime('%d.%m.%Y') if n.date else '—' }}</td>
         <td>{% if n.author %}{{ n.author.name }}{% else %}—{% endif %}</td>
         <td>{{ n.status }}</td>
         <td class="text-end">
