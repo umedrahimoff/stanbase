@@ -1598,33 +1598,27 @@ def create_full_test_data():
         authors = [Author(name=n, description=f"Автор {n}") for n in ["Иванов", "Петров", "Сидоров"]]
         session.add_all(authors)
         session.commit()
-    # Startup (реальные примеры ЦА)
+    # Startup (реальные примеры ЦА, максимально живые)
     if not session.query(Startup).first():
         startups = [
-            Startup(name="CerebraAI", description="AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
-            Startup(name="Uzum", description="Крупнейшая цифровая экосистема — маркетплейс, финтех, BNPL, логистика.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
-            Startup(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в ЦА.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
-            Startup(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech")
+            Startup(name="CerebraAI", description="Платформа на базе искусственного интеллекта для диагностики инсульта и других заболеваний по КТ/МРТ. Используется более чем в 50 больницах, финалист TechCrunch Battlefield.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
+            Startup(name="Uzum", description="Крупнейшая цифровая экосистема в Узбекистане: маркетплейс, финтех, BNPL, логистика, онлайн-банк. Более 15 млн пользователей.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
+            Startup(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
+            Startup(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
+            Startup(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
+            Startup(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com")
         ]
         session.add_all(startups)
-        session.commit()
-    # Investor (реальные фонды ЦА)
-    if not session.query(Investor).first():
-        investors = [
-            Investor(name="MOST Ventures", description="Один из крупнейших венчурных фондов ЦА, инвестирует в IT и DeepTech.", country="Казахстан", focus="IT, DeepTech", stages="Seed, Growth", website="https://mostventures.kz", type="venture"),
-            Investor(name="Quest Ventures", description="Международный фонд, активен в ЦА, инвестирует в AI, SaaS, Fintech.", country="Казахстан", focus="AI, SaaS, Fintech", stages="Seed, Series A", website="https://www.questventures.com", type="venture"),
-            Investor(name="Big Sky Capital", description="Фонд, инвестирующий в стартапы на ранних стадиях в ЦА.", country="Казахстан", focus="IT, HealthTech", stages="Pre-seed, Seed", website="https://bigskycapital.vc", type="venture")
-        ]
-        session.add_all(investors)
         session.commit()
     # News (реальные/реалистичные)
     if not session.query(News).first():
         news = [
-            News(title="CerebraAI привлекла $2 млн от Quest Ventures и Big Sky Capital", summary="Казахстанский HealthTech-стартап получил инвестиции от ведущих фондов региона.", date="2024-06-01", content="CerebraAI, ведущий AI-стартап в сфере медицины, объявил о привлечении $2 млн от Quest Ventures и Big Sky Capital.", status="active"),
-            News(title="Uzum стал первым единорогом в Узбекистане", summary="Оценка Uzum превысила $1 млрд — это первый единорог страны.", date="2024-05-15", content="Экосистема Uzum объявила о достижении оценки $1 млрд и планах по экспансии.", status="active"),
-            News(title="Tezbus запускает сервис онлайн-бронирования билетов в Кыргызстане", summary="Tezbus расширяет сервисы по всей Центральной Азии.", date="2024-04-20", content="Tezbus Group запустила новый сервис для онлайн-бронирования междугородних поездок.", status="active"),
+            News(title="CerebraAI вошла в топ-200 стартапов TechCrunch Battlefield", summary="Казахстанский HealthTech-стартап получил международное признание.", date="2024-06-01", content="CerebraAI, ведущий AI-стартап в сфере медицины, вошёл в топ-200 стартапов TechCrunch Battlefield.", status="active"),
+            News(title="Uzum привлек $50 млн инвестиций и стал первым единорогом Узбекистана", summary="Оценка Uzum превысила $1 млрд — это первый единорог страны.", date="2024-05-15", content="Экосистема Uzum объявила о привлечении $50 млн и достижении оценки $1 млрд.", status="active"),
+            News(title="Tezbus запустил онлайн-бронирование билетов в Кыргызстане", summary="Tezbus расширяет сервисы по всей Центральной Азии.", date="2024-04-20", content="Tezbus Group запустила новый сервис для онлайн-бронирования междугородних поездок.", status="active"),
             News(title="Voicy внедряет распознавание казахской речи в госуслугах", summary="Voicy помогает цифровизации госуслуг в Казахстане.", date="2024-03-10", content="Voicy интегрировала свою AI-платформу в ряд государственных сервисов Казахстана.", status="active"),
-            News(title="MOST Ventures инвестирует в HealthTech-стартапы Казахстана", summary="Фонд MOST Ventures объявил о новом раунде инвестиций.", date="2024-02-28", content="MOST Ventures инвестировал в три новых HealthTech-проекта в Казахстане.", status="active")
+            News(title="FORBOSSINFO запускает мультисервисную платформу для бизнеса в ЦА", summary="FORBOSSINFO выходит на рынок Казахстана и Узбекистана.", date="2024-03-01", content="FORBOSSINFO — первая мультисервисная платформа для бизнеса в Центральной Азии, стартовала в Казахстане.", status="active"),
+            News(title="Pamir Group внедряет водородные технологии в Таджикистане", summary="Pamir Group реализует проекты по зелёной энергетике.", date="2024-02-15", content="Pamir Group OÜ внедряет решения по производству зелёного водорода и модернизации энергетики Таджикистана.", status="active")
         ]
         session.add_all(news)
         session.commit()
