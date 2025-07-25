@@ -1559,11 +1559,24 @@ def root():
 # Гарантируем создание таблиц при любом запуске
 Base.metadata.create_all(bind=engine)
 
-# --- Автоматическое создание тестовых пользователей ---
-def create_test_users():
+# --- Автоматическое создание тестовых стартапов и пользователей ---
+def create_test_startups_and_users():
     from db import SessionLocal
     from models import User, Startup, Country
     session = SessionLocal()
+    # Создать тестовый стартап, если его нет
+    if not session.query(Startup).first():
+        startup = Startup(
+            name="CerebraAI",
+            description="AI для диагностики инсульта и других заболеваний по КТ/МРТ. Лидер в HealthTech Казахстана.",
+            country="Казахстан",
+            city="Алматы",
+            stage="Growth",
+            industry="HealthTech",
+            website="https://cerebraai.ai"
+        )
+        session.add(startup)
+        session.commit()
     # Админ
     if not session.query(User).filter_by(username="admin").first():
         admin_user = User(
@@ -1617,7 +1630,7 @@ def create_test_users():
             session.commit()
     session.close()
 
-create_test_users()
+create_test_startups_and_users()
 
 if __name__ == "__main__":
     print('SERVER STARTED')
