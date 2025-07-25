@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, User, Startup, Investor, News, Country, City, Category, StartupStage, Author, Podcast, Event, Deal, Person, Job, PortfolioEntry
 
 # Укажите строку подключения к прод-базе (например, из переменной окружения или напрямую)
-PROD_DB_URL = os.getenv("PROD_DATABASE_URL", "postgresql://user:password@host:port/dbname")
+PROD_DB_URL = os.getenv("DATABASE_URL")
 LOCAL_DB_URL = "sqlite:///instance/stanbase.db"
 
 local_engine = create_engine(LOCAL_DB_URL)
