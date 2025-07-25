@@ -96,6 +96,33 @@
     text-decoration: none;
     transform: translateY(-2px) scale(1.04);
   }
+  .section-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2563eb;
+    background-color: #eff6ff;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+  }
+  .section-button:hover {
+    color: #ffffff;
+    background-color: #2563eb;
+    border-color: #2563eb;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+  }
+  .section-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+  }
   .card-title {
     font-size: 1.08rem;
     font-weight: 500;
@@ -158,7 +185,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/companies" class="main-link">Все компании &rarr;</a></div>
+  <div class="text-end"><a href="/companies" class="section-button">Все компании <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -188,7 +215,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/investors" class="main-link">Все инвесторы &rarr;</a></div>
+  <div class="text-end"><a href="/investors" class="section-button">Все инвесторы <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -209,7 +236,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/news" class="main-link">Все новости &rarr;</a></div>
+  <div class="text-end"><a href="/news" class="section-button">Все новости <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
 </div>
 
 <div class="section-divider"></div>
@@ -230,7 +257,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end"><a href="/events" class="main-link">Все мероприятия &rarr;</a></div>
+  <div class="text-end"><a href="/events" class="section-button">Все мероприятия <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
 </div>
 
 {% endblock %} 
