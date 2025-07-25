@@ -190,6 +190,7 @@ if not session.query(News).first():
             summary=f"Краткое описание новости о {company.name} и инновациях.",
             date=date.today() - timedelta(days=i),
             content=f"Подробности о запуске, инвестициях и планах {company.name}.",
+            views=0,
             status='active'
         ))
     session.commit()

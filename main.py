@@ -352,6 +352,10 @@ def news_detail(request: Request, slug: str = Path(...)):
         db.close()
         raise HTTPException(status_code=404, detail="Новость не найдена")
     
+    # Увеличиваем счетчик просмотров
+    news.views = (news.views or 0) + 1
+    db.commit()
+    
     # Другие новости (исключая текущую)
     other_news = db.query(News).filter(News.id != news.id).order_by(News.date.desc()).limit(5).all()
     

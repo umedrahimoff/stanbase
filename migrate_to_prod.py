@@ -122,6 +122,25 @@ def migrate_production_database():
         else:
             print("Колонка slug уже существует в таблице news")
         
+        # Проверяем существование колонки views в таблице news
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'news' AND column_name = 'views'
+            );
+        """)
+        
+        views_exists = cursor.fetchone()[0]
+        
+        if not views_exists:
+            print("Добавляем колонку views в таблицу news...")
+            cursor.execute("""
+                ALTER TABLE news ADD COLUMN views INTEGER DEFAULT 0;
+            """)
+            print("Колонка views добавлена в таблицу news")
+        else:
+            print("Колонка views уже существует в таблице news")
+        
         # Фиксируем изменения
         conn.commit()
         print("Миграция успешно выполнена!")

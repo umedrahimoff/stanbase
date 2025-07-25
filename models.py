@@ -95,6 +95,7 @@ class News(Base):
     summary = Column(String(512))
     date = Column(Date, default=datetime.utcnow)
     content = Column(Text)
+    views = Column(Integer, default=0)
     status = Column(String(16), default='active')
     author_id = Column(Integer, ForeignKey('author.id'), nullable=True)
 
