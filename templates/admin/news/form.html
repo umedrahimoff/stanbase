@@ -11,21 +11,59 @@
           </li>
         </ul>
         {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" id="active_tab_input" name="active_tab" value="main">
           <div class="tab-content" id="newsTabContent">
             <div class="tab-pane fade show active" id="main" role="tabpanel">
-              <div class="mb-3">
-                <label class="form-label">Заголовок</label>
-                <input type="text" name="title" class="form-control" value="{{ news_item.title if news_item else '' }}" required>
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="mb-3">
+                    <label class="form-label">Заголовок <span class="text-danger">*</span></label>
+                    <input type="text" name="title" class="form-control" value="{{ news_item.title if news_item else '' }}" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">Дата <span class="text-danger">*</span></label>
+                    <input type="date" name="date" class="form-control" value="{{ news_item.date.strftime('%Y-%m-%d') if news_item and news_item.date else '' }}" required>
+                  </div>
+                </div>
               </div>
+              
               <div class="mb-3">
-                <label class="form-label">Дата (YYYY-MM-DD)</label>
-                <input type="text" name="date" class="form-control" value="{{ news_item.date if news_item and news_item.date else '' }}" required>
+                <label class="form-label">Автор</label>
+                <select name="author_id" class="form-select">
+                  <option value="">Выберите автора</option>
+                  {% for author in authors %}
+                    <option value="{{ author.id }}" {% if news_item and news_item.author_id == author.id %}selected{% endif %}>
+                      {{ author.name }}
+                    </option>
+                  {% endfor %}
+                </select>
               </div>
+              
               <div class="mb-3">
-                <label class="form-label">Кратко</label>
-                <input type="text" name="summary" class="form-control" value="{{ news_item.summary if news_item else '' }}">
+                <label class="form-label">Краткое описание</label>
+                <textarea name="summary" class="form-control" rows="2" placeholder="Краткое описание новости">{{ news_item.summary if news_item else '' }}</textarea>
               </div>
+              
+              <div class="mb-3">
+                <label class="form-label">SEO описание</label>
+                <textarea name="seo_description" class="form-control" rows="2" placeholder="Описание для поисковых систем (meta description)">{{ news_item.seo_description if news_item else '' }}</textarea>
+                <div class="form-text">Используется для meta description. Рекомендуется 150-160 символов.</div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Изображение новости</label>
+                {% if news_item and news_item.image %}
+                  <div class="mb-2">
+                    <img src="{{ news_item.image }}" alt="Текущее изображение" style="max-width: 200px; height: auto;" class="border rounded">
+                  </div>
+                {% endif %}
+                <input type="file" name="image" class="form-control" accept="image/*">
+                <div class="form-text">Рекомендуемый размер: 1200x630px. Поддерживаемые форматы: JPG, PNG, WebP.</div>
+              </div>
+              
               <div class="mb-3">
                 <label class="form-label">Статус</label>
                 <select name="status" class="form-select" required>
@@ -35,9 +73,11 @@
                   <option value="draft" {% if news_item and news_item.status=='draft' %}selected{% endif %}>Черновик</option>
                 </select>
               </div>
+              
               <div class="mb-3">
-                <label class="form-label">Текст новости</label>
-                <textarea name="content" class="form-control">{{ news_item.content if news_item else '' }}</textarea>
+                <label class="form-label">Текст новости <span class="text-danger">*</span></label>
+                <textarea name="content" id="content-editor" class="form-control" rows="15" required>{{ news_item.content if news_item else '' }}</textarea>
+                <div class="form-text">Поддерживается HTML разметка. Используйте &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.</div>
               </div>
             </div>
           </div>
@@ -55,20 +95,103 @@
         <h6 class="text-muted mb-3">Тех. информация</h6>
         {% if news_item %}
           <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ news_item.id }}</span></div>
-        {% endif %}
-        <div class="meta-row"><span class="meta-label">Дата:</span> <span class="meta-value">{{ news_item.date if news_item and news_item.date else '—' }}</span></div>
-        {% if news_item %}
-          <div class="meta-row"><a href="/news/{{ news_item.id }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Открыть на сайте</a></div>
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ news_item.status }}</span></div>
+          <div class="meta-row"><span class="meta-label">Просмотры:</span> <span class="meta-value">{{ news_item.views|default(0) }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата создания:</span> <span class="meta-value">{{ news_item.created_at.strftime('%d.%m.%Y %H:%M') if news_item.created_at else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата изменения:</span> <span class="meta-value">{{ news_item.updated_at.strftime('%d.%m.%Y %H:%M') if news_item.updated_at else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Создатель:</span> <span class="meta-value">{{ news_item.created_by or '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Slug:</span> <span class="meta-value">{{ news_item.slug or '—' }}</span></div>
+          <div class="meta-row"><a href="/news/{{ news_item.slug }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Открыть на сайте</a></div>
+        {% else %}
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">Новая запись</span></div>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
+
 <style>
   .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
   .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
   .user-meta-card .meta-value { font-weight: 500; }
   .user-meta-card .meta-row { margin-bottom: 8px; }
   @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+  
+  #content-editor {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  }
 </style>
+
+<!-- Подключение CodeMirror для редактора -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Инициализация CodeMirror для редактора контента
+  var editor = CodeMirror.fromTextArea(document.getElementById('content-editor'), {
+    mode: 'htmlmixed',
+    theme: 'monokai',
+    lineNumbers: true,
+    lineWrapping: true,
+    indentUnit: 2,
+    tabSize: 2,
+    extraKeys: {
+      'Tab': function(cm) {
+        if (cm.somethingSelected()) {
+          cm.indentSelection('add');
+        } else {
+          cm.replaceSelection('  ', 'end');
+        }
+      }
+    }
+  });
+  
+  // Обновление textarea перед отправкой формы
+  document.querySelector('form').addEventListener('submit', function() {
+    editor.save();
+  });
+  
+  // Автосохранение активного таба
+  const tabKey = 'adminNewsTabActive';
+  
+  // Восстановить активный таб из query-параметра
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  if (tabFromUrl && document.querySelector(`#${tabFromUrl}-tab`)) {
+    var tab = new bootstrap.Tab(document.querySelector(`#${tabFromUrl}-tab`));
+    tab.show();
+    document.getElementById('active_tab_input').value = tabFromUrl;
+  } else {
+    // Восстановить активный таб из localStorage
+    const savedTab = localStorage.getItem(tabKey);
+    if (savedTab && document.querySelector(savedTab)) {
+      var tab = new bootstrap.Tab(document.querySelector(savedTab));
+      tab.show();
+      document.getElementById('active_tab_input').value = savedTab.replace('-tab','');
+    }
+  }
+  
+  // Сохранять активный таб при переключении
+  document.querySelectorAll('#newsTab button[data-bs-toggle="tab"]').forEach(function(btn) {
+    btn.addEventListener('shown.bs.tab', function(e) {
+      localStorage.setItem(tabKey, '#' + e.target.getAttribute('id'));
+      document.getElementById('active_tab_input').value = e.target.getAttribute('data-bs-target').replace('#','');
+    });
+  });
+  
+  // Перед сабмитом формы обновлять hidden input
+  document.querySelector('form').addEventListener('submit', function() {
+    var activeTab = document.querySelector('#newsTab .nav-link.active');
+    if (activeTab) {
+      document.getElementById('active_tab_input').value = activeTab.getAttribute('data-bs-target').replace('#', '');
+    }
+  });
+});
+</script>
 {% endblock %} 

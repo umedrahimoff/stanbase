@@ -1295,52 +1295,110 @@ def admin_news(request: Request, q: str = Query('', alias='q'), per_page: int = 
 
 @app.route("/admin/news/create", methods=["GET", "POST"], name="admin_create_news")
 async def admin_create_news(request: Request):
-    from models import News
+    from models import News, Author
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    authors = db.query(Author).filter(Author.status == 'active').all()
+    
     error = None
     if request.method == "POST":
         form = await request.form()
         title = form.get('title')
-        description = form.get('description')
-        author_id = int(form.get('author_id'))
-        category_id = int(form.get('category_id'))
-        db = SessionLocal()
-        if db.query(News).filter_by(title=title, author_id=author_id, category_id=category_id).first():
-            error = 'Новость с такими параметрами уже существует'
-        else:
-            # Генерируем slug из заголовка
-            slug = generate_slug(title)
-            
-            # Проверяем уникальность slug
-            counter = 1
-            original_slug = slug
-            while db.query(News).filter_by(slug=slug).first():
-                slug = f"{original_slug}-{counter}"
-                counter += 1
-            
-            news = News(
-                title=title,
-                slug=slug,
-                description=description,
-                author_id=author_id,
-                category_id=category_id
-            )
-            db.add(news)
-            db.commit()
-            return RedirectResponse(url="/admin/news", status_code=302)
-    return templates.TemplateResponse("admin/news/form.html", {"request": request, "session": request.session, "error": error, "news": None})
+        summary = form.get('summary')
+        seo_description = form.get('seo_description')
+        content = form.get('content')
+        date_str = form.get('date')
+        status = form.get('status')
+        author_id = form.get('author_id')
+        
+        # Обработка даты
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.now().date()
+        except ValueError:
+            date = datetime.now().date()
+        
+        # Обработка author_id
+        author_id = int(author_id) if author_id else None
+        
+        # Обработка изображения
+        image_path = None
+        files = await request.form()
+        if 'image' in files:
+            image_file = files['image']
+            if image_file and hasattr(image_file, 'file') and image_file.file:
+                # Создаем папку для изображений если её нет
+                import os
+                os.makedirs('static/news_images', exist_ok=True)
+                
+                # Генерируем уникальное имя файла
+                import uuid
+                file_extension = os.path.splitext(image_file.filename)[1] if image_file.filename else '.jpg'
+                filename = f"{uuid.uuid4()}{file_extension}"
+                file_path = f"static/news_images/{filename}"
+                
+                # Сохраняем файл
+                with open(file_path, 'wb') as f:
+                    content = image_file.file.read()
+                    f.write(content)
+                
+                image_path = f"/{file_path}"
+        
+        # Генерируем slug из заголовка
+        slug = generate_slug(title)
+        
+        # Проверяем уникальность slug
+        counter = 1
+        original_slug = slug
+        while db.query(News).filter_by(slug=slug).first():
+            slug = f"{original_slug}-{counter}"
+            counter += 1
+        
+        news = News(
+            title=title,
+            slug=slug,
+            summary=summary,
+            seo_description=seo_description,
+            content=content,
+            date=date,
+            image=image_path,
+            status=status,
+            author_id=author_id,
+            created_by=request.session.get('user_email', 'admin'),
+            views=0
+        )
+        db.add(news)
+        db.commit()
+        db.close()
+        return RedirectResponse(url="/admin/news", status_code=302)
+    
+    db.close()
+    return templates.TemplateResponse("admin/news/form.html", {
+        "request": request, 
+        "session": request.session, 
+        "error": error, 
+        "news_item": None,
+        "authors": authors
+    })
 
 @app.get("/admin/news/edit/{news_id}", response_class=HTMLResponse, name="admin_edit_news")
 async def admin_edit_news(request: Request, news_id: int):
-    from models import News
+    from models import News, Author
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
     news = db.query(News).get(news_id)
+    authors = db.query(Author).filter(Author.status == 'active').all()
     error = None
     db.close()
-    return templates.TemplateResponse("admin/news/form.html", {"request": request, "session": request.session, "error": error, "news": news})
+    return templates.TemplateResponse("admin/news/form.html", {
+        "request": request, 
+        "session": request.session, 
+        "error": error, 
+        "news_item": news,
+        "authors": authors
+    })
 
 @app.post("/admin/news/edit/{news_id}", name="admin_edit_news_post")
 async def admin_edit_news_post(request: Request, news_id: int):
@@ -1350,11 +1408,62 @@ async def admin_edit_news_post(request: Request, news_id: int):
     db = SessionLocal()
     news = db.query(News).get(news_id)
     form = await request.form()
+    
     title = form.get('title')
+    summary = form.get('summary')
+    seo_description = form.get('seo_description')
+    content = form.get('content')
+    date_str = form.get('date')
+    status = form.get('status')
+    author_id = form.get('author_id')
+    
+    # Обработка даты
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.now().date()
+    except ValueError:
+        date = datetime.now().date()
+    
+    # Обработка author_id
+    author_id = int(author_id) if author_id else None
+    
+    # Обработка изображения
+    files = await request.form()
+    if 'image' in files:
+        image_file = files['image']
+        if image_file and hasattr(image_file, 'file') and image_file.file:
+            # Создаем папку для изображений если её нет
+            import os
+            os.makedirs('static/news_images', exist_ok=True)
+            
+            # Генерируем уникальное имя файла
+            import uuid
+            file_extension = os.path.splitext(image_file.filename)[1] if image_file.filename else '.jpg'
+            filename = f"{uuid.uuid4()}{file_extension}"
+            file_path = f"static/news_images/{filename}"
+            
+            # Сохраняем файл
+            with open(file_path, 'wb') as f:
+                content = image_file.file.read()
+                f.write(content)
+            
+            # Удаляем старое изображение если есть
+            if news.image and os.path.exists(news.image.lstrip('/')):
+                try:
+                    os.remove(news.image.lstrip('/'))
+                except:
+                    pass
+            
+            news.image = f"/{file_path}"
+    
+    # Обновляем поля
     news.title = title
-    news.description = form.get('description')
-    news.author_id = int(form.get('author_id'))
-    news.category_id = int(form.get('category_id'))
+    news.summary = summary
+    news.seo_description = seo_description
+    news.content = content
+    news.date = date
+    news.status = status
+    news.author_id = author_id
+    news.updated_by = request.session.get('user_email', 'admin')
     
     # Обновляем slug если изменился заголовок
     new_slug = generate_slug(title)

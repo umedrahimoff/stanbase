@@ -188,10 +188,13 @@ if not session.query(News).first():
             title=title,
             slug=slug,
             summary=f"Краткое описание новости о {company.name} и инновациях.",
+            seo_description=f"Новости о {company.name} - последние события, инвестиции и развитие технологий в Центральной Азии.",
             date=date.today() - timedelta(days=i),
-            content=f"Подробности о запуске, инвестициях и планах {company.name}.",
+            content=f"<p>Подробности о запуске, инвестициях и планах {company.name}.</p><p>Компания продолжает развиваться и расширять свое присутствие на рынке Центральной Азии.</p>",
             views=0,
-            status='active'
+            status='active',
+            created_by='admin',
+            author_id=1 if session.query(Author).first() else None
         ))
     session.commit()
 

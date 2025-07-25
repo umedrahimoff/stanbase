@@ -140,9 +140,123 @@ def migrate_production_database():
             print("Колонка views добавлена в таблицу news")
         else:
             print("Колонка views уже существует в таблице news")
-        
-        # Фиксируем изменения
-        conn.commit()
+            
+            # Проверяем существование колонки seo_description в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'seo_description'
+                );
+            """)
+            
+            seo_description_exists = cursor.fetchone()[0]
+            
+            if not seo_description_exists:
+                print("Добавляем колонку seo_description в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN seo_description VARCHAR(512);
+                """)
+                print("Колонка seo_description добавлена в таблицу news")
+            else:
+                print("Колонка seo_description уже существует в таблице news")
+            
+            # Проверяем существование колонки image в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'image'
+                );
+            """)
+            
+            image_exists = cursor.fetchone()[0]
+            
+            if not image_exists:
+                print("Добавляем колонку image в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN image VARCHAR(256);
+                """)
+                print("Колонка image добавлена в таблицу news")
+            else:
+                print("Колонка image уже существует в таблице news")
+            
+            # Проверяем существование колонки created_at в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'created_at'
+                );
+            """)
+            
+            created_at_exists = cursor.fetchone()[0]
+            
+            if not created_at_exists:
+                print("Добавляем колонку created_at в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                """)
+                print("Колонка created_at добавлена в таблицу news")
+            else:
+                print("Колонка created_at уже существует в таблице news")
+            
+            # Проверяем существование колонки updated_at в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'updated_at'
+                );
+            """)
+            
+            updated_at_exists = cursor.fetchone()[0]
+            
+            if not updated_at_exists:
+                print("Добавляем колонку updated_at в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                """)
+                print("Колонка updated_at добавлена в таблицу news")
+            else:
+                print("Колонка updated_at уже существует в таблице news")
+            
+            # Проверяем существование колонки created_by в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'created_by'
+                );
+            """)
+            
+            created_by_exists = cursor.fetchone()[0]
+            
+            if not created_by_exists:
+                print("Добавляем колонку created_by в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN created_by VARCHAR(64);
+                """)
+                print("Колонка created_by добавлена в таблицу news")
+            else:
+                print("Колонка created_by уже существует в таблице news")
+            
+            # Проверяем существование колонки updated_by в таблице news
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'news' AND column_name = 'updated_by'
+                );
+            """)
+            
+            updated_by_exists = cursor.fetchone()[0]
+            
+            if not updated_by_exists:
+                print("Добавляем колонку updated_by в таблицу news...")
+                cursor.execute("""
+                    ALTER TABLE news ADD COLUMN updated_by VARCHAR(64);
+                """)
+                print("Колонка updated_by добавлена в таблицу news")
+            else:
+                print("Колонка updated_by уже существует в таблице news")
+            
+            # Фиксируем изменения
+            conn.commit()
         print("Миграция успешно выполнена!")
         
         cursor.close()

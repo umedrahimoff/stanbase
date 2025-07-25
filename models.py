@@ -93,11 +93,17 @@ class News(Base):
     title = Column(String(256), nullable=False)
     slug = Column(String(256), unique=True, nullable=True)
     summary = Column(String(512))
+    seo_description = Column(String(512))  # SEO описание для meta description
     date = Column(Date, default=datetime.utcnow)
     content = Column(Text)
+    image = Column(String(256), nullable=True)  # путь к изображению новости
     views = Column(Integer, default=0)
     status = Column(String(16), default='active')
     author_id = Column(Integer, ForeignKey('author.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String(64), nullable=True)
+    updated_by = Column(String(64), nullable=True)
 
 class Podcast(Base):
     __tablename__ = 'podcast'
