@@ -4,7 +4,7 @@
 
 {% block meta_description %}{{ event.title }} - {{ event.format }} в {{ event.location }}{% if event.date %} {{ event.date.strftime('%d.%m.%Y %H:%M') }}{% endif %}. {{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}{% endblock %}
 
-{% block meta_keywords %}{{ event.title }}, {{ event.format }}, {{ event.location }}, мероприятие, стартап-событие, Центральная Азия{% endblock %}
+{% block meta_keywords %}{{ event.title }}, {{ event.format }}, {{ event.location }}, мероприятие, событие компаний, Центральная Азия, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}
 
 {% block og_title %}{{ event.title }} — {{ event.format }} в {{ event.location }} | StanBase{% endblock %}
 

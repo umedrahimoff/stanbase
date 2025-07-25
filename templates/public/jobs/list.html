@@ -1,17 +1,17 @@
 {% extends 'layout.html' %}
 
-{% block title %}Jobs in Startups | StanBase{% endblock %}
+{% block title %}Вакансии в компаниях Центральной Азии | StanBase{% endblock %}
 
-{% block meta_description %}Find jobs in innovative startups and tech companies worldwide. Search by city, job type, company. Work in SaaS, AI, and global tech.{% endblock %}
+{% block meta_description %}Найдите вакансии в инновационных компаниях, стартапах и технологических компаниях Центральной Азии. Поиск по городу, типу работы, компании. Работа в SaaS, AI и технологиях в Казахстане, Узбекистане, Кыргызстане, Таджикистане, Туркменистане.{% endblock %}
 
-{% block meta_keywords %}jobs, careers, startups, technology, SaaS, AI, global, remote, international, hiring, employment{% endblock %}
-{% block og_title %}Jobs in Startups — Global Opportunities | StanBase{% endblock %}
+{% block meta_keywords %}вакансии, карьера, компании, стартапы, технологии, Центральная Азия, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан, SaaS, AI, удаленная работа, найм, трудоустройство{% endblock %}
+{% block og_title %}Вакансии в компаниях Центральной Азии — Возможности | StanBase{% endblock %}
 
-{% block og_description %}Find jobs in innovative startups and tech companies worldwide. Search by city, job type, company. Work in SaaS, AI, and global tech.{% endblock %}
+{% block og_description %}Найдите вакансии в инновационных компаниях, стартапах и технологических компаниях Центральной Азии. Поиск по городу, типу работы, компании. Работа в SaaS, AI и технологиях в регионе.{% endblock %}
 
-{% block twitter_title %}Jobs in Startups | StanBase{% endblock %}
+{% block twitter_title %}Вакансии в компаниях Центральной Азии | StanBase{% endblock %}
 
-{% block twitter_description %}Find jobs in innovative startups and tech companies worldwide. Search by city, job type, company. Work in SaaS, AI, and global tech.{% endblock %}
+{% block twitter_description %}Найдите вакансии в инновационных компаниях, стартапах и технологических компаниях Центральной Азии. Поиск по городу, типу работы, компании. Работа в SaaS, AI и технологиях в регионе.{% endblock %}
 {% block content %}
 <h2 class="mb-4">Вакансии</h2>
 <form method="get" class="row g-2 mb-4">
@@ -36,7 +36,7 @@
   </div>
   <div class="col-md-3">
     <select name="company" class="form-select">
-      <option value="">Стартап</option>
+      <option value="">Компания</option>
       {% for c in companies %}
         <option value="{{ c.id }}" {% if c.id|string == request.query_params.get('company') %}selected{% endif %}>{{ c.name }}</option>
       {% endfor %}

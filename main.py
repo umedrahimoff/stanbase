@@ -376,14 +376,14 @@ async def dashboard_startuper(request: Request):
     if not (request.session.get('role') in ['admin', 'moderator']):
         return HTMLResponse("Доступ временно закрыт", status_code=403)
     # (Оставляю старую логику на будущее)
-    # from models import User, Startup
+    # from models import User, Company
     # user = None
     # startup = None
     # team = []
     # if request.session.get('user_id') and request.session.get('role') == 'startuper':
     #     db = SessionLocal()
     #     user = db.query(User).get(request.session['user_id'])
-    #     startup = db.query(Startup).get(user.startup_id)
+    #     company = db.query(Company).get(user.company_id)
     #     if startup:
     #         team = list(startup.team)  # загружаем команду до закрытия сессии
     #     db.close()
@@ -669,8 +669,8 @@ async def admin_delete_user(request: Request, user_id: int):
     db.commit()
     return RedirectResponse(url="/admin/users", status_code=302)
 
-# --- Startups CRUD ---
-@app.get("/admin/startups", response_class=HTMLResponse, name="admin_startups")
+# --- Companies CRUD ---
+@app.get("/admin/companies", response_class=HTMLResponse, name="admin_companies")
 async def admin_startups(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
     from models import Company
     if not admin_required(request):
@@ -686,7 +686,7 @@ async def admin_startups(request: Request, q: str = Query('', alias='q'), status
     db.close()
     return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
 
-@app.route("/admin/startups/create", methods=["GET", "POST"], name="admin_create_startup")
+@app.route("/admin/companies/create", methods=["GET", "POST"], name="admin_create_company")
 async def admin_create_startup(request: Request):
     from models import Company, Country, City
     import datetime
@@ -730,11 +730,11 @@ async def admin_create_startup(request: Request):
             db.add(company)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/startups", status_code=302)
+            return RedirectResponse(url="/admin/companies", status_code=302)
         db.close()
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": None, "countries": countries, "cities": cities})
 
-@app.post("/admin/startups/delete/{company_id}", name="admin_delete_startup")
+@app.post("/admin/companies/delete/{company_id}", name="admin_delete_company")
 async def admin_delete_startup(request: Request, company_id: int):
     from models import Company
     if not admin_required(request):
@@ -745,10 +745,10 @@ async def admin_delete_startup(request: Request, company_id: int):
         db.delete(company)
         db.commit()
     db.close()
-    return RedirectResponse(url="/admin/startups", status_code=302)
+    return RedirectResponse(url="/admin/companies", status_code=302)
 
-# --- Startups ---
-@app.get("/admin/startups/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_startup")
+# --- Companies ---
+@app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
 async def admin_edit_startup(request: Request, company_id: int):
     from models import Company, Country, City
     from sqlalchemy.orm import joinedload
@@ -765,7 +765,7 @@ async def admin_edit_startup(request: Request, company_id: int):
     db.close()
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": company, "team": team, "deals": deals, "jobs": jobs, "countries": countries, "cities": cities})
 
-@app.post("/admin/startups/edit/{company_id}", name="admin_edit_startup_post")
+@app.post("/admin/companies/edit/{company_id}", name="admin_edit_company_post")
 async def admin_edit_startup_post(request: Request, company_id: int):
     from models import Company
     import datetime
@@ -1513,7 +1513,7 @@ async def admin_delete_investor(request: Request, investor_id: int):
     db.close()
     return RedirectResponse(url="/admin/investors", status_code=302)
 
-@app.get("/admin/startup_search")
+@app.get("/admin/company_search")
 async def admin_startup_search(q: str = Query('', alias='q')):
     db = SessionLocal()
     query = db.query(Company)
@@ -1627,7 +1627,7 @@ def create_full_test_data():
     except Exception as e:
         print(f"Ошибка при создании категорий: {e}")
         session.rollback()
-    # Startup (реальные примеры ЦА, максимально живые)
+    # Company (реальные примеры ЦА, максимально живые)
     try:
         if not session.query(Company).first():
             companies = [

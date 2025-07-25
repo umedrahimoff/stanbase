@@ -4,7 +4,7 @@
 
 {% block meta_description %}{{ job.title }} - вакансия типа {{ job.job_type }} в {{ job.city }}. {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}{% if job.company %} Вакансия в компании {{ job.company.name }}.{% endif %}{% endblock %}
 
-{% block meta_keywords %}{{ job.title }}, {{ job.job_type }}, {{ job.city }}, вакансия, работа в стартапе, карьера в IT, Центральная Азия{% endblock %}
+{% block meta_keywords %}{{ job.title }}, {{ job.job_type }}, {{ job.city }}, вакансия, работа в компании, карьера в IT, Центральная Азия, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}
 
 {% block og_title %}{{ job.title }} — Вакансия в {{ job.city }} | StanBase{% endblock %}
 
