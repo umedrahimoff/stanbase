@@ -1942,6 +1942,7 @@ async def admin_create_company(request: Request):
         stage = form.get('stage')
         industry = form.get('industry')
         website = form.get('website')
+        tech_park = form.get('tech_park')
         db = SessionLocal()
         company = Company(
             name=name,
@@ -1951,7 +1952,8 @@ async def admin_create_company(request: Request):
             status=status,
             stage=stage,
             industry=industry,
-            website=website
+            website=website,
+            tech_park=tech_park
         )
         db.add(company)
         db.commit()
@@ -2006,6 +2008,7 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    company.tech_park = form.get('tech_park')
     company.updated_at = datetime.datetime.utcnow()
 
     # --- обработка логотипа ---

@@ -28,6 +28,15 @@ company_names = [
     "EduTech Pro", "RetailSmart", "LogiTech", "HealthSync", "AgroTech"
 ]
 
+# Технопарки по странам
+tech_parks = {
+    "Казахстан": ["Astana Hub 🇰🇿", "Almaty Tech Garden 🇰🇿"],
+    "Узбекистан": ["IT Park 🇺🇿", "Tashkent Tech Hub 🇺🇿"],
+    "Кыргызстан": ["ПВТ 🇰🇬", "Bishkek Tech Park 🇰🇬"],
+    "Таджикистан": ["IT Park 🇹🇯", "Dushanbe Tech Hub 🇹🇯"],
+    "Туркменистан": ["Ashgabat Tech 🇹🇲", "Turkmen Tech Hub 🇹🇲"]
+}
+
 companies_data = []
 for i in range(15):
     country, cities = ca_countries[i % len(ca_countries)]
@@ -35,6 +44,9 @@ for i in range(15):
     industry = industries[i % len(industries)]
     stage = stages[i % len(stages)]
     name = company_names[i]
+    # Выбираем случайный технопарк для страны
+    country_parks = tech_parks.get(country, [])
+    tech_park = country_parks[i % len(country_parks)] if country_parks else None
     companies_data.append({
         "name": name,
         "description": f"Ведущий проект в сфере {industry.lower()} для региона.",
@@ -42,7 +54,8 @@ for i in range(15):
         "city": city,
         "stage": stage,
         "industry": industry,
-        "website": f"https://{name.lower().replace(' ', '')}.com"
+        "website": f"https://{name.lower().replace(' ', '')}.com",
+        "tech_park": tech_park
     })
 
 # Вымышленные названия фондов без географических привязок
@@ -79,7 +92,8 @@ if not session.query(Company).first():
             stage=s["stage"],
             industry=s["industry"],
             founded_date=date(2020, 1, 1),
-            website=s["website"]
+            website=s["website"],
+            tech_park=s["tech_park"]
         )
         session.add(company)
     session.commit()

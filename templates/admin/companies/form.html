@@ -73,17 +73,33 @@
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label for="stage" class="form-label">Стадия</label>
                     <input type="text" class="form-control" id="stage" name="stage" value="{{ company.stage if company else '' }}">
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label for="industry" class="form-label">Отрасль</label>
                     <input type="text" class="form-control" id="industry" name="industry" value="{{ company.industry if company else '' }}">
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label for="website" class="form-label">Сайт</label>
                     <input type="url" class="form-control" id="website" name="website" value="{{ company.website if company else '' }}">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="tech_park" class="form-label">Технопарк</label>
+                    <select class="form-select" id="tech_park" name="tech_park">
+                      <option value="">Не указан</option>
+                      <option value="IT Park 🇺🇿" {% if company and company.tech_park == 'IT Park 🇺🇿' %}selected{% endif %}>IT Park 🇺🇿</option>
+                      <option value="Tashkent Tech Hub 🇺🇿" {% if company and company.tech_park == 'Tashkent Tech Hub 🇺🇿' %}selected{% endif %}>Tashkent Tech Hub 🇺🇿</option>
+                      <option value="Astana Hub 🇰🇿" {% if company and company.tech_park == 'Astana Hub 🇰🇿' %}selected{% endif %}>Astana Hub 🇰🇿</option>
+                      <option value="Almaty Tech Garden 🇰🇿" {% if company and company.tech_park == 'Almaty Tech Garden 🇰🇿' %}selected{% endif %}>Almaty Tech Garden 🇰🇿</option>
+                      <option value="ПВТ 🇰🇬" {% if company and company.tech_park == 'ПВТ 🇰🇬' %}selected{% endif %}>ПВТ 🇰🇬</option>
+                      <option value="Bishkek Tech Park 🇰🇬" {% if company and company.tech_park == 'Bishkek Tech Park 🇰🇬' %}selected{% endif %}>Bishkek Tech Park 🇰🇬</option>
+                      <option value="IT Park 🇹🇯" {% if company and company.tech_park == 'IT Park 🇹🇯' %}selected{% endif %}>IT Park 🇹🇯</option>
+                      <option value="Dushanbe Tech Hub 🇹🇯" {% if company and company.tech_park == 'Dushanbe Tech Hub 🇹🇯' %}selected{% endif %}>Dushanbe Tech Hub 🇹🇯</option>
+                      <option value="Ashgabat Tech 🇹🇲" {% if company and company.tech_park == 'Ashgabat Tech 🇹🇲' %}selected{% endif %}>Ashgabat Tech 🇹🇲</option>
+                      <option value="Turkmen Tech Hub 🇹🇲" {% if company and company.tech_park == 'Turkmen Tech Hub 🇹🇲' %}selected{% endif %}>Turkmen Tech Hub 🇹🇲</option>
+                    </select>
                   </div>
                 </div>
                 <div class="d-flex justify-content-between mt-4">
