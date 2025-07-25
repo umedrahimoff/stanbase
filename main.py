@@ -154,13 +154,24 @@ async def logout(request: Request):
 def index(request: Request):
     print("INDEX SESSION:", dict(request.session))
     db = SessionLocal()
-    companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
-    investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
-    news = db.query(News).order_by(News.date.desc()).limit(10).all()
-    podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
-    jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
-    events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
-    db.close()
+    try:
+        companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
+        investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
+        news = db.query(News).order_by(News.date.desc()).limit(10).all()
+        podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
+        jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
+        events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
+    except Exception as e:
+        print(f"Ошибка при загрузке данных: {e}")
+        # Возвращаем пустые списки в случае ошибки
+        companies = []
+        investors = []
+        news = []
+        podcasts = []
+        jobs = []
+        events = []
+    finally:
+        db.close()
     return templates.TemplateResponse("index.html", {"request": request, "session": request.session, "companies": companies, "investors": investors, "news": news, "podcasts": podcasts, "jobs": jobs, "events": events})
 
 # robots.txt
@@ -228,36 +239,44 @@ def company_profile(request: Request, id: int = Path(...)):
 @app.get("/investors", response_class=HTMLResponse)
 def investors(request: Request, q: str = Query('', alias='q'), country: str = Query('', alias='country'), focus: str = Query('', alias='focus'), stages: str = Query('', alias='stages')):
     db = SessionLocal()
-    query = db.query(Investor).options(joinedload(Investor.portfolio), joinedload(Investor.team))
-    if q:
-        query = query.filter(Investor.name.ilike(f'%{q}%'))
-    if country:
-        query = query.filter_by(country=country)
-    if focus:
-        query = query.filter(Investor.focus.ilike(f'%{focus}%'))
-    if stages:
-        query = query.filter(Investor.stages.ilike(f'%{stages}%'))
-    investors = query.order_by(Investor.name).all()
-    countries = [c[0] for c in db.query(Investor.country).distinct().order_by(Investor.country) if c[0]]
-    # Собираем уникальные значения focus и stages (разбиваем по запятым)
-    all_focus = set()
-    all_stages = set()
-    for f in db.query(Investor.focus).distinct():
-        if f[0]:
-            for part in f[0].split(','):
-                val = part.strip()
-                if val:
-                    all_focus.add(val)
-    for s in db.query(Investor.stages).distinct():
-        if s[0]:
-            for part in s[0].split(','):
-                val = part.strip()
-                if val:
-                    all_stages.add(val)
-    focus_list = sorted(all_focus)
-    stages_list = sorted(all_stages)
+    try:
+        query = db.query(Investor).options(joinedload(Investor.portfolio), joinedload(Investor.team))
+        if q:
+            query = query.filter(Investor.name.ilike(f'%{q}%'))
+        if country:
+            query = query.filter_by(country=country)
+        if focus:
+            query = query.filter(Investor.focus.ilike(f'%{focus}%'))
+        if stages:
+            query = query.filter(Investor.stages.ilike(f'%{stages}%'))
+        investors = query.order_by(Investor.name).all()
+        countries = [c[0] for c in db.query(Investor.country).distinct().order_by(Investor.country) if c[0]]
+        # Собираем уникальные значения focus и stages (разбиваем по запятым)
+        all_focus = set()
+        all_stages = set()
+        for f in db.query(Investor.focus).distinct():
+            if f[0]:
+                for part in f[0].split(','):
+                    val = part.strip()
+                    if val:
+                        all_focus.add(val)
+        for s in db.query(Investor.stages).distinct():
+            if s[0]:
+                for part in s[0].split(','):
+                    val = part.strip()
+                    if val:
+                        all_stages.add(val)
+        focus_list = sorted(all_focus)
+        stages_list = sorted(all_stages)
+    except Exception as e:
+        print(f"Ошибка при загрузке инвесторов: {e}")
+        investors = []
+        countries = []
+        focus_list = []
+        stages_list = []
+    finally:
+        db.close()
     response = templates.TemplateResponse("public/investors/list.html", {"request": request, "session": request.session, "investors": investors, "countries": countries, "focus_list": focus_list, "stages_list": stages_list})
-    db.close()
     return response
 
 @app.get("/investor/{id}", response_class=HTMLResponse)
