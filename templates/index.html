@@ -195,8 +195,11 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for n in news[:6] %}
     <div class="col">
-      <a href="/news/{{ n.id }}" class="card-google-link">
+      <a href="/news/{{ n.slug }}" class="card-google-link">
         <div class="card card-google h-100">
+          {% if n.image %}
+          <img src="{{ n.image }}" class="card-img-top" alt="{{ n.title }}" style="height: 160px; object-fit: cover;">
+          {% endif %}
           <div class="card-body">
             <h5 class="card-title mb-1">{{ n.title }}</h5>
             <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>

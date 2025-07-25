@@ -19,6 +19,9 @@
   {% for n in news %}
   <div class="col">
     <div class="card h-100">
+      {% if n.image %}
+      <img src="{{ n.image }}" class="card-img-top" alt="{{ n.title }}" style="height: 200px; object-fit: cover;">
+      {% endif %}
       <div class="card-body">
         <h5 class="card-title"><a href="/news/{{ n.slug }}">{{ n.title }}</a></h5>
         <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>

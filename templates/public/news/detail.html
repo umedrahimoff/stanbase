@@ -45,6 +45,12 @@
           {% endif %}
         </header>
 
+        {% if news.image %}
+        <div class="news-image mb-4">
+          <img src="{{ news.image }}" alt="{{ news.title }}" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+        </div>
+        {% endif %}
+        
         {% if news.content %}
         <div class="news-content mb-4">
           {{ news.content|safe }}
@@ -161,6 +167,22 @@
   height: auto;
   border-radius: 8px;
   margin: 1rem 0;
+}
+
+.news-image {
+  text-align: center;
+}
+
+.news-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.news-image img:hover {
+  transform: scale(1.02);
 }
 
 .news-detail .lead {
