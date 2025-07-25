@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import subprocess
 from fastapi import APIRouter
 from sqlalchemy import or_
+from sqlalchemy.exc import SQLAlchemyError, InternalError
 
 from db import SessionLocal, Base, engine
 from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage
@@ -26,6 +27,23 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 app.add_middleware(SessionMiddleware, secret_key="stanbase_secret_2024", https_only=False)
+
+# Глобальный обработчик SQLAlchemy ошибок
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    print(f"SQLAlchemy error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Database error occurred"}
+    )
+
+@app.exception_handler(InternalError)
+async def internal_error_handler(request: Request, exc: InternalError):
+    print(f"Internal database error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal database error"}
+    )
 
 # Удаляю GET-роуты /login и /register, оставляю только POST-обработку через модалки
 
@@ -1555,10 +1573,14 @@ def create_full_test_data():
     from models import User, Company, Country, City, Category, Author, Investor, News, Podcast, Event, Deal, Person
     session = SessionLocal()
     # Country
-    if not session.query(Country).first():
-        countries = [Country(name=n) for n in ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]]
-        session.add_all(countries)
-        session.commit()
+    try:
+        if not session.query(Country).first():
+            countries = [Country(name=n) for n in ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]]
+            session.add_all(countries)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании стран: {e}")
+        session.rollback()
     country_dict = {c.name: c.id for c in session.query(Country).all()}
     if not country_dict:
         print("Нет ни одной страны в базе, пользователи не будут созданы!")
@@ -1567,42 +1589,58 @@ def create_full_test_data():
     kz_id = country_dict.get("Казахстан") or list(country_dict.values())[0]
     print(f"country_id для тестовых пользователей: {kz_id}")
     # City
-    if not session.query(City).first():
-        cities = [City(name=n, country_id=kz_id) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
-        session.add_all(cities)
-        session.commit()
+    try:
+        if not session.query(City).first():
+            cities = [City(name=n, country_id=kz_id) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
+            session.add_all(cities)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании городов: {e}")
+        session.rollback()
     city_dict = {c.name: c.id for c in session.query(City).all()}
     almata_id = city_dict.get("Алматы") or list(city_dict.values())[0]
     # Category
-    if not session.query(Category).first():
-        cats = [Category(name=n) for n in ["Fintech", "HealthTech", "HRTech", "E-commerce", "SaaS"]]
-        session.add_all(cats)
-        session.commit()
+    try:
+        if not session.query(Category).first():
+            cats = [Category(name=n) for n in ["Fintech", "HealthTech", "HRTech", "E-commerce", "SaaS"]]
+            session.add_all(cats)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании категорий: {e}")
+        session.rollback()
     # Startup (реальные примеры ЦА, максимально живые)
-    if not session.query(Company).first():
-        companies = [
-            Company(name="CerebraAI", description="Платформа на базе искусственного интеллекта для диагностики инсульта и других заболеваний по КТ/МРТ. Используется более чем в 50 больницах, финалист TechCrunch Battlefield.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
-            Company(name="Uzum", description="Крупнейшая цифровая экосистема в Узбекистане: маркетплейс, финтех, BNPL, логистика, онлайн-банк. Более 15 млн пользователей.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
-            Company(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
-            Company(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
-            Company(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
-            Company(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com"),
-            Company(name="BILLZ", description="Программа для магазина, складского и товарного учёта, автоматизации продаж.", country="Казахстан", city="Алматы", stage="Growth", industry="SaaS, RetailTech", website="https://billz.io/")
-        ]
-        session.add_all(companies)
-        session.commit()
+    try:
+        if not session.query(Company).first():
+            companies = [
+                Company(name="CerebraAI", description="Платформа на базе искусственного интеллекта для диагностики инсульта и других заболеваний по КТ/МРТ. Используется более чем в 50 больницах, финалист TechCrunch Battlefield.", country="Казахстан", city="Алматы", stage="Growth", industry="HealthTech", website="https://cerebraai.ai"),
+                Company(name="Uzum", description="Крупнейшая цифровая экосистема в Узбекистане: маркетплейс, финтех, BNPL, логистика, онлайн-банк. Более 15 млн пользователей.", country="Узбекистан", city="Ташкент", stage="Scale", industry="E-commerce, Fintech", website="https://uzum.com"),
+                Company(name="Tezbus", description="Skyscanner для междугородних такси, автобусов и поездов в Центральной Азии. Онлайн-бронирование билетов, интеграция с перевозчиками.", country="Кыргызстан", city="Бишкек", stage="Seed", industry="Mobility, IT", website="http://www.tezbus.com"),
+                Company(name="Voicy", description="AI для распознавания речи на казахском, узбекском, кыргызском языках. Используется для автоматизации call-центров и госуслуг.", country="Казахстан", city="Алматы", stage="Growth", industry="AI, NLP", website="https://voicy.tech"),
+                Company(name="FORBOSSINFO", description="Первая мультисервисная платформа для бизнеса в Центральной Азии.", country="Казахстан", city="Алматы", stage="Seed", industry="Marketplace, B2B", website="https://www.forbossinfo.com"),
+                Company(name="Pamir Group OÜ", description="Поставщик промышленного и энергетического оборудования, внедрение решений для зеленой энергетики и водорода.", country="Таджикистан", city="Душанбе", stage="Growth", industry="Energy, Industrial", website="https://pamirgp.com"),
+                Company(name="BILLZ", description="Программа для магазина, складского и товарного учёта, автоматизации продаж.", country="Казахстан", city="Алматы", stage="Growth", industry="SaaS, RetailTech", website="https://billz.io/")
+            ]
+            session.add_all(companies)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании компаний: {e}")
+        session.rollback()
     # News (реальные/реалистичные)
-    if not session.query(News).first():
-        news = [
-            News(title="CerebraAI вошла в топ-200 стартапов TechCrunch Battlefield", summary="Казахстанский HealthTech-стартап получил международное признание.", date="2024-06-01", content="CerebraAI, ведущий AI-стартап в сфере медицины, вошёл в топ-200 стартапов TechCrunch Battlefield.", status="active"),
-            News(title="Uzum привлек $50 млн инвестиций и стал первым единорогом Узбекистана", summary="Оценка Uzum превысила $1 млрд — это первый единорог страны.", date="2024-05-15", content="Экосистема Uzum объявила о привлечении $50 млн и достижении оценки $1 млрд.", status="active"),
-            News(title="Tezbus запустил онлайн-бронирование билетов в Кыргызстане", summary="Tezbus расширяет сервисы по всей Центральной Азии.", date="2024-04-20", content="Tezbus Group запустила новый сервис для онлайн-бронирования междугородних поездок.", status="active"),
-            News(title="Voicy внедряет распознавание казахской речи в госуслугах", summary="Voicy помогает цифровизации госуслуг в Казахстане.", date="2024-03-10", content="Voicy интегрировала свою AI-платформу в ряд государственных сервисов Казахстана.", status="active"),
-            News(title="FORBOSSINFO запускает мультисервисную платформу для бизнеса в ЦА", summary="FORBOSSINFO выходит на рынок Казахстана и Узбекистана.", date="2024-03-01", content="FORBOSSINFO — первая мультисервисная платформа для бизнеса в Центральной Азии, стартовала в Казахстане.", status="active"),
-            News(title="Pamir Group внедряет водородные технологии в Таджикистане", summary="Pamir Group реализует проекты по зелёной энергетике.", date="2024-02-15", content="Pamir Group OÜ внедряет решения по производству зелёного водорода и модернизации энергетики Таджикистана.", status="active")
-        ]
-        session.add_all(news)
-        session.commit()
+    try:
+        if not session.query(News).first():
+            news = [
+                News(title="CerebraAI вошла в топ-200 стартапов TechCrunch Battlefield", summary="Казахстанский HealthTech-стартап получил международное признание.", date="2024-06-01", content="CerebraAI, ведущий AI-стартап в сфере медицины, вошёл в топ-200 стартапов TechCrunch Battlefield.", status="active"),
+                News(title="Uzum привлек $50 млн инвестиций и стал первым единорогом Узбекистана", summary="Оценка Uzum превысила $1 млрд — это первый единорог страны.", date="2024-05-15", content="Экосистема Uzum объявила о привлечении $50 млн и достижении оценки $1 млрд.", status="active"),
+                News(title="Tezbus запустил онлайн-бронирование билетов в Кыргызстане", summary="Tezbus расширяет сервисы по всей Центральной Азии.", date="2024-04-20", content="Tezbus Group запустила новый сервис для онлайн-бронирования междугородних поездок.", status="active"),
+                News(title="Voicy внедряет распознавание казахской речи в госуслугах", summary="Voicy помогает цифровизации госуслуг в Казахстане.", date="2024-03-10", content="Voicy интегрировала свою AI-платформу в ряд государственных сервисов Казахстана.", status="active"),
+                News(title="FORBOSSINFO запускает мультисервисную платформу для бизнеса в ЦА", summary="FORBOSSINFO выходит на рынок Казахстана и Узбекистана.", date="2024-03-01", content="FORBOSSINFO — первая мультисервисная платформа для бизнеса в Центральной Азии, стартовала в Казахстане.", status="active"),
+                News(title="Pamir Group внедряет водородные технологии в Таджикистане", summary="Pamir Group реализует проекты по зелёной энергетике.", date="2024-02-15", content="Pamir Group OÜ внедряет решения по производству зелёного водорода и модернизации энергетики Таджикистана.", status="active")
+            ]
+            session.add_all(news)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании новостей: {e}")
+        session.rollback()
     # User
     try:
         if not session.query(User).filter_by(email="admin@stanbase.test").first():
@@ -1624,12 +1662,21 @@ def create_full_test_data():
                 session.commit()
     except Exception as e:
         print(f"Ошибка при создании тестовых пользователей: {e}")
+        session.rollback()
+        # Создаем новую сессию после ошибки
+        session.close()
+        session = SessionLocal()
     # Person
-    if not session.query(Person).first():
-        persons = [Person(name=f"Person {i}", country="Казахстан", linkedin="https://linkedin.com/in/person{i}", role="CEO", status="active") for i in range(1, 4)]
-        session.add_all(persons)
-        session.commit()
-    session.close()
+    try:
+        if not session.query(Person).first():
+            persons = [Person(name=f"Person {i}", country="Казахстан", linkedin="https://linkedin.com/in/person{i}", role="CEO", status="active") for i in range(1, 4)]
+            session.add_all(persons)
+            session.commit()
+    except Exception as e:
+        print(f"Ошибка при создании тестовых персон: {e}")
+        session.rollback()
+    finally:
+        session.close()
 
 create_full_test_data()
 
