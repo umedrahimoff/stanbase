@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, Form, Path, Query, status
+from fastapi import FastAPI, Request, Depends, Form, Path, Query, status, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,6 +7,7 @@ import uvicorn
 import os
 from typing import Optional
 from sqlalchemy.orm import joinedload
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from db import SessionLocal
 from models import Startup, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, StartupStage, Category, Author, PortfolioEntry
@@ -49,7 +50,7 @@ def register_page(request: Request):
     db = SessionLocal()
     countries = db.query(Country).order_by(Country.name).all()
     db.close()
-    return templates.TemplateResponse("auth/register.html", {"request": request, "countries": countries})
+    return templates.TemplateResponse("auth/register.html", {"request": request, "countries": countries, "session": request.session})
 
 @app.route("/register", methods=["POST"])
 async def register(request: Request):
@@ -66,17 +67,30 @@ async def register(request: Request):
     password = form.get("password")
     agree1 = form.get("agree1")
     agree2 = form.get("agree2")
+    is_ajax = request.headers.get("accept", "").lower().find("application/json") != -1
     # Валидация
     if not (first_name and last_name and country_id and city and phone and email and role and password and agree1 and agree2):
-        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": "Пожалуйста, заполните все обязательные поля и согласия."})
+        error_msg = "Пожалуйста, заполните все обязательные поля и согласия."
+        if is_ajax:
+            return JSONResponse({"success": False, "error": error_msg}, status_code=400)
+        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": error_msg, "session": request.session})
     if not re.match(r"^\+\d{10,15}$", phone):
-        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": "Телефон должен быть в формате +7XXXXXXXXXX"})
+        error_msg = "Телефон должен быть в формате +7XXXXXXXXXX"
+        if is_ajax:
+            return JSONResponse({"success": False, "error": error_msg}, status_code=400)
+        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": error_msg, "session": request.session})
     if "@" not in parseaddr(email)[1]:
-        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": "Некорректный email."})
+        error_msg = "Некорректный email."
+        if is_ajax:
+            return JSONResponse({"success": False, "error": error_msg}, status_code=400)
+        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": error_msg, "session": request.session})
     db = SessionLocal()
     if db.query(User).filter_by(email=email).first():
         db.close()
-        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": "Пользователь с таким email уже существует."})
+        error_msg = "Пользователь с таким email уже существует."
+        if is_ajax:
+            return JSONResponse({"success": False, "error": error_msg}, status_code=400)
+        return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": error_msg, "session": request.session})
     user = User(
         email=email,
         password=password,
@@ -92,7 +106,16 @@ async def register(request: Request):
     )
     db.add(user)
     db.commit()
+    db.refresh(user)
     db.close()
+    # Авторизация пользователя после регистрации
+    request.session['user_id'] = user.id
+    request.session['user_email'] = user.email
+    request.session['user_name'] = user.first_name
+    # Флеш-сообщение
+    request.session['flash'] = 'Регистрация успешна! Вы вошли в систему.'
+    if is_ajax:
+        return JSONResponse({"success": True, "redirect": "/", "message": "Регистрация успешна! Вы вошли в систему."})
     return RedirectResponse(url="/", status_code=302)
 
 def get_countries():
@@ -154,16 +177,18 @@ def startups(request: Request, q: str = Query('', alias='q'), country: str = Que
 def startup_profile(request: Request, id: int = Path(...)):
     db = SessionLocal()
     startup = db.query(Startup).get(id)
-    team = list(startup.team) if startup else []
-    deals = list(startup.deals) if startup else []
-    jobs = list(startup.jobs) if startup else []
-    # Получаем всех инвесторов для словаря {имя: объект}
+    if not startup:
+        db.close()
+        raise HTTPException(status_code=404)
+    team = list(startup.team)
+    deals = list(startup.deals)
+    jobs = list(startup.jobs)
     investors = db.query(Investor).all()
     investor_dict = {inv.name: inv for inv in investors}
     db.close()
     return templates.TemplateResponse(
         "public/startups/detail.html",
-        {"request": request, "session": request.session, "startup": startup, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict}
+        {"request": request, "startup": startup, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session}
     )
 
 @app.get("/investors", response_class=HTMLResponse)
@@ -1505,6 +1530,10 @@ def admin_admins(request: Request):
     users = db.query(User).filter(User.role.in_(["admin", "moderator"])).all()
     db.close()
     return templates.TemplateResponse("admin/users/admins.html", {"request": request, "users": users})
+
+@app.exception_handler(404)
+async def not_found(request: Request, exc: StarletteHTTPException):
+    return templates.TemplateResponse("404.html", {"request": request, "session": request.session}, status_code=404)
 
 if __name__ == "__main__":
     print('SERVER STARTED')

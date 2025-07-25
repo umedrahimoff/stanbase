@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+{% block title %}Страница не найдена — 404{% endblock %}
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height:60vh;">
+  <h1 class="mb-3" style="font-size:7rem; font-weight:700; color:#007bff; letter-spacing:2px;">404</h1>
+  <p class="lead mb-4" style="font-size:1.35rem; font-weight:400; color:#222;">Упс! Такой страницы не существует.<br>Возможно, вы ошиблись адресом или страница была удалена.</p>
+  <a href="/" class="btn btn-primary px-4 py-2 mb-4">На главную</a>
+  {% set links = [
+    {'url': '/startups', 'title': 'Каталог стартапов'},
+    {'url': '/investors', 'title': 'Каталог инвесторов'},
+    {'url': '/news', 'title': 'Новости'},
+    {'url': '/podcasts', 'title': 'Подкасты'},
+    {'url': '/events', 'title': 'Мероприятия'},
+    {'url': '/', 'title': 'Главная страница'}
+  ] %}
+  <div class="mt-4 text-center" style="max-width: 420px;">
+    <div class="mb-2 text-muted">Возможно, вам будут интересны эти разделы:</div>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      {% for link in links %}
+        <a href="{{ link.url }}" class="btn btn-outline-secondary btn-sm">{{ link.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %} 

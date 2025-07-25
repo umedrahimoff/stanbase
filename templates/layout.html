@@ -62,8 +62,8 @@
             {% if session is defined and session.get('user_id') %}
             <li class="nav-item dropdown d-flex align-items-center">
               <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ session.get('username', 'user') }}" alt="avatar" width="32" height="32" class="rounded-circle me-2"/>
-                <span class="d-none d-md-inline">{{ session.get('username', 'Пользователь') }}</span>
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ session.get('user_email', 'user') }}" alt="avatar" width="32" height="32" class="rounded-circle me-2"/>
+                <span class="d-none d-md-inline">{{ session.get('user_name', 'Пользователь') }}</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li><a class="dropdown-item" href="/logout">Выйти</a></li>
@@ -79,6 +79,13 @@
       </div>
     </nav>
     <div class="container">
+      {% if session.get('flash') %}
+        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+          {{ session.get('flash') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% set _ = session.pop('flash') %}
+      {% endif %}
       {% block content %}{% endblock %}
       <div style="margin-bottom: 48px;"></div>
     </div>
@@ -170,10 +177,22 @@
             var resp = await fetch('/register', {
               method: 'POST',
               body: formData,
-              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
               credentials: 'same-origin'
             });
-            var data = await resp.json();
+            var data;
+            try {
+              data = await resp.json();
+            } catch (err) {
+              var alert = registerForm.querySelector('.alert');
+              if (!alert) {
+                alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                registerForm.prepend(alert);
+              }
+              alert.textContent = 'Ошибка регистрации: некорректный ответ сервера.';
+              return;
+            }
             if (data.success) {
               window.location.reload();
             } else {
