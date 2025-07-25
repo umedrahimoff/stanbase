@@ -91,6 +91,7 @@ class News(Base):
     __tablename__ = 'news'
     id = Column(Integer, primary_key=True)
     title = Column(String(256), nullable=False)
+    slug = Column(String(256), unique=True, nullable=True)
     summary = Column(String(512))
     date = Column(Date, default=datetime.utcnow)
     content = Column(Text)

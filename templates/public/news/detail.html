@@ -72,7 +72,7 @@
                       <ul class="list-group list-group-flush mb-4">
                         {% for other in other_news[:5] %}
                         <li class="list-group-item">
-                          <a href="/news/{{ other.id }}">{{ other.title }}</a><br>
+                          <a href="/news/{{ other.slug }}">{{ other.title }}</a><br>
                           <span class="text-muted small">{{ other.date.strftime('%d.%m.%Y') }}</span>
                         </li>
                         {% endfor %}

@@ -1,42 +1,37 @@
-import os
 import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+import os
+from datetime import datetime
 
 # Данные для подключения к продакшн базе данных Render
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 def migrate_production_database():
-    """Миграция продакшн базы данных"""
+    """Выполняет миграции на продакшн базе данных"""
+    
+    # Получаем строку подключения из переменной окружения
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        print("Ошибка: DATABASE_URL не найден в переменных окружения")
+        return False
+    
     try:
-        # Подключение к базе данных
-        conn = psycopg2.connect(DATABASE_URL)
-        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        # Подключаемся к базе данных
+        conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
-        print("Подключение к продакшн базе данных установлено")
+        print("Подключение к базе данных установлено")
         
-        # Проверяем, существует ли колонка logo в таблице investor
+        # Проверяем существование таблицы currency
         cursor.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'investor' AND column_name = 'logo'
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'currency'
+            );
         """)
         
-        if not cursor.fetchone():
-            print("Добавляем колонку logo в таблицу investor...")
-            cursor.execute("ALTER TABLE investor ADD COLUMN logo VARCHAR(256)")
-            print("Колонка logo успешно добавлена")
-        else:
-            print("Колонка logo уже существует")
+        currency_exists = cursor.fetchone()[0]
         
-        # Проверяем, существует ли таблица currency
-        cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_name = 'currency'
-        """)
-        
-        if not cursor.fetchone():
+        if not currency_exists:
             print("Создаем таблицу currency...")
             cursor.execute("""
                 CREATE TABLE currency (
@@ -45,71 +40,103 @@ def migrate_production_database():
                     name VARCHAR(64) NOT NULL,
                     symbol VARCHAR(8),
                     status VARCHAR(16) DEFAULT 'active'
-                )
+                );
             """)
-            print("Таблица currency успешно создана")
             
             # Добавляем базовые валюты
-            currencies = [
-                ("USD", "Доллар США", "$", "active"),
-                ("EUR", "Евро", "€", "active"),
-                ("KZT", "Тенге", "₸", "active"),
-                ("RUB", "Рубль", "₽", "active"),
-                ("UZS", "Сум", "so'm", "active"),
-                ("GBP", "Фунт стерлингов", "£", "active"),
-                ("CNY", "Юань", "¥", "active"),
-            ]
-            
-            cursor.executemany(
-                "INSERT INTO currency (code, name, symbol, status) VALUES (%s, %s, %s, %s)",
-                currencies
-            )
-            print("Базовые валюты добавлены")
+            cursor.execute("""
+                INSERT INTO currency (code, name, symbol, status) VALUES
+                ('USD', 'Доллар США', '$', 'active'),
+                ('EUR', 'Евро', '€', 'active'),
+                ('KZT', 'Тенге', '₸', 'active'),
+                ('UZS', 'Сум', 'сум', 'active'),
+                ('KGS', 'Сом', 'с', 'active'),
+                ('TJS', 'Сомони', 'ЅМ', 'active'),
+                ('TMT', 'Манат', 'T', 'active')
+                ON CONFLICT (code) DO NOTHING;
+            """)
+            print("Таблица currency создана и заполнена данными")
         else:
             print("Таблица currency уже существует")
         
-        # Проверяем, существует ли колонка currency_id в таблице deal
+        # Проверяем существование колонки logo в таблице investor
         cursor.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'deal' AND column_name = 'currency_id'
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'investor' AND column_name = 'logo'
+            );
         """)
         
-        if not cursor.fetchone():
-            # Проверяем, что таблица currency существует
+        logo_exists = cursor.fetchone()[0]
+        
+        if not logo_exists:
+            print("Добавляем колонку logo в таблицу investor...")
             cursor.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_name = 'currency'
+                ALTER TABLE investor ADD COLUMN logo VARCHAR(256);
+            """)
+            print("Колонка logo добавлена в таблицу investor")
+        else:
+            print("Колонка logo уже существует в таблице investor")
+        
+        # Проверяем существование колонки currency_id в таблице deal
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'deal' AND column_name = 'currency_id'
+            );
+        """)
+        
+        currency_id_exists = cursor.fetchone()[0]
+        
+        if not currency_id_exists:
+            print("Добавляем колонку currency_id в таблицу deal...")
+            cursor.execute("""
+                ALTER TABLE deal ADD COLUMN currency_id INTEGER REFERENCES currency(id);
             """)
             
-            if cursor.fetchone():
-                print("Добавляем колонку currency_id в таблицу deal...")
-                cursor.execute("ALTER TABLE deal ADD COLUMN currency_id INTEGER REFERENCES currency(id)")
-                print("Колонка currency_id успешно добавлена")
-                
-                # Получаем ID валюты USD
-                cursor.execute("SELECT id FROM currency WHERE code = 'USD'")
-                usd_result = cursor.fetchone()
-                if usd_result:
-                    usd_id = usd_result[0]
-                    # Устанавливаем USD как валюту по умолчанию для существующих сделок
-                    cursor.execute("UPDATE deal SET currency_id = %s WHERE currency_id IS NULL", (usd_id,))
-                    print(f"Установлена валюта USD (id={usd_id}) по умолчанию для существующих сделок")
-                else:
-                    print("Внимание: Валюта USD не найдена, сделки останутся без валюты")
-            else:
-                print("Внимание: Таблица currency не существует, пропускаем добавление currency_id")
+            # Обновляем существующие сделки, устанавливая USD как валюту по умолчанию
+            cursor.execute("""
+                UPDATE deal SET currency_id = (SELECT id FROM currency WHERE code = 'USD' LIMIT 1)
+                WHERE currency_id IS NULL;
+            """)
+            print("Колонка currency_id добавлена в таблицу deal и обновлена")
         else:
-            print("Колонка currency_id уже существует")
+            print("Колонка currency_id уже существует в таблице deal")
+        
+        # Проверяем существование колонки slug в таблице news
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'news' AND column_name = 'slug'
+            );
+        """)
+        
+        slug_exists = cursor.fetchone()[0]
+        
+        if not slug_exists:
+            print("Добавляем колонку slug в таблицу news...")
+            cursor.execute("""
+                ALTER TABLE news ADD COLUMN slug VARCHAR(256) UNIQUE;
+            """)
+            print("Колонка slug добавлена в таблицу news")
+        else:
+            print("Колонка slug уже существует в таблице news")
+        
+        # Фиксируем изменения
+        conn.commit()
+        print("Миграция успешно выполнена!")
         
         cursor.close()
         conn.close()
-        print("Миграция завершена успешно")
+        
+        return True
         
     except Exception as e:
-        print(f"Ошибка при миграции: {e}")
-        raise
+        print(f"Ошибка при выполнении миграции: {e}")
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return False
 
 if __name__ == "__main__":
     migrate_production_database() 

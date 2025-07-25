@@ -171,8 +171,22 @@ if not session.query(Deal).first():
 if not session.query(News).first():
     for i in range(15):
         company = company_objs[i % len(company_objs)]
+        title = f"{company.name} анонсировал новый продукт {i+1}"
+        
+        # Генерируем slug из заголовка
+        from main import generate_slug
+        slug = generate_slug(title)
+        
+        # Проверяем уникальность slug
+        counter = 1
+        original_slug = slug
+        while session.query(News).filter_by(slug=slug).first():
+            slug = f"{original_slug}-{counter}"
+            counter += 1
+        
         session.add(News(
-            title=f"{company.name} анонсировал новый продукт {i+1}",
+            title=title,
+            slug=slug,
             summary=f"Краткое описание новости о {company.name} и инновациях.",
             date=date.today() - timedelta(days=i),
             content=f"Подробности о запуске, инвестициях и планах {company.name}.",

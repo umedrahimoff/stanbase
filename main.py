@@ -19,6 +19,7 @@ from starlette.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from email.utils import parseaddr
 import re
+import unicodedata
 
 app = FastAPI()
 
@@ -27,6 +28,46 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 app.add_middleware(SessionMiddleware, secret_key="stanbase_secret_2024", https_only=False)
+
+def generate_slug(title):
+    """Генерирует SEO-friendly slug из заголовка новости"""
+    # Нормализация Unicode (убираем диакритические знаки)
+    title = unicodedata.normalize('NFKD', title)
+    
+    # Транслитерация кириллицы в латиницу
+    cyrillic_to_latin = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
+        'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+        'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+        'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch',
+        'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    }
+    
+    # Заменяем кириллицу на латиницу
+    for cyr, lat in cyrillic_to_latin.items():
+        title = title.replace(cyr, lat)
+    
+    # Приводим к нижнему регистру
+    title = title.lower()
+    
+    # Заменяем все символы кроме букв и цифр на дефисы
+    title = re.sub(r'[^a-z0-9\s-]', '', title)
+    
+    # Заменяем пробелы на дефисы
+    title = re.sub(r'\s+', '-', title)
+    
+    # Убираем множественные дефисы
+    title = re.sub(r'-+', '-', title)
+    
+    # Убираем дефисы в начале и конце
+    title = title.strip('-')
+    
+    return title
 
 # Глобальный обработчик SQLAlchemy ошибок
 @app.exception_handler(SQLAlchemyError)
@@ -295,8 +336,8 @@ def news_list(request: Request):
     db.close()
     return templates.TemplateResponse("public/news/list.html", {"request": request, "session": request.session, "news": news})
 
-@app.get("/news/{id}", response_class=HTMLResponse)
-def news_detail(request: Request, id: int = Path(...)):
+@app.get("/news/{slug}", response_class=HTMLResponse)
+def news_detail(request: Request, slug: str = Path(...)):
     from models import News, Event
     from sqlalchemy import and_
     from sqlalchemy.orm import joinedload
@@ -304,18 +345,20 @@ def news_detail(request: Request, id: int = Path(...)):
     
     db = SessionLocal()
     
-    # Основная новость с загрузкой автора
-    news = db.query(News).options(joinedload(News.author)).get(id)
+    # Основная новость с загрузкой автора по slug
+    news = db.query(News).options(joinedload(News.author)).filter(News.slug == slug).first()
+    
+    if not news:
+        db.close()
+        raise HTTPException(status_code=404, detail="Новость не найдена")
     
     # Другие новости (исключая текущую)
-    other_news = db.query(News).filter(News.id != id).order_by(News.date.desc()).limit(5).all()
+    other_news = db.query(News).filter(News.id != news.id).order_by(News.date.desc()).limit(5).all()
     
     # Ближайшие мероприятия (будущие)
     upcoming_events = db.query(Event).filter(
         and_(Event.date >= datetime.now(), Event.status == 'active')
     ).order_by(Event.date.asc()).limit(3).all()
-    
-
     
     db.close()
     
@@ -1262,8 +1305,19 @@ async def admin_create_news(request: Request):
         if db.query(News).filter_by(title=title, author_id=author_id, category_id=category_id).first():
             error = 'Новость с такими параметрами уже существует'
         else:
+            # Генерируем slug из заголовка
+            slug = generate_slug(title)
+            
+            # Проверяем уникальность slug
+            counter = 1
+            original_slug = slug
+            while db.query(News).filter_by(slug=slug).first():
+                slug = f"{original_slug}-{counter}"
+                counter += 1
+            
             news = News(
                 title=title,
+                slug=slug,
                 description=description,
                 author_id=author_id,
                 category_id=category_id
@@ -1292,10 +1346,23 @@ async def admin_edit_news_post(request: Request, news_id: int):
     db = SessionLocal()
     news = db.query(News).get(news_id)
     form = await request.form()
-    news.title = form.get('title')
+    title = form.get('title')
+    news.title = title
     news.description = form.get('description')
     news.author_id = int(form.get('author_id'))
     news.category_id = int(form.get('category_id'))
+    
+    # Обновляем slug если изменился заголовок
+    new_slug = generate_slug(title)
+    if new_slug != news.slug:
+        # Проверяем уникальность нового slug
+        counter = 1
+        original_slug = new_slug
+        while db.query(News).filter(News.slug == new_slug, News.id != news_id).first():
+            new_slug = f"{original_slug}-{counter}"
+            counter += 1
+        news.slug = new_slug
+    
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/news", status_code=302)

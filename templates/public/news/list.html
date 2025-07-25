@@ -20,10 +20,10 @@
   <div class="col">
     <div class="card h-100">
       <div class="card-body">
-        <h5 class="card-title"><a href="/news/{{ n.id }}">{{ n.title }}</a></h5>
+        <h5 class="card-title"><a href="/news/{{ n.slug }}">{{ n.title }}</a></h5>
         <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>
         <p class="card-text">{{ n.summary }}</p>
-        <a href="/news/{{ n.id }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
+        <a href="/news/{{ n.slug }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
       </div>
     </div>
   </div>
