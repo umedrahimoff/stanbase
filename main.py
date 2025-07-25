@@ -299,12 +299,13 @@ def news_list(request: Request):
 def news_detail(request: Request, id: int = Path(...)):
     from models import News, Event, Job, Company
     from sqlalchemy import and_
+    from sqlalchemy.orm import joinedload
     from datetime import datetime
     
     db = SessionLocal()
     
-    # Основная новость
-    news = db.query(News).get(id)
+    # Основная новость с загрузкой автора
+    news = db.query(News).options(joinedload(News.author)).get(id)
     
     # Другие новости (исключая текущую)
     other_news = db.query(News).filter(News.id != id).order_by(News.date.desc()).limit(5).all()
@@ -314,8 +315,8 @@ def news_detail(request: Request, id: int = Path(...)):
         and_(Event.date >= datetime.now(), Event.status == 'active')
     ).order_by(Event.date.asc()).limit(3).all()
     
-    # Актуальные вакансии
-    recent_jobs = db.query(Job).filter(Job.status == 'active').order_by(Job.id.desc()).limit(3).all()
+    # Актуальные вакансии с загрузкой компаний
+    recent_jobs = db.query(Job).options(joinedload(Job.company)).filter(Job.status == 'active').order_by(Job.id.desc()).limit(3).all()
     
     # Популярные компании (по количеству сделок)
     popular_companies = db.query(Company).filter(Company.status == 'active').order_by(Company.id.desc()).limit(3).all()
