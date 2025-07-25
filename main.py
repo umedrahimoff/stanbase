@@ -8,6 +8,8 @@ import os
 from typing import Optional
 from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
+import subprocess
+from fastapi import APIRouter
 
 from db import SessionLocal, Base, engine
 from models import Startup, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, StartupStage, Category, Author, PortfolioEntry
@@ -1650,6 +1652,15 @@ def create_full_test_data():
     session.close()
 
 create_full_test_data()
+
+router = APIRouter()
+
+@router.get("/run-migration")
+def run_migration():
+    result = subprocess.run(["python3", "migrate_to_prod.py"], capture_output=True, text=True)
+    return {"stdout": result.stdout, "stderr": result.stderr}
+
+app.include_router(router)
 
 if __name__ == "__main__":
     print('SERVER STARTED')
