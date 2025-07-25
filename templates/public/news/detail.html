@@ -30,15 +30,18 @@
       <article class="news-detail">
         <header class="mb-4">
           <h1 class="h2 mb-3">{{ news.title }}</h1>
-          <div class="d-flex align-items-center text-muted mb-3">
-            <i class="bi bi-calendar3 me-2"></i>
-            <span>{{ news.date.strftime('%d.%m.%Y') }}</span>
-            {% if news.author %}
-            <span class="mx-2">•</span>
-            <i class="bi bi-person me-1"></i>
-            <span>{{ news.author.name }}</span>
-            {% endif %}
-          </div>
+                                <div class="d-flex align-items-center text-muted mb-3">
+                        <i class="bi bi-calendar3 me-2"></i>
+                        <span>{{ news.date.strftime('%d.%m.%Y') }}</span>
+                        {% if news.author %}
+                        <span class="mx-2">•</span>
+                        <i class="bi bi-person me-1"></i>
+                        <span>{{ news.author.name }}</span>
+                        {% endif %}
+                        <span class="mx-2">•</span>
+                        <i class="bi bi-eye me-1"></i>
+                        <span>{{ news.views|default(0) }}</span>
+                      </div>
           {% if news.summary %}
           <div class="lead text-muted mb-4">{{ news.summary }}</div>
           {% endif %}
@@ -50,18 +53,14 @@
         </div>
         {% endif %}
 
-        <footer class="border-top pt-4">
-          <div class="d-flex justify-content-between align-items-center">
-            <a href="/news" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left me-1"></i>
-              К списку новостей
-            </a>
-            <div class="text-muted small">
-              <i class="bi bi-eye me-1"></i>
-              Просмотров: {{ news.views|default(0) }}
-            </div>
-          </div>
-        </footer>
+                            <footer class="border-top pt-4">
+                      <div class="d-flex justify-content-start">
+                        <a href="/news" class="btn btn-outline-secondary">
+                          <i class="bi bi-arrow-left me-1"></i>
+                          К списку новостей
+                        </a>
+                      </div>
+                    </footer>
       </article>
     </div>
 
@@ -75,7 +74,7 @@
                       <ul class="list-group list-group-flush mb-4">
                         {% for other in other_news[:5] %}
                         <li class="list-group-item">
-                          <a href="/news/{{ other.id }}"><b>{{ other.title }}</b></a><br>
+                          <a href="/news/{{ other.id }}">{{ other.title }}</a><br>
                           <span class="text-muted small">{{ other.date.strftime('%d.%m.%Y') }}</span>
                         </li>
                         {% endfor %}
@@ -92,7 +91,7 @@
                       <ul class="list-group list-group-flush mb-4">
                         {% for event in upcoming_events[:3] %}
                         <li class="list-group-item">
-                          <a href="/event/{{ event.id }}"><b>{{ event.title }}</b></a><br>
+                          <a href="/event/{{ event.id }}">{{ event.title }}</a><br>
                           <span class="text-muted small">{{ event.date.strftime('%d.%m.%Y') }}</span>
                           {% if event.location %}
                           <br><span class="text-muted small">{{ event.location }}</span>
@@ -115,20 +114,44 @@
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  font-size: 16px;
 }
 
-.news-content {
-  line-height: 1.7;
-  font-size: 1.1rem;
+.news-detail h1 {
+  font-size: 1.75rem; /* 28px */
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
-.news-content h2, .news-content h3, .news-content h4 {
+.news-detail h2 {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
   margin-top: 2rem;
   margin-bottom: 1rem;
 }
 
+.news-detail h3 {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.news-detail h4 {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.news-content {
+  line-height: 1.6;
+  font-size: 1rem; /* 16px - стандартный размер */
+}
+
 .news-content p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 1rem; /* 16px */
 }
 
 .news-content img {
@@ -138,9 +161,50 @@
   margin: 1rem 0;
 }
 
+.news-detail .lead {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.6;
+  color: #6c757d;
+}
+
+.news-detail .text-muted {
+  font-size: 0.875rem; /* 14px */
+}
+
+.news-detail .small {
+  font-size: 0.8125rem; /* 13px */
+}
+
+.news-detail .btn {
+  font-size: 0.875rem; /* 14px */
+}
+
+.news-detail .card h5 {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+}
+
+.news-detail .list-group-item {
+  font-size: 0.875rem; /* 14px */
+}
+
+.news-detail .list-group-item a {
+  font-size: 0.875rem; /* 14px */
+}
+
+
+
 @media (max-width: 991.98px) {
   .news-detail {
     padding: 1.5rem;
+  }
+  
+  .news-detail h1 {
+    font-size: 1.5rem; /* 24px */
+  }
+  
+  .news-detail h2 {
+    font-size: 1.25rem; /* 20px */
   }
 }
 </style>
