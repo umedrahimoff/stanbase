@@ -1552,6 +1552,10 @@ def admin_admins(request: Request):
 async def not_found(request: Request, exc: StarletteHTTPException):
     return templates.TemplateResponse("404.html", {"request": request, "session": request.session}, status_code=404)
 
+@app.get("/")
+def root():
+    return "Stanbase API is running"
+
 if __name__ == "__main__":
     print('SERVER STARTED')
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
