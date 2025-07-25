@@ -39,7 +39,13 @@ def import_data_from_dict(data):
                     name = EXCLUDED.name,
                     symbol = EXCLUDED.symbol,
                     status = EXCLUDED.status
-            """, (currency['id'], currency['code'], currency['name'], currency['symbol'], currency['status']))
+            """, (
+                currency['id'],
+                currency.get('code', ''),
+                currency.get('name', ''),
+                currency.get('symbol', ''),
+                currency.get('status', '')
+            ))
         print(f"Импортировано валют: {len(data.get('currencies', []))}")
         
         # Импорт стран
@@ -52,20 +58,32 @@ def import_data_from_dict(data):
                     name = EXCLUDED.name,
                     code = EXCLUDED.code,
                     status = EXCLUDED.status
-            """, (country['id'], country['name'], country['code'], country['status']))
+            """, (
+                country['id'],
+                country.get('name', ''),
+                country.get('code', ''),
+                country.get('status', '')
+            ))
         print(f"Импортировано стран: {len(data.get('countries', []))}")
         
         # Импорт городов
         print("Импортируем города...")
         for city in data.get('cities', []):
             cursor.execute("""
-                INSERT INTO city (id, name, country_id, status) 
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO city (id, name, country_id, code, status) 
+                VALUES (%s, %s, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE SET 
                     name = EXCLUDED.name,
                     country_id = EXCLUDED.country_id,
+                    code = EXCLUDED.code,
                     status = EXCLUDED.status
-            """, (city['id'], city['name'], city['country_id'], city['status']))
+            """, (
+                city['id'],
+                city.get('name', ''),
+                city.get('country_id'),
+                city.get('code', ''),
+                city.get('status', '')
+            ))
         print(f"Импортировано городов: {len(data.get('cities', []))}")
         
         # Импорт категорий
