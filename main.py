@@ -1126,15 +1126,25 @@ async def admin_create_author(request: Request):
     if request.method == "POST":
         form = await request.form()
         name = form.get('name')
+        description = form.get('description')
+        website = form.get('website')
+        status = form.get('status')
         db = SessionLocal()
         if db.query(Author).filter_by(name=name).first():
             error = 'Автор с таким именем уже существует'
         else:
-            author = Author(name=name)
+            author = Author(
+                name=name,
+                description=description,
+                website=website,
+                status=status
+            )
             db.add(author)
             db.commit()
+            db.close()
             return RedirectResponse(url="/admin/authors", status_code=302)
-    return templates.TemplateResponse("admin/authors/form.html", {"request": request, "error": error, "author": None})
+        db.close()
+    return templates.TemplateResponse("admin/authors/form.html", {"request": request, "session": request.session, "error": error, "author": None})
 
 @app.get("/admin/authors/edit/{author_id}", response_class=HTMLResponse, name="admin_edit_author")
 async def admin_edit_author(request: Request, author_id: int):
@@ -1156,6 +1166,9 @@ async def admin_edit_author_post(request: Request, author_id: int):
     author = db.query(Author).get(author_id)
     form = await request.form()
     author.name = form.get('name')
+    author.description = form.get('description')
+    author.website = form.get('website')
+    author.status = form.get('status')
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/authors", status_code=302)

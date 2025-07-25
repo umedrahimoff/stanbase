@@ -167,6 +167,8 @@ if not session.query(Deal).first():
                 inv.portfolio.append(company)
     session.commit()
 
+
+
 # --- Новости ---
 if not session.query(News).first():
     for i in range(15):
@@ -195,7 +197,7 @@ if not session.query(News).first():
             views=0,
             status='active',
             created_by='admin',
-            author_id=1 if session.query(Author).first() else None
+            author_id=None  # Автор будет назначен вручную через админ панель
         ))
     session.commit()
 
