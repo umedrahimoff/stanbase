@@ -155,34 +155,14 @@ def index(request: Request):
     print("INDEX SESSION:", dict(request.session))
     db = SessionLocal()
     try:
-        print("Загружаем компании...")
         companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
-        print(f"Загружено компаний: {len(companies)}")
-        
-        print("Загружаем инвесторов...")
         investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
-        print(f"Загружено инвесторов: {len(investors)}")
-        
-        print("Загружаем новости...")
         news = db.query(News).order_by(News.date.desc()).limit(10).all()
-        print(f"Загружено новостей: {len(news)}")
-        
-        print("Загружаем подкасты...")
         podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
-        print(f"Загружено подкастов: {len(podcasts)}")
-        
-        print("Загружаем вакансии...")
         jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
-        print(f"Загружено вакансий: {len(jobs)}")
-        
-        print("Загружаем мероприятия...")
         events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
-        print(f"Загружено мероприятий: {len(events)}")
-        
     except Exception as e:
         print(f"Ошибка при загрузке данных: {e}")
-        import traceback
-        traceback.print_exc()
         # Возвращаем пустые списки в случае ошибки
         companies = []
         investors = []
