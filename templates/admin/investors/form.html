@@ -1,0 +1,340 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if investor %}Редактировать инвестора{% else %}Создать инвестора{% endif %}</h3>
+        <ul class="nav nav-tabs mb-4" id="investorTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+          <li class="nav-item" role="presentation" id="portfolio-tab-li">
+            <button class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab">Портфель</button>
+          </li>
+          <li class="nav-item" role="presentation" id="team-tab-li">
+            <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">Команда</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="tab-content" id="investorTabContent">
+            <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" name="name" class="form-control" value="{{ investor.name if investor else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control">{{ investor.description if investor else '' }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Страна</label>
+                <input type="text" name="country" class="form-control" value="{{ investor.country if investor else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Фокус</label>
+                <input type="text" name="focus" class="form-control" value="{{ investor.focus if investor else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Стадии</label>
+                <input type="text" name="stages" class="form-control" value="{{ investor.stages if investor else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Сайт</label>
+                <input type="text" name="website" class="form-control" value="{{ investor.website if investor else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if investor and investor.status=='active' %}selected{% endif %}>Активен</option>
+                  <option value="inactive" {% if investor and investor.status=='inactive' %}selected{% endif %}>Неактивен</option>
+                  <option value="archived" {% if investor and investor.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if investor and investor.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Тип</label>
+                <select name="type" id="investor-type-select" class="form-select" required>
+                  <option value="angel" {% if investor and investor.type=='angel' %}selected{% endif %}>Ангел</option>
+                  <option value="venture" {% if investor and investor.type=='venture' %}selected{% endif %}>Венчур</option>
+                  <option value="other" {% if investor and investor.type=='other' %}selected{% endif %}>Прочие</option>
+                </select>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="portfolio" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Портфель</h5>
+                {% if investor %}
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#portfolioModal">Добавить</button>
+                {% endif %}
+              </div>
+              {% if investor %}
+              <!-- Модалка добавления портфельной записи -->
+              <div class="modal fade" id="portfolioModal" tabindex="-1" aria-labelledby="portfolioModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="portfolioModalLabel">Добавить стартап в портфель</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="portfolio-entry-form">
+                        <div class="mb-3">
+                          <label class="form-label">Стартап</label>
+                          <input type="text" id="startup-autocomplete" class="form-control" autocomplete="off" placeholder="Начните вводить название..." required>
+                          <input type="hidden" name="startup_id" id="startup-id-hidden">
+                          <div class="form-text">Выберите из списка или начните вводить название</div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Сумма инвестиций (USD)</label>
+                          <input type="text" name="amount" id="amount-input" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Дата инвестирования</label>
+                          <input type="date" name="date" id="date-input" class="form-control" required min="2000-01-01" max="{{ today.isoformat() }}">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Оценка стартапа (USD, необязательно)</label>
+                          <input type="text" name="valuation" id="valuation-input" class="form-control">
+                        </div>
+                        <div class="alert alert-danger d-none" id="portfolio-entry-error"></div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              <table class="table table-sm table-hover">
+                <thead><tr><th>Стартап</th><th>Сумма</th><th>Дата</th><th>Оценка</th><th></th></tr></thead>
+                <tbody id="portfolio-table-body">
+                  {% if investor and investor.portfolio_entries %}
+                    {% for entry in investor.portfolio_entries %}
+                      <tr data-entry-id="{{ entry.id }}">
+                        <td><a href="{{ url_for('startup_profile', id=entry.startup.id) }}" target="_blank">{{ entry.startup.name }}</a></td>
+                        <td>{{ entry.amount|int if entry.amount == entry.amount|int else entry.amount }}</td>
+                        <td>{{ entry.date.strftime('%d.%m.%Y') }}</td>
+                        <td>{% if entry.valuation %}{{ entry.valuation|int if entry.valuation == entry.valuation|int else entry.valuation }}{% else %}—{% endif %}</td>
+                        <td class="text-end">
+                          <button class="btn btn-sm btn-outline-danger portfolio-delete-btn" data-entry-id="{{ entry.id }}">Удалить</button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="text-muted">Нет стартапов в портфеле.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="team" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Команда</h5>
+                <button class="btn btn-sm btn-outline-primary">Добавить</button>
+              </div>
+              <table class="table table-sm table-hover">
+                <thead><tr><th>Имя</th><th>Роль</th><th>LinkedIn</th><th></th></tr></thead>
+                <tbody>
+                  {% if investor and investor.team %}
+                    {% for p in investor.team %}
+                      <tr>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.role }}</td>
+                        <td>{% if p.linkedin %}<a href="{{ p.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
+                        <td class="text-end">
+                          <button class="btn btn-sm btn-outline-secondary">Редактировать</button>
+                          <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="4" class="text-muted">Нет данных о команде.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_investors') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Мета-информация</h6>
+        {% if investor %}
+          <div class="mb-2"><b>ID:</b> {{ investor.id }}</div>
+        {% endif %}
+        <div class="mb-2"><b>Страна:</b> {{ investor.country if investor else '—' }}</div>
+        <div class="mb-2"><b>Фокус:</b> {{ investor.focus if investor else '—' }}</div>
+        {% if investor %}
+          <div class="mb-2">
+            <a href="{{ url_for('investor_profile', id=investor.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Открыть на сайте</a>
+          </div>
+        {% endif %}
+        <!-- Можно добавить дату создания/изменения, если появятся -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- jQuery (должен быть до Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- jQuery UI для Autocomplete -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<!-- autoNumeric для форматирования суммы -->
+<script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js"></script>
+<script>
+function updateInvestorTabs() {
+  var type = document.getElementById('investor-type-select').value;
+  document.getElementById('portfolio-tab-li').style.display = '';
+  document.getElementById('team-tab-li').style.display = (type === 'venture') ? '' : 'none';
+}
+document.getElementById('investor-type-select').addEventListener('change', updateInvestorTabs);
+window.addEventListener('DOMContentLoaded', function() {
+  updateInvestorTabs();
+  // --- DEBUG: Проверка наличия поля ---
+  console.log('init autocomplete', $('#startup-autocomplete').length);
+  // --- jQuery UI Autocomplete для стартапа ---
+  $('#startup-autocomplete').autocomplete({
+    minLength: 0,
+    source: function(request, response) {
+      console.log('autocomplete source called', request.term);
+      var q = request.term;
+      var params = {};
+      if (q && q.length >= 2) {
+        params.q = q;
+      }
+      $.getJSON('/admin/startup_search', params, function(data) {
+        console.log('startup_search response', data); // debug
+        var items = data.results || [];
+        if (!q || q.length < 2) items = items.slice(0, 5);
+        if (items.length === 0) {
+          response([{ label: 'Нет вариантов', value: '', id: null, disabled: true }]);
+        } else {
+          response($.map(items, function(item) {
+            return { label: item.text, value: item.text, id: item.id };
+          }));
+        }
+      });
+    },
+    select: function(event, ui) {
+      if (ui.item.id) {
+        $('#startup-id-hidden').val(ui.item.id);
+      } else {
+        event.preventDefault();
+      }
+    },
+    change: function(event, ui) {
+      if (!ui.item || !ui.item.id) {
+        $('#startup-id-hidden').val('');
+      }
+    }
+  }).on('focus', function() {
+    console.log('focus autocomplete');
+    $(this).autocomplete('search', '');
+  });
+  // --- autoNumeric для суммы и оценки ---
+  if (!window.amountNumeric) {
+    window.amountNumeric = new AutoNumeric('#amount-input', {
+      digitGroupSeparator: ' ',
+      decimalCharacter: '.',
+      decimalPlaces: 0,
+      modifyValueOnWheel: false,
+      minimumValue: '0',
+      maximumValue: '1000000000',
+      unformatOnSubmit: true
+    });
+    window.amountNumeric.reformat(); // DEBUG: вручную форматируем
+  }
+  if (!window.valuationNumeric) {
+    window.valuationNumeric = new AutoNumeric('#valuation-input', {
+      digitGroupSeparator: ' ',
+      decimalCharacter: '.',
+      decimalPlaces: 0,
+      modifyValueOnWheel: false,
+      minimumValue: '0',
+      maximumValue: '1000000000',
+      unformatOnSubmit: true
+    });
+    window.valuationNumeric.reformat(); // DEBUG: вручную форматируем
+  }
+  // --- AJAX добавление портфельной записи ---
+  $('#portfolio-entry-form').on('submit', function(e) {
+    var startupId = $('#startup-id-hidden').val();
+    if (!startupId) {
+      e.preventDefault();
+      $('#portfolio-entry-error').removeClass('d-none').text('Выберите стартап из списка');
+      return false;
+    }
+    var dateVal = $('#date-input').val();
+    if (dateVal) {
+      var minDate = new Date('2000-01-01');
+      var maxDate = new Date();
+      var inputDate = new Date(dateVal);
+      if (inputDate < minDate || inputDate > maxDate) {
+        e.preventDefault();
+        $('#portfolio-entry-error').removeClass('d-none').text('Дата должна быть с 2000 года по сегодня');
+        return false;
+      }
+    }
+    var $form = $(this);
+    var amountRaw = AutoNumeric.getNumber('#amount-input');
+    var valuationRaw = AutoNumeric.getNumber('#valuation-input');
+    var data = {
+      startup_id: startupId,
+      amount: amountRaw,
+      date: $form.find('[name="date"]').val(),
+      valuation: valuationRaw || null
+    };
+    $('#portfolio-entry-error').addClass('d-none').text('');
+    $.ajax({
+      url: '/admin/investors/{{ investor.id }}/portfolio/entry/add',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      success: function(resp) {
+        if (resp.success) {
+          location.reload();
+        } else {
+          $('#portfolio-entry-error').removeClass('d-none').text(resp.error || 'Ошибка');
+        }
+      },
+      error: function(xhr) {
+        var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Ошибка';
+        $('#portfolio-entry-error').removeClass('d-none').text(msg);
+      }
+    });
+    return false;
+  });
+  // --- AJAX удаление портфельной записи ---
+  $('#portfolio-table-body').on('click', '.portfolio-delete-btn', function() {
+    var entryId = $(this).data('entry-id');
+    if (!confirm('Удалить стартап из портфеля?')) return;
+    $.ajax({
+      url: '/admin/investors/{{ investor.id }}/portfolio/entry/delete/' + entryId,
+      method: 'POST',
+      success: function(resp) {
+        if (resp.success) {
+          $('tr[data-entry-id="' + entryId + '"]').remove();
+          if ($('#portfolio-table-body tr').length === 0) {
+            $('#portfolio-table-body').append('<tr><td colspan="5" class="text-muted">Нет стартапов в портфеле.</td></tr>');
+          }
+        }
+      }
+    });
+  });
+});
+</script>
+{% endblock %} 

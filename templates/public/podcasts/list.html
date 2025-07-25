@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block title %}Подкасты о стартапах Центральной Азии — Экспертные интервью и обсуждения | StanBase{% endblock %}
+
+{% block meta_description %}Подкасты о стартапах и инновациях Центральной Азии. Экспертные интервью, обсуждения трендов, истории успеха и советы для предпринимателей в регионе.{% endblock %}
+
+{% block meta_keywords %}подкасты о стартапах, стартап-подкасты, экспертные интервью, инновации Центральной Азии, предпринимательство, венчурные инвестиции, технологические тренды, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}
+{% block og_title %}Подкасты о стартапах Центральной Азии — Экспертные интервью и обсуждения | StanBase{% endblock %}
+
+{% block og_description %}Подкасты о стартапах и инновациях Центральной Азии. Экспертные интервью, обсуждения трендов, истории успеха и советы для предпринимателей в регионе.{% endblock %}
+
+{% block twitter_title %}Подкасты о стартапах Центральной Азии — Экспертные интервью и обсуждения | StanBase{% endblock %}
+
+{% block twitter_description %}Подкасты о стартапах и инновациях Центральной Азии. Экспертные интервью, обсуждения трендов, истории успеха и советы для предпринимателей в регионе.{% endblock %}
+{% block content %}
+<h2 class="mb-4">Подкасты</h2>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for p in podcasts %}
+  <div class="col">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">{{ p.title }}</h5>
+        <div class="mb-2 text-muted small">{{ p.date.strftime('%d.%m.%Y') }}</div>
+        <p class="card-text">{{ p.description }}</p>
+        {% if p.youtube_url %}
+        <div class="ratio ratio-16x9"><iframe src="{{ p.youtube_url }}" allowfullscreen></iframe></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %} 

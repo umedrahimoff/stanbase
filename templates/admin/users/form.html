@@ -1,0 +1,201 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<style>
+  .user-detail-card { border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 24px 24px 16px 24px; margin-bottom: 24px; }
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) {
+    .user-meta-card { margin-top: 18px; }
+  }
+  #togglePassword[disabled] {
+    background: #f8f9fa;
+    color: #adb5bd;
+    border-color: #ced4da;
+    pointer-events: none;
+    opacity: 1;
+  }
+  #togglePassword .bi {
+    font-size: 1.2em;
+    vertical-align: middle;
+  }
+  #togglePassword {
+    min-width: 44px;
+    text-align: center;
+  }
+</style>
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card user-detail-card">
+      <div class="card-body">
+        <h3 class="mb-4">{% if user %}Редактирование пользователя{% else %}Создание пользователя{% endif %}</h3>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" value="{{ user.email if user else '' }}" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Имя <span class="text-danger">*</span></label>
+              <input type="text" name="first_name" class="form-control" value="{{ user.first_name if user else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Фамилия <span class="text-danger">*</span></label>
+              <input type="text" name="last_name" class="form-control" value="{{ user.last_name if user else '' }}" required>
+            </div>
+          </div>
+          {% if not user or (user.role != 'admin' and user.role != 'moderator') %}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Страна <span class="text-danger">*</span></label>
+              <select name="country_id" class="form-select" required>
+                <option value="">Выберите страну</option>
+                {% for country in countries %}
+                  <option value="{{ country.id }}" {% if user and user.country_id == country.id %}selected{% endif %}>{{ country.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Город <span class="text-danger">*</span></label>
+              <input type="text" name="city" class="form-control" value="{{ user.city if user else '' }}" required>
+            </div>
+          </div>
+          {% endif %}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Телефон <span class="text-danger">*</span></label>
+              <input type="text" name="phone" class="form-control" value="{{ user.phone if user else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Telegram</label>
+              <input type="text" name="telegram" class="form-control" value="{{ user.telegram if user else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">LinkedIn</label>
+            <input type="url" name="linkedin" class="form-control" value="{{ user.linkedin if user else '' }}">
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Роль <span class="text-danger">*</span></label>
+              <select name="role" class="form-select" required>
+                <option value="admin" {% if user and user.role=='admin' %}selected{% endif %}>admin</option>
+                <option value="moderator" {% if user and user.role=='moderator' %}selected{% endif %}>moderator</option>
+                <option value="investor" {% if user and user.role=='investor' %}selected{% endif %}>investor</option>
+                <option value="startuper" {% if user and user.role=='startuper' %}selected{% endif %}>startuper</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Статус <span class="text-danger">*</span></label>
+              <select name="status" class="form-select" required>
+                <option value="active" {% if user and user.status=='active' %}selected{% endif %}>Активен</option>
+                <option value="inactive" {% if user and user.status=='inactive' %}selected{% endif %}>Неактивен</option>
+                <option value="archived" {% if user and user.status=='archived' %}selected{% endif %}>Архив</option>
+                <option value="draft" {% if user and user.status=='draft' %}selected{% endif %}>Черновик</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Пароль <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="password" name="password" id="passwordInputAdmin" class="form-control" autocomplete="new-password">
+              <button class="btn btn-outline-secondary" type="button" id="togglePasswordAdmin" aria-label="Показать пароль">
+                <span id="eyeIconAdmin">
+                  <svg id="svgEyeAdmin" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z"/>
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 1a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
+                  </svg>
+                </span>
+              </button>
+              {% if not user %}
+              <button class="btn btn-outline-secondary" type="button" id="generatePasswordAdmin" tabindex="-1">Сгенерировать</button>
+              {% else %}
+              <button class="btn btn-outline-secondary" type="button" id="generatePasswordAdmin" tabindex="-1">Сбросить</button>
+              {% endif %}
+            </div>
+            <div class="form-text">Если оставить поле пустым — пароль не изменится. После генерации не забудьте скопировать пароль.</div>
+            <div id="passwordAlertAdmin" style="display:none;" class="alert alert-info mt-2"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card user-meta-card">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Тех. информация</h6>
+        {% if user %}
+          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ user.id }}</span></div>
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ user.status }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата создания:</span> <span class="meta-value">{{ user.created_at.strftime('%d.%m.%Y %H:%M') if user.created_at else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата изменения:</span> <span class="meta-value">{{ user.updated_at.strftime('%d.%m.%Y %H:%M') if user.updated_at else '—' }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const passInput = document.getElementById('passwordInputAdmin');
+  const toggleBtn = document.getElementById('togglePasswordAdmin');
+  const genBtn = document.querySelector('#generatePasswordAdmin');
+  const svgEye = document.getElementById('svgEyeAdmin');
+  const passwordAlert = document.getElementById('passwordAlertAdmin');
+  let eyeOpen = true;
+  if (toggleBtn && passInput && svgEye) {
+    toggleBtn.addEventListener('click', function() {
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        svgEye.innerHTML = '<path d="M13.359 11.238l1.453 1.453a.5.5 0 0 1-.707.707l-1.453-1.453C11.12 12.332 9.88 13 8 13c-5 0-8-5-8-5s1.522-2.794 4.359-4.238l-1.453-1.453a.5.5 0 1 1 .707-.707l1.453 1.453C4.88 3.668 6.12 3 8 3c5 0 8 5 8 5s-1.522 2.794-4.359 4.238zM8 4c-1.657 0-3.156.672-4.359 1.762C2.12 7.332 1.172 8 1.172 8s1.522 2.794 4.359 4.238C6.88 12.332 8.12 13 10 13c1.657 0 3.156-.672 4.359-1.762C13.88 8.668 14.828 8 14.828 8s-1.522-2.794-4.359-4.238z"/>';
+        eyeOpen = false;
+      } else {
+        passInput.type = 'password';
+        svgEye.innerHTML = '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 1a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>';
+        eyeOpen = true;
+      }
+    });
+  }
+  if (genBtn && passInput) {
+    genBtn.addEventListener('click', function() {
+      let confirmReset = true;
+      if (genBtn.textContent.trim() === 'Сбросить') {
+        confirmReset = confirm('Вы уверены, что хотите сбросить пароль?');
+      }
+      if (!confirmReset) return;
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+      let pass = '';
+      for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+      passInput.value = pass;
+      passInput.type = 'text';
+      svgEye.innerHTML = '<path d="M13.359 11.238l1.453 1.453a.5.5 0 0 1-.707.707l-1.453-1.453C11.12 12.332 9.88 13 8 13c-5 0-8-5-8-5s1.522-2.794 4.359-4.238l-1.453-1.453a.5.5 0 1 1 .707-.707l1.453 1.453C4.88 3.668 6.12 3 8 3c5 0 8 5 8 5s-1.522 2.794-4.359 4.238zM8 4c-1.657 0-3.156.672-4.359 1.762C2.12 7.332 1.172 8 1.172 8s1.522 2.794 4.359 4.238C6.88 12.332 8.12 13 10 13c1.657 0 3.156-.672 4.359-1.762C13.88 8.668 14.828 8 14.828 8s-1.522-2.794-4.359-4.238z"/>';
+      // Показываем алерт с паролем и кнопкой скопировать
+      if (passwordAlert) {
+        passwordAlert.innerHTML = 'Сгенерирован новый пароль: <b>' + pass + '</b> <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="copyGeneratedPasswordAdmin">Скопировать</button>';
+        passwordAlert.style.display = 'block';
+        setTimeout(() => { passwordAlert.style.display = 'none'; }, 15000);
+        const copyBtn = document.getElementById('copyGeneratedPasswordAdmin');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(pass);
+            copyBtn.textContent = 'Скопировано!';
+            setTimeout(() => { copyBtn.textContent = 'Скопировать'; }, 1200);
+          });
+        }
+      }
+    });
+  }
+  window.addEventListener('beforeunload', function() {
+    if (passInput) passInput.value = '';
+    if (svgEye) svgEye.innerHTML = '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 1a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>';
+    if (passwordAlert) passwordAlert.style.display = 'none';
+  });
+});
+</script>
+{% endblock %} 

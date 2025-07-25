@@ -1,0 +1,40 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if author %}Редактировать автора{% else %}Создать автора{% endif %}</h3>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Имя</label>
+            <input type="text" name="name" class="form-control" value="{{ author.name if author else '' }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Описание</label>
+            <textarea name="description" class="form-control">{{ author.description if author else '' }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Сайт</label>
+            <input type="text" name="website" class="form-control" value="{{ author.website if author else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-select" required>
+              <option value="active" {% if author and author.status=='active' %}selected{% endif %}>Активен</option>
+              <option value="inactive" {% if author and author.status=='inactive' %}selected{% endif %}>Неактивен</option>
+              <option value="archived" {% if author and author.status=='archived' %}selected{% endif %}>Архив</option>
+              <option value="draft" {% if author and author.status=='draft' %}selected{% endif %}>Черновик</option>
+            </select>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_authors') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

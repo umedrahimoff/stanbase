@@ -1,0 +1,37 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4 class="mb-3">Статистика</h4>
+        <ul class="list-unstyled mb-0">
+          <li><b>Пользователи:</b> {{ users|length }}</li>
+          <li><b>Стартапы:</b> {{ startups|length }}</li>
+          <li><b>Инвесторы:</b> {{ investors|length }}</li>
+          <li><b>Сделки:</b> {{ deals|length }}</li>
+          <li><b>Вакансии:</b> {{ jobs|length }}</li>
+          <li><b>Новости:</b> {{ news|length }}</li>
+          <li><b>Мероприятия:</b> {{ events|length }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4 class="mb-3">Разделы управления</h4>
+        <div class="d-flex flex-wrap gap-3">
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_users') }}">Пользователи</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_startups') }}">Стартапы</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_investors') }}">Инвесторы</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_news') }}">Новости</a>
+          <a class="btn btn-outline-primary disabled" href="#">Сделки</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('admin_jobs') }}">Вакансии</a>
+          <a class="btn btn-outline-primary disabled" href="#">Мероприятия</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

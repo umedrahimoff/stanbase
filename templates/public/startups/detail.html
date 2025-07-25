@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ startup.name }} — {{ startup.industry }} стартап в {{ startup.city }}, {{ startup.country }} | StanBase{% endblock %}
+
+{% block meta_description %}{{ startup.name }} - {{ startup.industry }} стартап на стадии {{ startup.stage }} в {{ startup.city }}, {{ startup.country }}. {{ startup.description[:150] }}{% if startup.description|length > 150 %}...{% endif %}{% if startup.founded_date %} Основан {{ startup.founded_date.strftime('%d.%m.%Y') }}.{% endif %}{% if startup.website %} Официальный сайт: {{ startup.website }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ startup.name }}, {{ startup.industry }}, {{ startup.stage }}, {{ startup.city }}, {{ startup.country }}, стартап, инновации, технологические проекты, Центральная Азия{% endblock %}
+
+{% block og_title %}{{ startup.name }} — {{ startup.industry }} стартап в {{ startup.city }}, {{ startup.country }} | StanBase{% endblock %}
+
+{% block og_description %}{{ startup.name }} - {{ startup.industry }} стартап на стадии {{ startup.stage }} в {{ startup.city }}, {{ startup.country }}. {{ startup.description[:150] }}{% if startup.description|length > 150 %}...{% endif %}{% if startup.founded_date %} Основан {{ startup.founded_date.strftime('%d.%m.%Y') }}.{% endif %}{% if startup.website %} Официальный сайт: {{ startup.website }}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ startup.name }} — {{ startup.industry }} стартап в {{ startup.city }}, {{ startup.country }} | StanBase{% endblock %}
+
+{% block twitter_description %}{{ startup.name }} - {{ startup.industry }} стартап на стадии {{ startup.stage }} в {{ startup.city }}, {{ startup.country }}. {{ startup.description[:150] }}{% if startup.description|length > 150 %}...{% endif %}{% endblock %}
+
+{% block content %}
+{% if not (session is defined and session.get('user_id')) %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+  <span>Для доступа к полной информации, пожалуйста, авторизуйтесь</span>
+  <button type="button" class="btn btn-sm btn-outline-primary ms-3 open-login-modal">Войти</button>
+</div>
+{% endif %}
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <h2 class="mb-2">{{ startup.name }}</h2>
+        <div class="mb-2 text-muted small">{{ startup.country }}, {{ startup.city }} | {{ startup.stage }} | {{ startup.industry }}</div>
+        <p class="mb-3">{{ startup.description }}</p>
+        <ul class="list-unstyled mb-3">
+          {% if startup.founded_date %}<li><b>Дата основания:</b> {{ startup.founded_date.strftime('%d.%m.%Y') }}</li>{% endif %}
+          {% if startup.website %}<li><b>Сайт:</b> <a href="{{ startup.website }}" target="_blank">{{ startup.website }}</a></li>{% endif %}
+        </ul>
+        <hr>
+        <h5 class="mt-4 mb-2">Команда</h5>
+        {% if startup.team %}
+          <ul class="list-group mb-3">
+            {% for person in startup.team %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {% if session is defined and session.get('user_id') %}
+                  <span><a href="#">{{ person.name }}</a> — {{ person.role }}</span>
+                  {% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank"><img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/linkedin.svg" width="20" alt="LinkedIn"></a>{% endif %}
+                {% else %}
+                  <span>{{ person.name[:2] }}****</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет данных о команде.</div>
+        {% endif %}
+        <hr>
+        <h5 class="mt-4 mb-2">Инвестиционные раунды</h5>
+        {% if startup.deals %}
+          <ul class="list-group mb-3">
+            {% for deal in startup.deals %}
+              <li class="list-group-item">
+                <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ deal.amount|int }} {{ deal.currency }}{% else %}{{ (deal.amount|string)[:2] }}**** {{ deal.currency }}{% endif %}
+                <span class="text-muted small">({{ deal.date.strftime('%d.%m.%Y') if deal.date else '' }})</span><br>
+                <span class="text-muted small">Оценка: {% if session is defined and session.get('user_id') %}{{ deal.valuation|int if deal.valuation else '—' }}{% else %}{{ (deal.valuation|string)[:2] if deal.valuation else '--' }}****{% endif %}</span><br>
+                <span class="text-muted small">Инвестор(ы):
+                  {% set inv_names = deal.investors.split(',') if deal.investors else [] %}
+                  {% for inv in inv_names %}
+                    {% set inv_obj = investor_dict.get(inv.strip()) %}
+                    {% if inv_obj %}
+                      <a href="/investor/{{ inv_obj.id }}">{{ inv_obj.name }}</a>{% if not loop.last %}, {% endif %}
+                    {% else %}
+                      {{ inv.strip() }}{% if not loop.last %}, {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет данных о сделках.</div>
+        {% endif %}
+        <hr>
+        <h5 class="mt-4 mb-2">Вакансии</h5>
+        {% if startup.jobs %}
+          <ul class="list-group mb-3">
+            {% for job in startup.jobs %}
+              <li class="list-group-item">
+                <a href="/job/{{ job.id }}">{{ job.title }}</a> — {{ job.city }} ({{ job.job_type }})<br>
+                <span class="text-muted small">Контакт: {{ job.contact }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет открытых вакансий.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="mb-3">Похожие стартапы</h5>
+        {% if similar %}
+          <ul class="list-group list-group-flush">
+            {% for s in similar %}
+              <li class="list-group-item">
+                <a href="/startup/{{ s.id }}"><b>{{ s.name }}</b></a><br>
+                <span class="text-muted small">{{ s.country }}, {{ s.city }} | {{ s.industry }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет похожих стартапов.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+.blurred {
+  color: transparent;
+  text-shadow: 0 0 8px #888;
+  background: repeating-linear-gradient(90deg, #eee 0 10px, #fff 10px 20px);
+  border-radius: 4px;
+  padding: 0 8px;
+  user-select: none;
+}
+</style>
+{% endblock %} 

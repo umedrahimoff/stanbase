@@ -1,0 +1,101 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Пользователи</h2>
+  <a href="{{ url_for('admin_create_user') }}" class="btn btn-primary">Создать пользователя</a>
+</div>
+
+{# --- Блок Администраторы --- #}
+{% set is_admins_page = request.url.path == '/admin/admins' %}
+{% set admins = users | selectattr('role', 'in', ['admin', 'moderator']) | list %}
+{% if admins and is_admins_page %}
+<div class="mb-4">
+  <h5 class="mb-2">Администраторы и модераторы</h5>
+  <table class="table table-bordered table-hover align-middle bg-white rounded-0 border-0">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Логин</th>
+        <th>Email</th>
+        <th>Роль</th>
+        <th>Статус</th>
+        <th class="text-end">Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in admins %}
+      <tr class="table-primary">
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ u.status }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('admin_edit_user', user_id=u.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+          <form action="{{ url_for('admin_delete_user', user_id=u.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить пользователя?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# --- Основная таблица пользователей (кроме админов и модераторов) --- #}
+{% if not is_admins_page %}
+{% set non_admins = users | rejectattr('role', 'in', ['admin', 'moderator']) | list %}
+<table class="table table-striped table-hover align-middle bg-white rounded-0 border-0">
+  <thead class="table-light">
+    <tr>
+      <th>ID</th>
+      <th>Имя и фамилия</th>
+      <th>Email</th>
+      <th>Роль</th>
+      <th>Страна</th>
+      <th>Телефон</th>
+      <th>Статус</th>
+      <th class="text-end">Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in non_admins %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.first_name }} {{ u.last_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{% if u.country_id %}{{ countries[u.country_id|int] if countries and (u.country_id|int) in countries else u.country_id }}{% endif %}</td>
+        <td>{{ u.phone }}</td>
+        <td>{{ u.status }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('admin_edit_user', user_id=u.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+          <form action="{{ url_for('admin_delete_user', user_id=u.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить пользователя?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<!-- Пагинация -->
+{% set last_page = (total // per_page) + (1 if total % per_page else 0) %}
+{% if last_page > 1 %}
+<nav>
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page-1 }}">&laquo;</a>
+    </li>
+    {% for p in range(1, last_page+1) %}
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+    <li class="page-item {% if page == last_page %}disabled{% endif %}">
+      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page+1 }}">&raquo;</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+<!-- Пагинация и таблица остаются, убираю ссылку 'Назад в админку' -->
+{% endblock %} 

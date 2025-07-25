@@ -1,0 +1,166 @@
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
+  background: #f6f8fa;
+  color: #1a2341;
+}
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+.admin-sidebar {
+  width: 240px;
+  background: #1a2341;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-shadow: 2px 0 8px rgba(26,35,65,0.04);
+}
+.sidebar-logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  padding: 28px 32px 20px 32px;
+  letter-spacing: 1px;
+  color: #fff;
+  border-bottom: 1px solid #263159;
+}
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+.admin-sidebar nav a {
+  color: #bfc8e6;
+  text-decoration: none;
+  padding: 14px 32px;
+  font-size: 1.08rem;
+  border-left: 4px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  font-weight: 500;
+}
+.admin-sidebar nav a.active, .admin-sidebar nav a:hover {
+  background: #263159;
+  color: #fff;
+  border-left: 4px solid #4f8cff;
+}
+.admin-content {
+  flex: 1;
+  padding: 48px 48px 48px 48px;
+  background: #f6f8fa;
+}
+h1, h2, h3 {
+  color: #1a2341;
+  margin-top: 0;
+  font-weight: 700;
+}
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 12px rgba(26,35,65,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+table th, table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid #e5e9f2;
+  text-align: left;
+  font-size: 1.04rem;
+}
+table th {
+  background: #f0f3fa;
+  color: #1a2341;
+  font-weight: 600;
+}
+table tr:last-child td {
+  border-bottom: none;
+}
+table tr:hover td {
+  background: #f6f8fa;
+}
+.btn, button, input[type="submit"] {
+  background: #4f8cff;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: 1.08rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 8px;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(26,35,65,0.04);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn:hover, button:hover, input[type="submit"]:hover {
+  background: #2563d8;
+}
+form {
+  background: #fff;
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(26,35,65,0.06);
+  max-width: 520px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+  font-size: 1.04rem;
+  background: #f9fbfd;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #4f8cff;
+  background: #fff;
+}
+/* Иконки */
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor;
+}
+/* Тёмный режим (переключатель пока не реализован) */
+body.dark {
+  background: #181c2a;
+  color: #e5e9f2;
+}
+body.dark .admin-sidebar {
+  background: #181c2a;
+  color: #fff;
+}
+body.dark .admin-sidebar nav a {
+  color: #bfc8e6;
+}
+body.dark .admin-sidebar nav a.active, body.dark .admin-sidebar nav a:hover {
+  background: #23263a;
+  color: #fff;
+  border-left: 4px solid #4f8cff;
+}
+body.dark .admin-content {
+  background: #23263a;
+}
+body.dark table {
+  background: #23263a;
+  color: #e5e9f2;
+}
+body.dark table th {
+  background: #181c2a;
+  color: #bfc8e6;
+}
+body.dark form {
+  background: #23263a;
+  color: #e5e9f2;
+} 

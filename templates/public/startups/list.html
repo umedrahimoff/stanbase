@@ -1,0 +1,145 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} | Стадия: {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} | Индустрия: {{ request.query_params.get('industry') }}{% endif %}
+    — Стартапы | StanBase
+  {% else %}
+    Стартапы Центральной Азии — Каталог инновационных проектов | StanBase
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Найдите стартапы по запросу "{{ request.query_params.get('q') }}"{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} на стадии {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} в сфере {{ request.query_params.get('industry') }}{% endif %}. Полный каталог стартапов Центральной Азии с фильтрами по стране, стадии и индустрии.
+  {% else %}
+    Каталог стартапов Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане. Фильтры по стране, стадии развития и индустрии.
+  {% endif %}
+{% endblock %}
+
+{% block meta_keywords %}
+  {% if request.query_params.get('q') %}{{ request.query_params.get('q') }}, {% endif %}
+  {% if request.query_params.get('country') %}{{ request.query_params.get('country') }}, {% endif %}
+  {% if request.query_params.get('stage') %}{{ request.query_params.get('stage') }}, {% endif %}
+  {% if request.query_params.get('industry') %}{{ request.query_params.get('industry') }}, {% endif %}
+  стартапы Центральной Азии, инновационные проекты, технологические стартапы, венчурные инвестиции, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан
+{% endblock %}
+
+{% block og_title %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} | Стадия: {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} | Индустрия: {{ request.query_params.get('industry') }}{% endif %}
+    — Стартапы | StanBase
+  {% else %}
+    Стартапы Центральной Азии — Каталог инновационных проектов | StanBase
+  {% endif %}
+{% endblock %}
+
+{% block og_description %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Найдите стартапы по запросу "{{ request.query_params.get('q') }}"{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} на стадии {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} в сфере {{ request.query_params.get('industry') }}{% endif %}. Полный каталог стартапов Центральной Азии с фильтрами по стране, стадии и индустрии.
+  {% else %}
+    Каталог стартапов Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане. Фильтры по стране, стадии развития и индустрии.
+  {% endif %}
+{% endblock %}
+
+{% block twitter_title %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Поиск: {{ request.query_params.get('q') }}{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} | Стадия: {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} | Индустрия: {{ request.query_params.get('industry') }}{% endif %}
+    — Стартапы | StanBase
+  {% else %}
+    Стартапы Центральной Азии — Каталог инновационных проектов | StanBase
+  {% endif %}
+{% endblock %}
+
+{% block twitter_description %}
+  {% if request.query_params.get('q') or request.query_params.get('country') or request.query_params.get('stage') or request.query_params.get('industry') %}
+    {% if request.query_params.get('q') %}Найдите стартапы по запросу "{{ request.query_params.get('q') }}"{% endif %}
+    {% if request.query_params.get('country') %} в {{ request.query_params.get('country') }}{% endif %}
+    {% if request.query_params.get('stage') %} на стадии {{ request.query_params.get('stage') }}{% endif %}
+    {% if request.query_params.get('industry') %} в сфере {{ request.query_params.get('industry') }}{% endif %}. Полный каталог стартапов Центральной Азии.
+  {% else %}
+    Каталог стартапов Центральной Азии. Найдите инновационные проекты в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.
+  {% endif %}
+{% endblock %}
+{% block head %}
+<style>
+  .card-google {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    background: #fff;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.15s;
+  }
+  .card-google:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="mb-4">Стартапы</h2>
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-3">
+    <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.query_params.get('q', '') }}">
+  </div>
+  <div class="col-md-2">
+    <select name="country" class="form-select">
+      <option value="">Страна</option>
+      {% for c in countries %}
+        <option value="{{ c }}" {% if c == request.query_params.get('country') %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="stage" class="form-select">
+      <option value="">Стадия</option>
+      {% for s in stages %}
+        <option value="{{ s }}" {% if s == request.query_params.get('stage') %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="industry" class="form-select">
+      <option value="">Индустрия</option>
+      {% for i in industries %}
+        <option value="{{ i }}" {% if i == request.query_params.get('industry') %}selected{% endif %}>{{ i }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
+  </div>
+</form>
+
+{% if startups %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for s in startups %}
+    <div class="col">
+      <div class="card card-google h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="/startup/{{ s.id }}">{{ s.name }}</a></h5>
+          <div class="mb-2 text-muted small">{{ s.country }}, {{ s.city }} | {{ s.stage }} | {{ s.industry }}</div>
+          <p class="card-text">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">Стартапы не найдены.</div>
+{% endif %}
+{% endblock %} 

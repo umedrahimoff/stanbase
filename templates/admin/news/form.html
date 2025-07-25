@@ -1,0 +1,70 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if news_item %}Редактировать новость{% else %}Создать новость{% endif %}</h3>
+        <ul class="nav nav-tabs mb-4" id="newsTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="tab-content" id="newsTabContent">
+            <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Заголовок</label>
+                <input type="text" name="title" class="form-control" value="{{ news_item.title if news_item else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Дата (YYYY-MM-DD)</label>
+                <input type="text" name="date" class="form-control" value="{{ news_item.date if news_item and news_item.date else '' }}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Кратко</label>
+                <input type="text" name="summary" class="form-control" value="{{ news_item.summary if news_item else '' }}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if news_item and news_item.status=='active' %}selected{% endif %}>Активна</option>
+                  <option value="inactive" {% if news_item and news_item.status=='inactive' %}selected{% endif %}>Неактивна</option>
+                  <option value="archived" {% if news_item and news_item.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if news_item and news_item.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Текст новости</label>
+                <textarea name="content" class="form-control">{{ news_item.content if news_item else '' }}</textarea>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_news') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Мета-информация</h6>
+        {% if news_item %}
+          <div class="mb-2"><b>ID:</b> {{ news_item.id }}</div>
+        {% endif %}
+        <div class="mb-2"><b>Дата:</b> {{ news_item.date if news_item and news_item.date else '—' }}</div>
+        {% if news_item %}
+          <div class="mb-2">
+            <a href="{{ url_for('news_detail', id=news_item.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Открыть на сайте</a>
+          </div>
+        {% endif %}
+        <!-- Можно добавить дату создания/изменения, если появятся -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

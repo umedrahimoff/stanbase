@@ -1,0 +1,91 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<h2 class="mb-4">Страны</h2>
+<div class="row g-3 mb-3 d-flex justify-content-between align-items-center">
+  <form class="col d-flex flex-row" method="get" action="">
+    <div class="me-2" style="width: 250px;">
+      <input type="text" name="q" class="form-control" placeholder="Поиск по названию..." value="{{ q }}">
+    </div>
+    <div class="me-2" style="width: 180px;">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">Все статусы</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Активна</option>
+        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Неактивна</option>
+        <option value="archived" {% if status == 'archived' %}selected{% endif %}>Архив</option>
+        <option value="draft" {% if status == 'draft' %}selected{% endif %}>Черновик</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-outline-primary me-2">Найти</button>
+  </form>
+  <div class="col-auto">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal">Добавить</button>
+  </div>
+</div>
+<!-- Модальное окно для добавления страны -->
+<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin_create_country') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCountryModalLabel">Добавить страну</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Название</label>
+            <input type="text" name="name" class="form-control" placeholder="Название страны" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-select">
+              <option value="active">Активна</option>
+              <option value="inactive">Неактивна</option>
+              <option value="archived">Архив</option>
+              <option value="draft">Черновик</option>
+            </select>
+          </div>
+          {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<table class="table table-striped table-hover align-middle bg-white rounded-0 border-0">
+  <thead class="table-light"><tr><th>ID</th><th>Название</th><th>Статус</th><th class="text-end">Действия</th></tr></thead>
+  <tbody>
+    {% for c in countries %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td>{{ c.name }}</td>
+        <td>{{ c.status }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('admin_edit_country', country_id=c.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+          <form action="{{ url_for('admin_delete_country', country_id=c.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить страну?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% set last_page = (total // per_page) + (1 if total % per_page else 0) %}
+{% if last_page > 1 %}
+<nav>
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page-1 }}">&laquo;</a>
+    </li>
+    {% for p in range(1, last_page+1) %}
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+    <li class="page-item {% if page == last_page %}disabled{% endif %}">
+      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page+1 }}">&raquo;</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+{% endblock %} 

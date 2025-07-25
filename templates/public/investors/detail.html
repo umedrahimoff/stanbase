@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ investor.name }} — {{ inv_type }} в {{ investor.country }} | StanBase{% endblock %}
+
+{% block meta_description %}{{ investor.name }} - {{ inv_type }} в {{ investor.country }}. {{ investor.description[:150] }}{% if investor.description|length > 150 %}...{% endif %} Фокус на {{ investor.focus }}. Инвестирует в стадии: {{ investor.stages }}.{% if investor.website %} Официальный сайт: {{ investor.website }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ investor.name }}, {{ inv_type }}, {{ investor.country }}, {{ investor.focus }}, {{ investor.stages }}, инвестор, венчурные инвестиции, Центральная Азия{% endblock %}
+
+{% block og_title %}{{ investor.name }} — {{ inv_type }} в {{ investor.country }} | StanBase{% endblock %}
+
+{% block og_description %}{{ investor.name }} - {{ inv_type }} в {{ investor.country }}. {{ investor.description[:150] }}{% if investor.description|length > 150 %}...{% endif %} Фокус на {{ investor.focus }}. Инвестирует в стадии: {{ investor.stages }}.{% if investor.website %} Официальный сайт: {{ investor.website }}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ investor.name }} — {{ inv_type }} в {{ investor.country }} | StanBase{% endblock %}
+
+{% block twitter_description %}{{ investor.name }} - {{ inv_type }} в {{ investor.country }}. {{ investor.description[:150] }}{% if investor.description|length > 150 %}...{% endif %} Фокус на {{ investor.focus }}. Инвестирует в стадии: {{ investor.stages }}.{% endblock %}
+
+{% block content %}
+{% if not (session is defined and session.get('user_id')) %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+  <span>Для доступа к полной информации, пожалуйста, авторизуйтесь</span>
+  <button type="button" class="btn btn-sm btn-outline-primary ms-3 open-login-modal">Войти</button>
+</div>
+{% endif %}
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <h2 class="mb-2">{{ investor.name }}</h2>
+        <div class="mb-2 text-muted small">{{ investor.country }} | {{ inv_type }}</div>
+        <p class="mb-3">{{ investor.description }}</p>
+        {% if investor.website %}
+          <div class="mb-2"><b>Сайт:</b> <a href="{{ investor.website }}" target="_blank">{{ investor.website }}</a></div>
+        {% endif %}
+        <div class="mb-3"><b>Стадии инвестирования:</b>
+          {% for stage in investor.stages.split(',') %}
+            <span class="badge bg-info text-dark me-1">{{ stage.strip() }}</span>
+          {% endfor %}
+        </div>
+        <hr>
+        {% if investor.type in ['angel', 'venture'] %}
+        <h5 class="mb-2">Портфель</h5>
+        {% if investor.portfolio %}
+          <ul class="list-group mb-3">
+            {% for startup in investor.portfolio %}
+              <li class="list-group-item">
+                {% if session is defined and session.get('user_id') %}
+                  <a href="/startup/{{ startup.id }}"><b>{{ startup.name }}</b></a><br>
+                  <span class="text-muted small">{{ startup.country }}, {{ startup.city }} | {{ startup.industry }}</span>
+                {% else %}
+                  <span>{{ startup.name[:2] }}****</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет данных о портфеле.</div>
+        {% endif %}
+        {% endif %}
+        {% if investor.type == 'venture' and investor.team %}
+        <hr>
+        <h5 class="mb-2">Команда</h5>
+        <ul class="list-group mb-3">
+          {% for p in investor.team %}
+            <li class="list-group-item">
+              {% if session is defined and session.get('user_id') %}
+                <span><b>{{ p.name }}</b> — {{ p.role }}</span>
+                {% if p.linkedin %}<a href="{{ p.linkedin }}" target="_blank" class="ms-2">LinkedIn</a>{% endif %}
+              {% else %}
+                <span>{{ p.name[:2] }}****</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="mb-3">Похожие инвесторы</h5>
+        {% if similar %}
+          <ul class="list-group list-group-flush">
+            {% for inv in similar %}
+              <li class="list-group-item">
+                <a href="/investor/{{ inv.id }}"><b>{{ inv.name }}</b></a><br>
+                <span class="text-muted small">{{ inv.country }} | {{ inv.focus }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Нет похожих инвесторов.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+.blurred {
+  color: transparent;
+  text-shadow: 0 0 8px #888;
+  background: repeating-linear-gradient(90deg, #eee 0 10px, #fff 10px 20px);
+  border-radius: 4px;
+  padding: 0 8px;
+  user-select: none;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}Новости стартап-экосистемы Центральной Азии — Актуальные события и аналитика | StanBase{% endblock %}
+
+{% block meta_description %}Новости стартап-экосистемы Центральной Азии. Актуальные события, инвестиции, запуски проектов и аналитика рынка в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.{% endblock %}
+
+{% block meta_keywords %}новости стартапов, стартап-экосистема Центральной Азии, инвестиции в стартапы, технологические новости, венчурные инвестиции, инновации, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}
+
+{% block og_title %}Новости стартап-экосистемы Центральной Азии — Актуальные события и аналитика | StanBase{% endblock %}
+
+{% block og_description %}Новости стартап-экосистемы Центральной Азии. Актуальные события, инвестиции, запуски проектов и аналитика рынка в Казахстане, Узбекистане, Кыргызстане, Таджикистане и Туркменистане.{% endblock %}
+
+{% block twitter_title %}Новости стартап-экосистемы Центральной Азии — Актуальные события и аналитика | StanBase{% endblock %}
+
+{% block twitter_description %}Новости стартап-экосистемы Центральной Азии. Актуальные события, инвестиции, запуски проектов и аналитика рынка в регионе.{% endblock %}
+{% block content %}
+<h2 class="mb-4">Новости</h2>
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for n in news %}
+  <div class="col">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title"><a href="/news/{{ n.id }}">{{ n.title }}</a></h5>
+        <div class="mb-2 text-muted small">{{ n.date.strftime('%d.%m.%Y') }}</div>
+        <p class="card-text">{{ n.summary }}</p>
+        <a href="/news/{{ n.id }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %} 

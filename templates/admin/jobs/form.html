@@ -1,0 +1,113 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row justify-content-center g-2">
+  <div class="col-lg-9">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h3 class="mb-3">{% if job %}Редактировать вакансию{% else %}Создать вакансию{% endif %}</h3>
+        <ul class="nav nav-tabs mb-3" id="jobTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main" type="button" role="tab">Основная информация</button>
+          </li>
+        </ul>
+        {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+        <form method="post">
+          <div class="tab-content" id="jobTabContent">
+            <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-2">
+                <label class="form-label">Должность <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" value="{{ job.title if job else '' }}" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control">{{ job.description if job else '' }}</textarea>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Компания <span class="text-danger">*</span></label>
+                <select name="startup_id" id="startup-select" class="form-select" required>
+                  <option value=""></option>
+                  {% for s in startups %}
+                    <option value="{{ s.id }}" {% if (job and job.startup_id == s.id) or (not job and startup_id and s.id == startup_id) %}selected{% endif %}>{{ s.name }}{% if s.country %}, {{ s.country[:2]|upper }}{% endif %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Город <span class="text-danger">*</span></label>
+                <select name="city" id="city-select" class="form-select" required>
+                  <option value=""></option>
+                  {% for c in cities %}
+                    <option value="{{ c.id }}" {% if job and job.city_id == c.id %}selected{% endif %}>{{ c.name }}{% if c.country %}, {{ c.country.name[:2]|upper }}{% endif %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Тип <span class="text-danger">*</span></label>
+                <select name="job_type" id="job-type-select" class="form-select" required>
+                  <option value="">Выберите тип</option>
+                  <option value="Полная занятость" {% if job and job.job_type=='Полная занятость' %}selected{% endif %}>Полная занятость</option>
+                  <option value="Частичная занятость" {% if job and job.job_type=='Частичная занятость' %}selected{% endif %}>Частичная занятость</option>
+                  <option value="Стажировка" {% if job and job.job_type=='Стажировка' %}selected{% endif %}>Стажировка</option>
+                  <option value="Удалёнка" {% if job and job.job_type=='Удалёнка' %}selected{% endif %}>Удалёнка</option>
+                  <option value="Проектная работа" {% if job and job.job_type=='Проектная работа' %}selected{% endif %}>Проектная работа</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Контакт</label>
+                <input type="text" name="contact" class="form-control" value="{{ job.contact if job else '' }}" placeholder="Email или t.me/username" pattern="(^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$)|(^t\.me\/[\w_]+$)" title="Введите email или ссылку на Telegram (t.me/username)">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Статус <span class="text-danger">*</span></label>
+                <select name="status" class="form-select" required>
+                  <option value="active" {% if job and job.status=='active' %}selected{% endif %}>Активна</option>
+                  <option value="inactive" {% if job and job.status=='inactive' %}selected{% endif %}>Неактивна</option>
+                  <option value="archived" {% if job and job.status=='archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if job and job.status=='draft' %}selected{% endif %}>Черновик</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_jobs') }}" class="btn btn-link">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% if job %}
+  <div class="col-lg-3">
+    <div class="card mb-3">
+      <div class="card-body py-3 px-3">
+        <h6 class="text-muted mb-2">Мета-информация</h6>
+        <div class="mb-1"><b>ID:</b> {{ job.id }}</div>
+        <div class="mb-1"><b>Стартап:</b> {% if job.startup %}<a href="/admin/startups/edit/{{ job.startup.id }}">{{ job.startup.name }}</a>{% else %}—{% endif %}</div>
+        <div class="mb-1"><b>Город:</b> {{ job.city or '—' }}</div>
+        <div class="mb-1"><b>Тип:</b> {{ job.job_type or '—' }}</div>
+        <div class="mb-1"><b>Контакт:</b> {{ job.contact or '—' }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- jQuery (до Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(function() {
+  // --- Автозаполнение города при выборе компании (оставляем для совместимости) ---
+  $('#startup-select').on('change', function() {
+    var companyId = $(this).val();
+    if (companyId) {
+      $.getJSON('/admin/startup_info/' + companyId, function(data) {
+        if (data && data.city && $('#city-select').length) {
+          $('#city-select').val(data.city);
+        }
+      });
+    }
+  });
+});
+</script>
+{% endblock %} 
