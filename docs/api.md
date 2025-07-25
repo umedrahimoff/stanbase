@@ -4,7 +4,7 @@
 
 REST API для работы с данными компаний, инвесторов и связанных сущностей. Построен на FastAPI.
 
-**Базовый URL:** `https://stanbasetech.onrender.com`
+**Базовый URL:** `https://your-domain.com`
 
 ## Аутентификация
 
@@ -68,7 +68,7 @@ REST API для работы с данными компаний, инвесто�
   - Параметры: `name`, `type`, `description`, `country`, `city`, `focus`, `stages`, `website`, `logo`, `status`
 - **GET /admin/investors/edit/{id}** - Форма редактирования
 - **POST /admin/investors/edit/{id}** - Обновление инвестора
-- **POST /admin/investors/delete/{id}** - Удаление инвестора
+- **POST /admin/investors/delete/{id}` - Удаление инвестора
 
 ### Управление вакансиями
 - **GET /admin/jobs** - Список вакансий
@@ -252,12 +252,12 @@ REST API для работы с данными компаний, инвесто�
 
 ### Поиск компаний
 ```bash
-curl "https://stanbasetech.onrender.com/companies?country=Казахстан&industry=SaaS&q=AI"
+curl "https://your-domain.com/companies?country=Казахстан&industry=SaaS&q=AI"
 ```
 
 ### Создание компании
 ```bash
-curl -X POST "https://stanbasetech.onrender.com/admin/companies/create" \
+curl -X POST "https://your-domain.com/admin/companies/create" \
   -H "Content-Type: multipart/form-data" \
   -F "name=AI Startup" \
   -F "description=Инновационная AI компания" \
@@ -269,7 +269,7 @@ curl -X POST "https://stanbasetech.onrender.com/admin/companies/create" \
 
 ### Проверка БД
 ```bash
-curl "https://stanbasetech.onrender.com/test-db"
+curl "https://your-domain.com/test-db"
 ```
 
 ## Обработка ошибок
