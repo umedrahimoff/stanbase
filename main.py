@@ -12,6 +12,7 @@ import subprocess
 from fastapi import APIRouter
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError, InternalError
+from datetime import datetime
 
 from db import SessionLocal, Base, engine
 from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage
