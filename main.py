@@ -199,7 +199,7 @@ def index(request: Request):
     try:
         companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
         investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
-        news = db.query(News).order_by(News.date.desc()).limit(10).all()
+        news = db.query(News).options(joinedload(News.author)).order_by(News.date.desc()).limit(10).all()
         podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
         jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
         events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
@@ -333,7 +333,7 @@ def investor_profile(request: Request, id: int = Path(...)):
 @app.get("/news", response_class=HTMLResponse)
 def news_list(request: Request):
     db = SessionLocal()
-    news = db.query(News).order_by(News.date.desc()).all()
+    news = db.query(News).options(joinedload(News.author)).order_by(News.date.desc()).all()
     db.close()
     return templates.TemplateResponse("public/news/list.html", {"request": request, "session": request.session, "news": news})
 
