@@ -7,62 +7,133 @@
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ request.url_for('static', path='admin_custom.css') }}">
+  <style>
+    body {
+      padding-top: 64px; /* Высота фиксированного хедера */
+    }
+    
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1030;
+      height: 64px;
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 64px; /* Под фиксированным хедером */
+      left: 0;
+      bottom: 0;
+      width: 16.666667%; /* col-md-2 = 2/12 = 16.666667% */
+      z-index: 1020;
+      overflow-y: auto;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+    
+    .main-content {
+      margin-left: 16.666667%; /* Отступ под сайдбар */
+      padding: 2rem;
+      min-height: calc(100vh - 64px);
+    }
+    
+    /* Стили для скроллбара сайдбара */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sidebar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 767.98px) {
+      .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      body {
+        padding-top: 0;
+      }
+      
+      .navbar {
+        position: static;
+        height: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- Header на всю ширину, без тени -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom w-100" style="min-height:64px;">
+  <!-- Фиксированный Header -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
     <div class="container-fluid">
       <span class="navbar-brand mb-0 h4">Админка Stanbase</span>
       <a href="https://stanbase.kz/" target="_blank" class="btn btn-outline-primary ms-auto">Открыть сайт</a>
     </div>
   </nav>
-  <div class="container-fluid">
-    <div class="row min-vh-100">
-      <!-- Sidebar без тени и без названия -->
-      <nav class="col-md-2 d-none d-md-block bg-light sidebar py-4">
-        <div class="sidebar-sticky">
-          <ul class="nav flex-column">
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Дашборд</a></li>
-            <li class="nav-item">
-              <a class="nav-link {% if request.url.path.startswith('/admin/users') or request.url.path.startswith('/admin/admins') %}active{% endif %}" href="{{ url_for('admin_users') }}">Все пользователи</a>
-              <ul class="nav flex-column ms-3">
-                <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/users' %}active{% endif %}" href="/admin/users">Пользователи</a></li>
-                <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/admins' %}active{% endif %}" href="/admin/admins">Администраторы</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_companies' %}active{% endif %}" href="{{ url_for('admin_companies') }}">Компании</a></li>
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_investors' %}active{% endif %}" href="{{ url_for('admin_investors') }}">Инвесторы</a></li>
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_news' %}active{% endif %}" href="{{ url_for('admin_news') }}">Новости</a>
-              <ul class="nav flex-column ms-3">
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_authors' %}active{% endif %}" href="{{ url_for('admin_authors') }}">Авторы</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_jobs' %}active{% endif %}" href="{{ url_for('admin_jobs') }}">Вакансии</a></li>
-            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_deals' %}active{% endif %}" href="{{ url_for('admin_deals') }}">Сделки</a></li>
-            <li><hr class="my-2"></li>
-            <li class="nav-item">
-              <span class="nav-link d-flex justify-content-between align-items-center">
-                <span>Справочники</span>
-              </span>
-              <ul class="nav flex-column ms-3">
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_countries' %}active{% endif %}" href="{{ url_for('admin_countries') }}">Страны</a></li>
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_cities' %}active{% endif %}" href="{{ url_for('admin_cities') }}">Города</a></li>
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_currencies' %}active{% endif %}" href="{{ url_for('admin_currencies') }}">Валюты</a></li>
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_company_stages' %}active{% endif %}" href="{{ url_for('admin_company_stages') }}">Стадии компании</a></li>
-                <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" href="{{ url_for('admin_categories') }}">Категории</a></li>
-              </ul>
-            </li>
+  
+  <!-- Фиксированный Sidebar -->
+  <nav class="sidebar bg-light">
+    <div class="sidebar-sticky">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Дашборд</a></li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.url.path.startswith('/admin/users') or request.url.path.startswith('/admin/admins') %}active{% endif %}" href="{{ url_for('admin_users') }}">Все пользователи</a>
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/users' %}active{% endif %}" href="/admin/users">Пользователи</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.url.path == '/admin/admins' %}active{% endif %}" href="/admin/admins">Администраторы</a></li>
           </ul>
-        </div>
-      </nav>
-      <!-- Main content -->
-      <main class="col-md-10 ms-sm-auto px-md-4 py-4">
-        {% block content %}{% endblock %}
-      </main>
+        </li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_companies' %}active{% endif %}" href="{{ url_for('admin_companies') }}">Компании</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_investors' %}active{% endif %}" href="{{ url_for('admin_investors') }}">Инвесторы</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_news' %}active{% endif %}" href="{{ url_for('admin_news') }}">Новости</a>
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_authors' %}active{% endif %}" href="{{ url_for('admin_authors') }}">Авторы</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_jobs' %}active{% endif %}" href="{{ url_for('admin_jobs') }}">Вакансии</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_deals' %}active{% endif %}" href="{{ url_for('admin_deals') }}">Сделки</a></li>
+        <li><hr class="my-2"></li>
+        <li class="nav-item">
+          <span class="nav-link d-flex justify-content-between align-items-center">
+            <span>Справочники</span>
+          </span>
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_countries' %}active{% endif %}" href="{{ url_for('admin_countries') }}">Страны</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_cities' %}active{% endif %}" href="{{ url_for('admin_cities') }}">Города</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_currencies' %}active{% endif %}" href="{{ url_for('admin_currencies') }}">Валюты</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_company_stages' %}active{% endif %}" href="{{ url_for('admin_company_stages') }}">Стадии компании</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" href="{{ url_for('admin_categories') }}">Категории</a></li>
+          </ul>
+        </li>
+      </ul>
     </div>
-  </div>
+  </nav>
+  
+  <!-- Main content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+  
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Удалён JS для collapse -->
 </body>
 </html> 
