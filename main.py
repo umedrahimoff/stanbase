@@ -205,7 +205,24 @@ def investors(request: Request, q: str = Query('', alias='q'), country: str = Qu
         query = query.filter(Investor.stages.ilike(f'%{stages}%'))
     investors = query.order_by(Investor.name).all()
     countries = [c[0] for c in db.query(Investor.country).distinct().order_by(Investor.country) if c[0]]
-    response = templates.TemplateResponse("public/investors/list.html", {"request": request, "session": request.session, "investors": investors, "countries": countries})
+    # Собираем уникальные значения focus и stages (разбиваем по запятым)
+    all_focus = set()
+    all_stages = set()
+    for f in db.query(Investor.focus).distinct():
+        if f[0]:
+            for part in f[0].split(','):
+                val = part.strip()
+                if val:
+                    all_focus.add(val)
+    for s in db.query(Investor.stages).distinct():
+        if s[0]:
+            for part in s[0].split(','):
+                val = part.strip()
+                if val:
+                    all_stages.add(val)
+    focus_list = sorted(all_focus)
+    stages_list = sorted(all_stages)
+    response = templates.TemplateResponse("public/investors/list.html", {"request": request, "session": request.session, "investors": investors, "countries": countries, "focus_list": focus_list, "stages_list": stages_list})
     db.close()
     return response
 

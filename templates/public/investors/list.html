@@ -105,10 +105,20 @@
     </select>
   </div>
   <div class="col-md-3">
-    <input type="text" name="focus" class="form-control" placeholder="Фокус" value="{{ request.query_params.get('focus', '') }}">
+    <select name="focus" class="form-select">
+      <option value="">Фокус (любой)</option>
+      {% for f in focus_list %}
+        <option value="{{ f }}" {% if f == request.query_params.get('focus') %}selected{% endif %}>{{ f }}</option>
+      {% endfor %}
+    </select>
   </div>
   <div class="col-md-2">
-    <input type="text" name="stages" class="form-control" placeholder="Стадии" value="{{ request.query_params.get('stages', '') }}">
+    <select name="stages" class="form-select">
+      <option value="">Стадии (любые)</option>
+      {% for s in stages_list %}
+        <option value="{{ s }}" {% if s == request.query_params.get('stages') %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
   </div>
   <div class="col-md-2">
     <button type="submit" class="btn btn-primary w-100">Фильтровать</button>
