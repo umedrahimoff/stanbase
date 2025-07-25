@@ -1642,14 +1642,15 @@ def create_full_test_data():
         countries = [Country(name=n) for n in ["Казахстан", "Узбекистан", "Кыргызстан", "Таджикистан", "Туркменистан"]]
         session.add_all(countries)
         session.commit()
-    # Получаем id страны Казахстан или первую попавшуюся
-    kz = session.query(Country).filter_by(name="Казахстан").first() or session.query(Country).first()
-    kz_id = kz.id if kz else 1
+    country_dict = {c.name: c.id for c in session.query(Country).all()}
+    kz_id = country_dict.get("Казахстан") or list(country_dict.values())[0]
     # City
     if not session.query(City).first():
         cities = [City(name=n, country_id=kz_id) for n in ["Алматы", "Астана", "Ташкент", "Бишкек", "Душанбе"]]
         session.add_all(cities)
         session.commit()
+    city_dict = {c.name: c.id for c in session.query(City).all()}
+    almata_id = city_dict.get("Алматы") or list(city_dict.values())[0]
     # Category
     if not session.query(Category).first():
         cats = [Category(name=n) for n in ["Fintech", "HealthTech", "HRTech", "E-commerce", "SaaS"]]
@@ -1670,6 +1671,7 @@ def create_full_test_data():
         startups = [Startup(name=f"Startup {i}", description=f"Описание {i}", country="Казахстан", city="Алматы", stage="Seed", industry="Fintech", website=f"https://startup{i}.com") for i in range(1, 4)]
         session.add_all(startups)
         session.commit()
+    startup = session.query(Startup).first()
     # Investor
     if not session.query(Investor).first():
         investors = [Investor(name=f"Investor {i}", description=f"Инвестор {i}", country="Казахстан", focus="Fintech", stages="Seed", website=f"https://investor{i}.com", type="angel") for i in range(1, 4)]
@@ -1685,7 +1687,6 @@ def create_full_test_data():
         session.add(moderator_user)
         session.commit()
     if not session.query(User).filter_by(username="startuper").first():
-        startup = session.query(Startup).first()
         if startup:
             startuper_user = User(username="startuper", email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", startup_id=startup.id, status="active")
             session.add(startuper_user)
@@ -1707,7 +1708,7 @@ def create_full_test_data():
         session.commit()
     # Deal
     if not session.query(Deal).first():
-        deals = [Deal(type="investment", amount=10000*i, date="2024-01-0{}".format(i), currency="USD", startup_id=1, investors="Investor 1", status="active") for i in range(1, 4)]
+        deals = [Deal(type="investment", amount=10000*i, date="2024-01-0{}".format(i), currency="USD", startup_id=startup.id if startup else None, investors="Investor 1", status="active") for i in range(1, 4)]
         session.add_all(deals)
         session.commit()
     # Person
