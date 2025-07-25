@@ -1559,6 +1559,66 @@ def root():
 # Гарантируем создание таблиц при любом запуске
 Base.metadata.create_all(bind=engine)
 
+# --- Автоматическое создание тестовых пользователей ---
+def create_test_users():
+    from db import SessionLocal
+    from models import User, Startup, Country
+    session = SessionLocal()
+    # Админ
+    if not session.query(User).filter_by(username="admin").first():
+        admin_user = User(
+            username="admin",
+            email="admin@stanbase.test",
+            password="admin123",
+            role="admin",
+            first_name="Admin",
+            last_name="Stanbase",
+            country_id=1,
+            city="Алматы",
+            phone="+77001234567",
+            status="active"
+        )
+        session.add(admin_user)
+        session.commit()
+    # Модератор
+    if not session.query(User).filter_by(username="moderator").first():
+        moderator_user = User(
+            username="moderator",
+            email="moderator@stanbase.test",
+            password="mod123",
+            role="moderator",
+            first_name="Mod",
+            last_name="Stanbase",
+            country_id=1,
+            city="Алматы",
+            phone="+77001234568",
+            status="active"
+        )
+        session.add(moderator_user)
+        session.commit()
+    # Стартапер
+    if not session.query(User).filter_by(username="startuper").first():
+        startup = session.query(Startup).first()
+        if startup:
+            startuper_user = User(
+                username="startuper",
+                email="startuper@stanbase.test",
+                password="startuper123",
+                role="startuper",
+                first_name="Start",
+                last_name="Stanbase",
+                country_id=1,
+                city="Алматы",
+                phone="+77001234569",
+                startup_id=startup.id,
+                status="active"
+            )
+            session.add(startuper_user)
+            session.commit()
+    session.close()
+
+create_test_users()
+
 if __name__ == "__main__":
     print('SERVER STARTED')
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
