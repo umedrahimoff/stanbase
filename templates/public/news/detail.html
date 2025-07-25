@@ -104,53 +104,7 @@
                   </div>
                   {% endif %}
 
-                  <!-- Актуальные вакансии -->
-                  {% if recent_jobs %}
-                  <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                      <h5 class="mb-3">Актуальные вакансии</h5>
-                      <ul class="list-group list-group-flush mb-4">
-                        {% for job in recent_jobs[:3] %}
-                        <li class="list-group-item d-flex align-items-center">
-                          {% if job.company and job.company.logo %}
-                          <img src="{{ job.company.logo }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
-                          {% elif job.company %}
-                          <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ job.company.name|urlencode }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
-                          {% endif %}
-                          <div>
-                            <span><a href="/job/{{ job.id }}"><b>{{ job.title }}</b></a>{% if job.company %}, <span class="fw-bold">{{ job.company.name }}</span>{% endif %}</span><br>
-                            <span class="text-muted small">{{ job.city }}, {{ job.job_type }}</span>
-                          </div>
-                        </li>
-                        {% endfor %}
-                      </ul>
-                    </div>
-                  </div>
-                  {% endif %}
 
-                  <!-- Популярные компании -->
-                  {% if popular_companies %}
-                  <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                      <h5 class="mb-3">Популярные компании</h5>
-                      <ul class="list-group list-group-flush mb-4">
-                        {% for company in popular_companies[:3] %}
-                        <li class="list-group-item d-flex align-items-center">
-                          {% if company.logo %}
-                          <img src="{{ company.logo }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
-                          {% else %}
-                          <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ company.name|urlencode }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
-                          {% endif %}
-                          <div>
-                            <a href="/company/{{ company.id }}"><b>{{ company.name }}</b></a><br>
-                            <span class="text-muted small">{{ company.country }}, {{ company.city }} | {{ company.industry }}</span>
-                          </div>
-                        </li>
-                        {% endfor %}
-                      </ul>
-                    </div>
-                  </div>
-                  {% endif %}
                 </div>
   </div>
 </div>

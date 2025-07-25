@@ -297,7 +297,7 @@ def news_list(request: Request):
 
 @app.get("/news/{id}", response_class=HTMLResponse)
 def news_detail(request: Request, id: int = Path(...)):
-    from models import News, Event, Job, Company
+    from models import News, Event
     from sqlalchemy import and_
     from sqlalchemy.orm import joinedload
     from datetime import datetime
@@ -315,11 +315,7 @@ def news_detail(request: Request, id: int = Path(...)):
         and_(Event.date >= datetime.now(), Event.status == 'active')
     ).order_by(Event.date.asc()).limit(3).all()
     
-    # Актуальные вакансии с загрузкой компаний
-    recent_jobs = db.query(Job).options(joinedload(Job.company)).filter(Job.status == 'active').order_by(Job.id.desc()).limit(3).all()
-    
-    # Популярные компании (по количеству сделок)
-    popular_companies = db.query(Company).filter(Company.status == 'active').order_by(Company.id.desc()).limit(3).all()
+
     
     db.close()
     
@@ -328,9 +324,7 @@ def news_detail(request: Request, id: int = Path(...)):
         "session": request.session, 
         "news": news,
         "other_news": other_news,
-        "upcoming_events": upcoming_events,
-        "recent_jobs": recent_jobs,
-        "popular_companies": popular_companies
+        "upcoming_events": upcoming_events
     })
 
 @app.get("/events", response_class=HTMLResponse)
