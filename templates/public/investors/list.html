@@ -114,9 +114,6 @@
             </div>
           </div>
           <p class="card-text mb-0 two-lines">{{ inv.description[:120] }}{% if inv.description|length > 120 %}...{% endif %}</p>
-          {% if inv.type in ['angel', 'venture'] and inv.portfolio %}
-            <div class="mt-2 small text-muted">Портфель: {{ inv.portfolio|length }} компания(й)</div>
-          {% endif %}
         </div>
       </div>
     </div>

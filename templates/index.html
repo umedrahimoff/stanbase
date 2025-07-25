@@ -167,24 +167,22 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for i in investors[:6] %}
     <div class="col">
-      <a href="/investor/{{ i.id }}" class="card-google-link">
-        <div class="card card-google h-100">
-          <div class="card-body">
-            <div class="d-flex align-items-center mb-2">
-              {% if i.logo %}
-                <img src="{{ i.logo }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
-              {% else %}
-                <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ i.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
-              {% endif %}
-              <div>
-                <h5 class="card-title mb-0">{{ i.name }}</h5>
-                <div class="text-muted small">{{ i.country }} | {{ i.focus }} | {{ i.stages }}</div>
-              </div>
+      <div class="card card-google h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            {% if i.logo %}
+              <img src="{{ i.logo }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% else %}
+              <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ i.name|urlencode }}" alt="logo" width="40" height="40" class="rounded-circle me-2" style="object-fit:cover;">
+            {% endif %}
+            <div>
+              <h5 class="card-title mb-0"><a href="/investor/{{ i.id }}">{{ i.name }}</a></h5>
+              <div class="text-muted small">{{ i.country }} | {{ i.focus }} | {{ i.stages }}</div>
             </div>
-            <p class="card-text mb-0 two-lines">{{ i.description[:120] }}{% if i.description|length > 120 %}...{% endif %}</p>
           </div>
+          <p class="card-text mb-0 two-lines">{{ i.description[:120] }}{% if i.description|length > 120 %}...{% endif %}</p>
         </div>
-      </a>
+      </div>
     </div>
     {% endfor %}
   </div>
