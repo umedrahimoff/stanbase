@@ -240,22 +240,8 @@ function fallbackShare() {
   const url = window.location.href;
   const text = "{{ news.summary or news.title }}";
   
-  // Создаем временный textarea для копирования ссылки
-  const textarea = document.createElement('textarea');
-  textarea.value = `${title}\n\n${text}\n\n${url}`;
-  document.body.appendChild(textarea);
-  textarea.select();
-  
-  try {
-    document.execCommand('copy');
-    alert('Ссылка скопирована в буфер обмена!');
-  } catch (err) {
-    console.error('Не удалось скопировать ссылку:', err);
-    // Альтернативный способ - открыть в новом окне
-    window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n\n' + url)}`);
-  }
-  
-  document.body.removeChild(textarea);
+  // Открываем системный share через email
+  window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n\n' + url)}`);
 }
 </script>
 {% endblock %} 
