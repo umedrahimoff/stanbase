@@ -11,6 +11,7 @@
           </li>
         </ul>
         {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        {% if success_message %}<div class="alert alert-success">{{ success_message }}</div>{% endif %}
         <form method="post" enctype="multipart/form-data">
           <input type="hidden" id="active_tab_input" name="active_tab" value="main">
           <div class="tab-content" id="newsTabContent">
@@ -71,7 +72,7 @@
               
               <div class="mb-3">
                 <label class="form-label">Текст новости <span class="text-danger">*</span></label>
-                <textarea name="content" id="content-editor" class="form-control" rows="15" required>{{ news_item.content if news_item else '' }}</textarea>
+                <textarea name="content" id="content-editor" class="form-control" rows="15" required>{{ news_item.content.decode('utf-8') if news_item and news_item.content and isinstance(news_item.content, bytes) else (news_item.content if news_item else '') }}</textarea>
                 <div class="form-text">Поддерживается HTML разметка. Используйте &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.</div>
               </div>
             </div>

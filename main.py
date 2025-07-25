@@ -1384,13 +1384,17 @@ async def admin_create_news(request: Request):
         db.add(news)
         db.commit()
         db.close()
-        return RedirectResponse(url="/admin/news", status_code=302)
+        
+        # Добавляем уведомление в сессию
+        request.session['success_message'] = 'Новость успешно создана!'
+        return RedirectResponse(url=f"/admin/news/edit/{news.id}", status_code=302)
     
     db.close()
     return templates.TemplateResponse("admin/news/form.html", {
         "request": request, 
         "session": request.session, 
         "error": error, 
+        "success_message": None,
         "news_item": None,
         "authors": authors
     })
@@ -1404,11 +1408,16 @@ async def admin_edit_news(request: Request, news_id: int):
     news = db.query(News).get(news_id)
     authors = db.query(Author).filter(Author.status == 'active').all()
     error = None
+    
+    # Получаем уведомление из сессии
+    success_message = request.session.pop('success_message', None)
+    
     db.close()
     return templates.TemplateResponse("admin/news/form.html", {
         "request": request, 
         "session": request.session, 
         "error": error, 
+        "success_message": success_message,
         "news_item": news,
         "authors": authors
     })
@@ -1455,8 +1464,8 @@ async def admin_edit_news_post(request: Request, news_id: int):
             
             # Сохраняем файл
             with open(file_path, 'wb') as f:
-                content = image_file.file.read()
-                f.write(content)
+                image_content = image_file.file.read()
+                f.write(image_content)
             
             # Удаляем старое изображение если есть
             if news.image and os.path.exists(news.image.lstrip('/')):
@@ -1490,7 +1499,10 @@ async def admin_edit_news_post(request: Request, news_id: int):
     
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/news", status_code=302)
+    
+    # Добавляем уведомление в сессию
+    request.session['success_message'] = 'Новость успешно обновлена!'
+    return RedirectResponse(url=f"/admin/news/edit/{news_id}", status_code=302)
 
 @app.post("/admin/news/delete/{news_id}", name="admin_delete_news")
 async def admin_delete_news(request: Request, news_id: int):
