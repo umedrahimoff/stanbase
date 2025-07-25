@@ -184,11 +184,12 @@ if not session.query(News).first():
             slug = f"{original_slug}-{counter}"
             counter += 1
         
+        summary_text = f"Новости о {company.name} - последние события, инвестиции и развитие технологий в Центральной Азии."
         session.add(News(
             title=title,
             slug=slug,
-            summary=f"Краткое описание новости о {company.name} и инновациях.",
-            seo_description=f"Новости о {company.name} - последние события, инвестиции и развитие технологий в Центральной Азии.",
+            summary=summary_text,
+            seo_description=summary_text,  # Используем summary как SEO описание
             date=date.today() - timedelta(days=i),
             content=f"<p>Подробности о запуске, инвестициях и планах {company.name}.</p><p>Компания продолжает развиваться и расширять свое присутствие на рынке Центральной Азии.</p>",
             views=0,

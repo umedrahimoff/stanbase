@@ -1307,7 +1307,6 @@ async def admin_create_news(request: Request):
         form = await request.form()
         title = form.get('title')
         summary = form.get('summary')
-        seo_description = form.get('seo_description')
         content = form.get('content')
         date_str = form.get('date')
         status = form.get('status')
@@ -1359,7 +1358,7 @@ async def admin_create_news(request: Request):
             title=title,
             slug=slug,
             summary=summary,
-            seo_description=seo_description,
+            seo_description=summary,  # Используем summary как SEO описание
             content=content,
             date=date,
             image=image_path,
@@ -1411,7 +1410,6 @@ async def admin_edit_news_post(request: Request, news_id: int):
     
     title = form.get('title')
     summary = form.get('summary')
-    seo_description = form.get('seo_description')
     content = form.get('content')
     date_str = form.get('date')
     status = form.get('status')
@@ -1458,7 +1456,7 @@ async def admin_edit_news_post(request: Request, news_id: int):
     # Обновляем поля
     news.title = title
     news.summary = summary
-    news.seo_description = seo_description
+    news.seo_description = summary  # Используем summary как SEO описание
     news.content = content
     news.date = date
     news.status = status

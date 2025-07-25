@@ -15,14 +15,26 @@
           <input type="hidden" id="active_tab_input" name="active_tab" value="main">
           <div class="tab-content" id="newsTabContent">
             <div class="tab-pane fade show active" id="main" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Заголовок <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" value="{{ news_item.title if news_item else '' }}" required>
+              </div>
+              
               <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-6">
                   <div class="mb-3">
-                    <label class="form-label">Заголовок <span class="text-danger">*</span></label>
-                    <input type="text" name="title" class="form-control" value="{{ news_item.title if news_item else '' }}" required>
+                    <label class="form-label">Автор</label>
+                    <select name="author_id" class="form-select">
+                      <option value="">Выберите автора</option>
+                      {% for author in authors %}
+                        <option value="{{ author.id }}" {% if news_item and news_item.author_id == author.id %}selected{% endif %}>
+                          {{ author.name }}
+                        </option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Дата <span class="text-danger">*</span></label>
                     <input type="date" name="date" class="form-control" value="{{ news_item.date.strftime('%Y-%m-%d') if news_item and news_item.date else '' }}" required>
@@ -31,25 +43,8 @@
               </div>
               
               <div class="mb-3">
-                <label class="form-label">Автор</label>
-                <select name="author_id" class="form-select">
-                  <option value="">Выберите автора</option>
-                  {% for author in authors %}
-                    <option value="{{ author.id }}" {% if news_item and news_item.author_id == author.id %}selected{% endif %}>
-                      {{ author.name }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Краткое описание</label>
-                <textarea name="summary" class="form-control" rows="2" placeholder="Краткое описание новости">{{ news_item.summary if news_item else '' }}</textarea>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">SEO описание</label>
-                <textarea name="seo_description" class="form-control" rows="2" placeholder="Описание для поисковых систем (meta description)">{{ news_item.seo_description if news_item else '' }}</textarea>
+                <label class="form-label">Краткое описание (SEO)</label>
+                <textarea name="summary" class="form-control" rows="2" placeholder="Краткое описание новости для SEO">{{ news_item.summary if news_item else '' }}</textarea>
                 <div class="form-text">Используется для meta description. Рекомендуется 150-160 символов.</div>
               </div>
               
@@ -117,45 +112,43 @@
   .user-meta-card .meta-row { margin-bottom: 8px; }
   @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
   
-  #content-editor {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
+  /* Стили для CKEditor */
+  .ck-editor__editable {
+    min-height: 300px;
+    max-height: 600px;
+  }
+  
+  .ck-editor__editable_inline {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
   }
 </style>
 
-<!-- Подключение CodeMirror для редактора -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+<!-- Подключение CKEditor 5 -->
+<script src="https://cdn.ckeditor.com/ckeditor5/40.1.0/classic/ckeditor.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Инициализация CodeMirror для редактора контента
-  var editor = CodeMirror.fromTextArea(document.getElementById('content-editor'), {
-    mode: 'htmlmixed',
-    theme: 'monokai',
-    lineNumbers: true,
-    lineWrapping: true,
-    indentUnit: 2,
-    tabSize: 2,
-    extraKeys: {
-      'Tab': function(cm) {
-        if (cm.somethingSelected()) {
-          cm.indentSelection('add');
-        } else {
-          cm.replaceSelection('  ', 'end');
-        }
+  // Инициализация CKEditor 5 для редактора контента
+  ClassicEditor
+    .create(document.querySelector('#content-editor'), {
+      toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+      heading: {
+        options: [
+          { model: 'paragraph', title: 'Параграф', class: 'ck-heading_paragraph' },
+          { model: 'heading1', view: 'h2', title: 'Заголовок 1', class: 'ck-heading_heading1' },
+          { model: 'heading2', view: 'h3', title: 'Заголовок 2', class: 'ck-heading_heading2' },
+          { model: 'heading3', view: 'h4', title: 'Заголовок 3', class: 'ck-heading_heading3' }
+        ]
       }
-    }
-  });
-  
-  // Обновление textarea перед отправкой формы
-  document.querySelector('form').addEventListener('submit', function() {
-    editor.save();
-  });
+    })
+    .then(editor => {
+      // Сохраняем ссылку на редактор
+      window.newsEditor = editor;
+    })
+    .catch(error => {
+      console.error(error);
+    });
   
   // Автосохранение активного таба
   const tabKey = 'adminNewsTabActive';
@@ -185,11 +178,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Перед сабмитом формы обновлять hidden input
+  // Перед сабмитом формы обновлять hidden input и сохранять контент редактора
   document.querySelector('form').addEventListener('submit', function() {
     var activeTab = document.querySelector('#newsTab .nav-link.active');
     if (activeTab) {
       document.getElementById('active_tab_input').value = activeTab.getAttribute('data-bs-target').replace('#', '');
+    }
+    
+    // Сохраняем контент из CKEditor
+    if (window.newsEditor) {
+      window.newsEditor.updateSourceElement();
     }
   });
 });
