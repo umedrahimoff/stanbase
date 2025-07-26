@@ -110,10 +110,10 @@
                           <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
                           <td>
                             <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }})" title="Редактировать">
-                              <i class="bi bi-pencil"></i>
+                              <i class="bi bi-pencil-fill"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamMember({{ person.id }})" title="Удалить">
-                              <i class="bi bi-trash"></i>
+                              <i class="bi bi-trash-fill"></i>
                             </button>
                           </td>
                         </tr>
@@ -189,10 +189,10 @@
                           <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
                           <td>
                             <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})" title="Редактировать">
-                              <i class="bi bi-pencil"></i>
+                              <i class="bi bi-pencil-fill"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})" title="Удалить">
-                              <i class="bi bi-trash"></i>
+                              <i class="bi bi-trash-fill"></i>
                             </button>
                           </td>
                         </tr>
@@ -355,6 +355,17 @@
 
 <style>
   .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  
+  /* Стили для иконок в кнопках */
+  .btn .bi {
+    font-size: 14px;
+    line-height: 1;
+  }
+  
+  /* Увеличиваем размер иконок для лучшей видимости */
+  .btn-sm .bi {
+    font-size: 16px;
+  }
   .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
   .user-meta-card .meta-value { font-weight: 500; }
   .user-meta-card .meta-row { margin-bottom: 8px; }
