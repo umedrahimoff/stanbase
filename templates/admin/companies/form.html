@@ -109,7 +109,7 @@
                           <td>{{ person.role }}</td>
                           <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
                           <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }})" title="Редактировать">
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }}, event)" title="Редактировать">
                               <i class="bi bi-pencil-fill"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamMember({{ person.id }})" title="Удалить">
@@ -447,15 +447,27 @@ function deletePitch(pitchId) {
 }
 
 // Функции для работы с членами команды
-function editTeamMember(personId) {
+function editTeamMember(personId, event) {
+  console.log('editTeamMember вызвана с personId:', personId);
+  
   // Получаем данные текущего члена команды
   const row = event.target.closest('tr');
+  console.log('Найдена строка:', row);
+  
   const name = row.cells[0].textContent.trim();
   const role = row.cells[1].textContent.trim();
   const linkedin = row.cells[2].querySelector('a') ? row.cells[2].querySelector('a').href : '';
   
+  console.log('Данные:', { name, role, linkedin });
+  
   // Заполняем модальное окно для редактирования
   const modal = document.getElementById('editTeamMemberModal');
+  if (!modal) {
+    console.error('Модальное окно editTeamMemberModal не найдено!');
+    alert('Ошибка: модальное окно не найдено');
+    return;
+  }
+  
   modal.querySelector('input[name="name"]').value = name;
   modal.querySelector('input[name="role"]').value = role;
   modal.querySelector('input[name="linkedin"]').value = linkedin;
@@ -464,6 +476,8 @@ function editTeamMember(personId) {
   
   // Обновляем action формы
   modal.querySelector('form').action = `/admin/team/${personId}/edit`;
+  
+  console.log('Модальное окно заполнено, показываем...');
   
   // Показываем модальное окно
   new bootstrap.Modal(modal).show();
