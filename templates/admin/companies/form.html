@@ -327,7 +327,7 @@
         <h5 class="modal-title" id="editTeamMemberModalLabel">Редактировать члена команды</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
-      <form method="post" action="/admin/team/0/edit" enctype="multipart/form-data">
+      <form method="post" action="/admin/team/0/edit" enctype="multipart/form-data" onsubmit="submitEditTeamMemberForm(event)">
         <div class="modal-body">
           <input type="hidden" name="person_id" value="">
           <input type="hidden" name="company_id" value="">
@@ -483,17 +483,60 @@ function editTeamMember(personId, event) {
   new bootstrap.Modal(modal).show();
 }
 
+// Функция для отправки формы редактирования через AJAX
+function submitEditTeamMemberForm(event) {
+  event.preventDefault();
+  console.log('Отправка формы редактирования члена команды...');
+  
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  fetch(form.action, {
+    method: 'POST',
+    body: formData
+  }).then(response => {
+    console.log('Ответ сервера:', response.status);
+    if (response.ok) {
+      console.log('Член команды успешно обновлен');
+      // Закрываем модальное окно
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editTeamMemberModal'));
+      modal.hide();
+      // Перезагружаем страницу с сохранением вкладки
+      window.location.href = `/admin/companies/edit/{{ company.id }}?tab=team`;
+    } else {
+      console.error('Ошибка при обновлении члена команды');
+      alert('Ошибка при обновлении члена команды');
+    }
+  }).catch(error => {
+    console.error('Ошибка сети:', error);
+    alert('Ошибка сети при обновлении члена команды');
+  });
+}
+
 function deleteTeamMember(personId) {
+  console.log('deleteTeamMember вызвана с personId:', personId);
+  
   if (confirm('Вы уверены, что хотите удалить этого члена команды?')) {
+    console.log('Подтверждение получено, отправляем запрос...');
+    
     fetch(`/admin/team/${personId}/delete?company_id={{ company.id }}`, {
       method: 'POST'
     }).then(response => {
+      console.log('Ответ сервера при удалении:', response.status);
       if (response.ok) {
-        location.reload();
+        console.log('Член команды успешно удален');
+        // Перезагружаем страницу с сохранением вкладки
+        window.location.href = `/admin/companies/edit/{{ company.id }}?tab=team`;
       } else {
+        console.error('Ошибка при удалении члена команды');
         alert('Ошибка при удалении члена команды');
       }
+    }).catch(error => {
+      console.error('Ошибка сети при удалении:', error);
+      alert('Ошибка сети при удалении члена команды');
     });
+  } else {
+    console.log('Удаление отменено пользователем');
   }
 }
 </script>
