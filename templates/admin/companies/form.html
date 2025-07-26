@@ -108,7 +108,7 @@
                           <td>{{ person.name }}</td>
                           <td>{{ person.role }}</td>
                           <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
-                          <td>
+                          <td class="text-end">
                             <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }})" title="Редактировать">
                               <i class="bi bi-pencil-fill"></i>
                             </button>
@@ -187,7 +187,7 @@
                             </select>
                           </td>
                           <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
-                          <td>
+                          <td class="text-end">
                             <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})" title="Редактировать">
                               <i class="bi bi-pencil-fill"></i>
                             </button>
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('#companyTab button[data-bs-toggle="tab"]').forEach(function(btn) {
     btn.addEventListener('shown.bs.tab', function(e) {
       localStorage.setItem(tabKey, '#' + e.target.getAttribute('id'));
-      document.getElementById('active_tab_input').value = e.target.getAttribute('data-bs-target').replace('#','');
+      document.getElementById('active_tab_input').value = e.target.getAttribute('data-bs-target').replace('#', '');
     });
   });
   // Перед сабмитом формы обновлять hidden input

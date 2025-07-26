@@ -1869,7 +1869,7 @@ async def admin_create_team_member(request: Request):
             company.team.append(person)
             db.commit()
     db.close()
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
 
 @app.post("/admin/team/{person_id}/edit", name="admin_edit_team_member")
 async def admin_edit_team_member(request: Request, person_id: int):
