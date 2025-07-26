@@ -146,31 +146,50 @@
                 </table>
               </div>
               <div class="tab-pane fade" id="pitch" role="tabpanel">
-                <div class="mb-3">
-                  <label for="pitch" class="form-label">Питч компании (PDF)</label>
-                  {% if company and company.pitch %}
-                    <div class="mb-2">
-                      <div class="alert alert-info">
-                        <i class="bi bi-file-pdf text-danger me-2"></i>
-                        <strong>Текущий питч:</strong> 
-                        <a href="{{ company.pitch }}" target="_blank" class="text-decoration-none">{{ company.pitch.split('/')[-1] }}</a>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deletePitch()">Удалить</button>
-                      </div>
-                    </div>
-                  {% endif %}
-                  <input type="file" class="form-control" id="pitch" name="pitch" accept=".pdf">
-                  <div class="form-text">Загрузите PDF файл с питчем компании (максимум 10 МБ)</div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Питчи компании</h5>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addPitchModal">Добавить питч</button>
                 </div>
-                {% if company and company.pitch_date %}
-                <div class="mb-3">
-                  <label class="form-label">Дата добавления питча</label>
-                  <div class="form-control-plaintext">{{ company.pitch_date.strftime('%d.%m.%Y %H:%M') }}</div>
-                </div>
-                {% endif %}
-                <div class="d-flex justify-content-between mt-4">
-                  <button type="submit" class="btn btn-primary">Сохранить</button>
-                  <a href="{{ url_for('admin_companies') }}" class="btn btn-outline-secondary">Отмена</a>
-                </div>
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Название питча</th>
+                      <th>Статус</th>
+                      <th>Дата создания</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if pitches and pitches|length > 0 %}
+                      {% for pitch in pitches %}
+                        <tr>
+                          <td>{{ pitch.id }}</td>
+                          <td>
+                            <a href="{{ pitch.file_path }}" target="_blank" class="text-decoration-none">
+                              <i class="bi bi-file-pdf text-danger me-1"></i>{{ pitch.name }}
+                            </a>
+                          </td>
+                          <td>
+                            <select class="form-select form-select-sm" onchange="updatePitchStatus({{ pitch.id }}, this.value)" style="width: auto;">
+                              <option value="active" {% if pitch.status == 'active' %}selected{% endif %}>Активен</option>
+                              <option value="inactive" {% if pitch.status == 'inactive' %}selected{% endif %}>Неактивен</option>
+                              <option value="archived" {% if pitch.status == 'archived' %}selected{% endif %}>Архив</option>
+                              <option value="draft" {% if pitch.status == 'draft' %}selected{% endif %}>Черновик</option>
+                            </select>
+                          </td>
+                          <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
+                          <td>
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})">Редактировать</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})">Удалить</button>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="5" class="text-muted">Нет питчей.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
               </div>
               <div class="tab-pane fade" id="jobs" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -249,6 +268,45 @@
     </div>
   </div>
 </div>
+
+<!-- Модалка добавления питча -->
+<div class="modal fade" id="addPitchModal" tabindex="-1" aria-labelledby="addPitchModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addPitchModalLabel">Добавить питч</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <form id="pitch-form" method="post" action="/admin/pitch/create?company_id={{ company.id }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Название питча <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">PDF файл <span class="text-danger">*</span></label>
+            <input type="file" name="file" class="form-control" accept=".pdf" required>
+            <div class="form-text">Максимум 10 МБ</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-select">
+              <option value="active">Активен</option>
+              <option value="inactive">Неактивен</option>
+              <option value="archived">Архив</option>
+              <option value="draft">Черновик</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Добавить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <style>
   .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
   .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
@@ -295,18 +353,39 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Функция для удаления питча
-function deletePitch() {
-  if (confirm('Вы уверены, что хотите удалить питч компании?')) {
-    // Создаем скрытое поле для удаления питча
-    const deleteInput = document.createElement('input');
-    deleteInput.type = 'hidden';
-    deleteInput.name = 'delete_pitch';
-    deleteInput.value = '1';
-    document.querySelector('form').appendChild(deleteInput);
-    
-    // Отправляем форму
-    document.querySelector('form').submit();
+// Функции для работы с питчами
+function updatePitchStatus(pitchId, status) {
+  fetch(`/admin/pitch/${pitchId}/status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `status=${status}`
+  }).then(response => {
+    if (response.ok) {
+      console.log('Статус питча обновлен');
+    } else {
+      alert('Ошибка при обновлении статуса');
+    }
+  });
+}
+
+function editPitch(pitchId) {
+  // Пока что просто показываем сообщение
+  alert('Редактирование питча будет добавлено позже');
+}
+
+function deletePitch(pitchId) {
+  if (confirm('Вы уверены, что хотите удалить этот питч?')) {
+    fetch(`/admin/pitch/${pitchId}/delete`, {
+      method: 'POST'
+    }).then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Ошибка при удалении питча');
+      }
+    });
   }
 }
 </script>

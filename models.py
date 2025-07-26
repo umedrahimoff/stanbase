@@ -30,9 +30,8 @@ class Company(Base):
     founded_date = Column(Date)
     website = Column(String(256))
     logo = Column(String(256), nullable=True)  # путь к файлу логотипа
-    pitch = Column(String(256), nullable=True)  # путь к PDF файлу питча
-    pitch_date = Column(DateTime, nullable=True)  # дата добавления питча
     team = relationship('Person', secondary=company_person, backref='companies')
+    pitches = relationship('Pitch', backref='company', cascade='all, delete-orphan')
     deals = relationship('Deal', backref='company')
     jobs = relationship('Job', backref='company')
     status = Column(String(16), default='active')
@@ -201,4 +200,15 @@ class Currency(Base):
     code = Column(String(8), unique=True, nullable=False)  # USD, EUR, KZT, etc.
     name = Column(String(64), nullable=False)  # Доллар США, Евро, Тенге
     symbol = Column(String(8))  # $, €, ₸
-    status = Column(String(16), default='active') 
+    status = Column(String(16), default='active')
+
+class Pitch(Base):
+    __tablename__ = 'pitch'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), nullable=False)  # название питча
+    file_path = Column(String(256), nullable=False)  # путь к PDF файлу
+    status = Column(String(16), default='active')  # active, inactive, archived, draft
+    company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String(64), nullable=True) 

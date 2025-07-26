@@ -509,6 +509,7 @@ async def edit_startuper(request: Request):
         company.stage = form.get('stage')
         company.industry = form.get('industry')
         company.website = form.get('website')
+        company.updated_at = datetime.datetime.utcnow()
         db.commit()
         return RedirectResponse(url="/dashboard/startuper", status_code=302)
     return templates.TemplateResponse("edit_startuper.html", {"request": request, "company": company})
@@ -856,6 +857,7 @@ async def admin_edit_startup_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    company.updated_at = datetime.datetime.utcnow()
     
     # --- обработка питча ---
     pitch_file = form.get('pitch')
@@ -892,8 +894,6 @@ async def admin_edit_startup_post(request: Request, company_id: int):
         if not company.pitch_date:
             company.pitch_date = datetime.datetime.utcnow()
     
-    company.updated_at = datetime.datetime.utcnow()
-
     # --- обработка логотипа ---
     logo_file = form.get('logo')
     if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
@@ -2288,8 +2288,9 @@ async def admin_edit_company(request: Request, company_id: int):
     error = None
     team = company.team if company else []
     jobs = company.jobs if company else []
+    pitches = company.pitches if company else []
     db.close()
-    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team, "jobs": jobs})
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team, "jobs": jobs, "pitches": pitches})
 
 @app.post("/admin/companies/edit/{company_id}", name="admin_edit_company_post")
 async def admin_edit_company_post(request: Request, company_id: int):
@@ -2309,6 +2310,7 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    company.updated_at = datetime.datetime.utcnow()
     
     # --- обработка питча ---
     pitch_file = form.get('pitch')
@@ -2345,8 +2347,6 @@ async def admin_edit_company_post(request: Request, company_id: int):
         if not company.pitch_date:
             company.pitch_date = datetime.datetime.utcnow()
     
-    company.updated_at = datetime.datetime.utcnow()
-
     # --- обработка логотипа ---
     logo_file = form.get('logo')
     if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
@@ -2363,6 +2363,105 @@ async def admin_edit_company_post(request: Request, company_id: int):
     db.close()
     active_tab = form.get('active_tab') or 'main'
     return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab={active_tab}", status_code=302)
+
+# CRUD операции для питчей
+@app.post("/admin/pitch/create", name="admin_create_pitch")
+async def admin_create_pitch(request: Request):
+    from models import Pitch
+    import datetime
+    import os
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    company_id = form.get('company_id')
+    name = form.get('name')
+    status = form.get('status', 'active')
+    
+    pitch_file = form.get('file')
+    if not pitch_file or not hasattr(pitch_file, 'filename') or not pitch_file.filename:
+        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch&error=Файл не выбран", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        # Сохраняем файл
+        filename = f"pitch_{company_id}_{int(datetime.datetime.utcnow().timestamp())}_{pitch_file.filename}"
+        save_dir = os.path.join("static", "pitches")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await pitch_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        
+        # Создаем запись в БД
+        pitch = Pitch(
+            name=name,
+            file_path=f"/static/pitches/{filename}",
+            status=status,
+            company_id=company_id,
+            created_by=request.session.get('user_email', 'admin')
+        )
+        db.add(pitch)
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch&error=Ошибка при создании питча", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch", status_code=302)
+
+@app.post("/admin/pitch/{pitch_id}/status", name="admin_update_pitch_status")
+async def admin_update_pitch_status(request: Request, pitch_id: int):
+    from models import Pitch
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    status = form.get('status')
+    
+    db = SessionLocal()
+    try:
+        pitch = db.query(Pitch).get(pitch_id)
+        if pitch:
+            pitch.status = status
+            pitch.updated_at = datetime.datetime.utcnow()
+            db.commit()
+    except Exception as e:
+        db.rollback()
+    finally:
+        db.close()
+    
+    return Response(status_code=200)
+
+@app.post("/admin/pitch/{pitch_id}/delete", name="admin_delete_pitch")
+async def admin_delete_pitch(request: Request, pitch_id: int):
+    from models import Pitch
+    import os
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        pitch = db.query(Pitch).get(pitch_id)
+        if pitch:
+            # Удаляем файл
+            if pitch.file_path and os.path.exists(pitch.file_path.lstrip('/')):
+                try:
+                    os.remove(pitch.file_path.lstrip('/'))
+                except:
+                    pass
+            
+            # Удаляем запись из БД
+            db.delete(pitch)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+    finally:
+        db.close()
+    
+    return Response(status_code=200)
 
 if __name__ == "__main__":
     print('SERVER STARTED')

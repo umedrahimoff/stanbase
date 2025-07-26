@@ -281,7 +281,35 @@ def run_migration():
         
         print("Подключение к базе данных успешно установлено")
         
-        # Проверяем, существуют ли уже поля pitch и pitch_date
+        # Проверяем, существует ли таблица pitch
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'pitch'
+            )
+        """)
+        
+        pitch_table_exists = cursor.fetchone()[0]
+        
+        if not pitch_table_exists:
+            print("Создаем таблицу 'pitch'...")
+            cursor.execute("""
+                CREATE TABLE pitch (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(128) NOT NULL,
+                    file_path VARCHAR(256) NOT NULL,
+                    status VARCHAR(16) DEFAULT 'active',
+                    company_id INTEGER NOT NULL REFERENCES company(id) ON DELETE CASCADE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by VARCHAR(64)
+                )
+            """)
+            print("Таблица 'pitch' создана успешно")
+        else:
+            print("Таблица 'pitch' уже существует")
+        
+        # Удаляем старые поля pitch и pitch_date из таблицы company, если они существуют
         cursor.execute("""
             SELECT column_name 
             FROM information_schema.columns 
@@ -291,34 +319,15 @@ def run_migration():
         
         existing_columns = [row[0] for row in cursor.fetchall()]
         
-        # Добавляем поле pitch, если его нет
-        if 'pitch' not in existing_columns:
-            print("Добавляем поле 'pitch'...")
-            cursor.execute("ALTER TABLE company ADD COLUMN pitch VARCHAR(256)")
-            print("Поле 'pitch' добавлено успешно")
-        else:
-            # Изменяем тип поля pitch на VARCHAR(256) если оно существует как TEXT
-            cursor.execute("""
-                SELECT data_type 
-                FROM information_schema.columns 
-                WHERE table_name = 'company' 
-                AND column_name = 'pitch'
-            """)
-            current_type = cursor.fetchone()[0]
-            if current_type == 'text':
-                print("Изменяем тип поля 'pitch' с TEXT на VARCHAR(256)...")
-                cursor.execute("ALTER TABLE company ALTER COLUMN pitch TYPE VARCHAR(256)")
-                print("Тип поля 'pitch' изменен успешно")
-            else:
-                print("Поле 'pitch' уже имеет правильный тип")
+        if 'pitch' in existing_columns:
+            print("Удаляем старое поле 'pitch' из таблицы company...")
+            cursor.execute("ALTER TABLE company DROP COLUMN pitch")
+            print("Поле 'pitch' удалено успешно")
         
-        # Добавляем поле pitch_date, если его нет
-        if 'pitch_date' not in existing_columns:
-            print("Добавляем поле 'pitch_date'...")
-            cursor.execute("ALTER TABLE company ADD COLUMN pitch_date TIMESTAMP")
-            print("Поле 'pitch_date' добавлено успешно")
-        else:
-            print("Поле 'pitch_date' уже существует")
+        if 'pitch_date' in existing_columns:
+            print("Удаляем старое поле 'pitch_date' из таблицы company...")
+            cursor.execute("ALTER TABLE company DROP COLUMN pitch_date")
+            print("Поле 'pitch_date' удалено успешно")
         
         print("Миграция завершена успешно!")
         

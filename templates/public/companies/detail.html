@@ -86,25 +86,29 @@
           <div class="text-muted mb-4">Нет данных о сделках.</div>
         {% endif %}
         
-        {% if company.pitch %}
+        {% if company.pitches and company.pitches|length > 0 %}
         <hr class="my-4">
-        <h5 class="mt-4 mb-2">Питч компании</h5>
-        <div class="card mb-4">
-          <div class="card-body">
-            <div class="d-flex align-items-center mb-3">
-              <i class="bi bi-file-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
-              <div>
-                <h6 class="mb-1">{{ company.pitch.split('/')[-1] }}</h6>
-                {% if company.pitch_date %}
-                <small class="text-muted">Добавлен: {{ company.pitch_date.strftime('%d.%m.%Y') }}</small>
-                {% endif %}
+        <h5 class="mt-4 mb-2">Питчи компании</h5>
+        {% for pitch in company.pitches %}
+          {% if pitch.status == 'active' %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-file-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+                <div>
+                  <h6 class="mb-1">{{ pitch.name }}</h6>
+                  {% if pitch.created_at %}
+                  <small class="text-muted">Добавлен: {{ pitch.created_at.strftime('%d.%m.%Y') }}</small>
+                  {% endif %}
+                </div>
               </div>
+              <a href="{{ pitch.file_path }}" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-download me-2"></i>Скачать питч
+              </a>
             </div>
-            <a href="{{ company.pitch }}" target="_blank" class="btn btn-outline-primary">
-              <i class="bi bi-download me-2"></i>Скачать питч
-            </a>
           </div>
-        </div>
+          {% endif %}
+        {% endfor %}
         {% endif %}
         
         <hr class="my-4">
