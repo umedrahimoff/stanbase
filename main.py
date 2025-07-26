@@ -1871,6 +1871,58 @@ async def admin_create_team_member(request: Request):
     db.close()
     return RedirectResponse(url=f"/admin/companies/edit/{company_id}", status_code=302)
 
+@app.post("/admin/team/{person_id}/edit", name="admin_edit_team_member")
+async def admin_edit_team_member(request: Request, person_id: int):
+    from models import Person
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    name = form.get('name')
+    role = form.get('role')
+    linkedin = form.get('linkedin')
+    company_id = form.get('company_id')
+    
+    db = SessionLocal()
+    try:
+        person = db.query(Person).get(person_id)
+        if person:
+            person.name = name
+            person.role = role
+            person.linkedin = linkedin
+            db.commit()
+    except Exception as e:
+        db.rollback()
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
+
+@app.post("/admin/team/{person_id}/delete", name="admin_delete_team_member")
+async def admin_delete_team_member(request: Request, person_id: int):
+    from models import Person, Company
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    company_id = request.query_params.get('company_id')
+    
+    db = SessionLocal()
+    try:
+        person = db.query(Person).get(person_id)
+        if person:
+            # Удаляем связь с компанией
+            for company in person.companies:
+                company.team.remove(person)
+            # Удаляем самого человека
+            db.delete(person)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
+
 @app.get("/admin/admins", response_class=HTMLResponse, name="admin_admins")
 def admin_admins(request: Request):
     db = SessionLocal()

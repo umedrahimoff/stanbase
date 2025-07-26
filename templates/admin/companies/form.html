@@ -319,6 +319,40 @@
   </div>
 </div>
 
+<!-- Модалка редактирования члена команды -->
+<div class="modal fade" id="editTeamMemberModal" tabindex="-1" aria-labelledby="editTeamMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTeamMemberModalLabel">Редактировать члена команды</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <form method="post" action="/admin/team/0/edit" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="person_id" value="">
+          <input type="hidden" name="company_id" value="">
+          <div class="mb-3">
+            <label class="form-label">Имя и фамилия <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Должность <span class="text-danger">*</span></label>
+            <input type="text" name="role" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">LinkedIn страница</label>
+            <input type="url" name="linkedin" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <style>
   .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
   .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
@@ -403,13 +437,30 @@ function deletePitch(pitchId) {
 
 // Функции для работы с членами команды
 function editTeamMember(personId) {
-  // Пока что просто показываем сообщение
-  alert('Редактирование члена команды будет добавлено позже');
+  // Получаем данные текущего члена команды
+  const row = event.target.closest('tr');
+  const name = row.cells[0].textContent.trim();
+  const role = row.cells[1].textContent.trim();
+  const linkedin = row.cells[2].querySelector('a') ? row.cells[2].querySelector('a').href : '';
+  
+  // Заполняем модальное окно для редактирования
+  const modal = document.getElementById('editTeamMemberModal');
+  modal.querySelector('input[name="name"]').value = name;
+  modal.querySelector('input[name="role"]').value = role;
+  modal.querySelector('input[name="linkedin"]').value = linkedin;
+  modal.querySelector('input[name="person_id"]').value = personId;
+  modal.querySelector('input[name="company_id"]').value = {{ company.id }};
+  
+  // Обновляем action формы
+  modal.querySelector('form').action = `/admin/team/${personId}/edit`;
+  
+  // Показываем модальное окно
+  new bootstrap.Modal(modal).show();
 }
 
 function deleteTeamMember(personId) {
   if (confirm('Вы уверены, что хотите удалить этого члена команды?')) {
-    fetch(`/admin/team/${personId}/delete`, {
+    fetch(`/admin/team/${personId}/delete?company_id={{ company.id }}`, {
       method: 'POST'
     }).then(response => {
       if (response.ok) {
