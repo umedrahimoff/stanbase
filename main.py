@@ -2367,16 +2367,20 @@ async def admin_edit_company_post(request: Request, company_id: int):
 # CRUD операции для питчей
 @app.post("/admin/pitch/create", name="admin_create_pitch")
 async def admin_create_pitch(request: Request):
-    from models import Pitch
+    from models import Pitch, Company
     import datetime
     import os
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
     form = await request.form()
-    company_id = form.get('company_id')
+    # Получаем company_id из query параметров
+    company_id = request.query_params.get('company_id')
     name = form.get('name')
     status = form.get('status', 'active')
+    
+    if not company_id:
+        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
     
     pitch_file = form.get('file')
     if not pitch_file or not hasattr(pitch_file, 'filename') or not pitch_file.filename:
@@ -2384,6 +2388,11 @@ async def admin_create_pitch(request: Request):
     
     db = SessionLocal()
     try:
+        # Проверяем существование компании
+        company = db.query(Company).get(company_id)
+        if not company:
+            return RedirectResponse(url="/admin/companies?error=Компания не найдена", status_code=302)
+        
         # Сохраняем файл
         filename = f"pitch_{company_id}_{int(datetime.datetime.utcnow().timestamp())}_{pitch_file.filename}"
         save_dir = os.path.join("static", "pitches")
