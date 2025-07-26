@@ -100,7 +100,7 @@
                   <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addTeamMemberModal">Добавить</button>
                 </div>
                 <table class="table table-sm table-hover">
-                  <thead><tr><th>Имя</th><th>Должность</th><th>LinkedIn</th></tr></thead>
+                  <thead><tr><th>Имя</th><th>Должность</th><th>LinkedIn</th><th></th></tr></thead>
                   <tbody>
                     {% if team and team|length > 0 %}
                       {% for person in team %}
@@ -108,10 +108,18 @@
                           <td>{{ person.name }}</td>
                           <td>{{ person.role }}</td>
                           <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
+                          <td>
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }})" title="Редактировать">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamMember({{ person.id }})" title="Удалить">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </td>
                         </tr>
                       {% endfor %}
                     {% else %}
-                      <tr><td colspan="3" class="text-muted">Нет данных о команде.</td></tr>
+                      <tr><td colspan="4" class="text-muted">Нет данных о команде.</td></tr>
                     {% endif %}
                   </tbody>
                 </table>
@@ -180,8 +188,12 @@
                           </td>
                           <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
                           <td>
-                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})">Редактировать</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})">Удалить</button>
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})" title="Редактировать">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})" title="Удалить">
+                              <i class="bi bi-trash"></i>
+                            </button>
                           </td>
                         </tr>
                       {% endfor %}
@@ -384,6 +396,26 @@ function deletePitch(pitchId) {
         location.reload();
       } else {
         alert('Ошибка при удалении питча');
+      }
+    });
+  }
+}
+
+// Функции для работы с членами команды
+function editTeamMember(personId) {
+  // Пока что просто показываем сообщение
+  alert('Редактирование члена команды будет добавлено позже');
+}
+
+function deleteTeamMember(personId) {
+  if (confirm('Вы уверены, что хотите удалить этого члена команды?')) {
+    fetch(`/admin/team/${personId}/delete`, {
+      method: 'POST'
+    }).then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Ошибка при удалении члена команды');
       }
     });
   }
