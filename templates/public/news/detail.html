@@ -35,7 +35,15 @@
                         <span>{{ news.date.strftime('%d.%m.%Y') }}</span>
                         <span class="mx-2">•</span>
                         <i class="bi bi-person me-1"></i>
-                        <span>{{ news.author.name if news.author else 'Редакция' }}</span>
+                        {% if news.author %}
+                          {% if news.author.website %}
+                            <a href="{{ news.author.website }}" target="_blank" class="text-decoration-none">{{ news.author.name }}</a>
+                          {% else %}
+                            <span>{{ news.author.name }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span>Редакция</span>
+                        {% endif %}
                         <span class="mx-2">•</span>
                         <i class="bi bi-eye me-1"></i>
                         <span>{{ news.views|default(0) }}</span>

@@ -34,9 +34,13 @@
             <i class="bi bi-eye"></i>
             <span>{{ n.views or 0 }}</span>
           </span>
-          {% if n.author %}
-          <span>{{ n.author.name }}</span>
-          {% endif %}
+                      {% if n.author %}
+              {% if n.author.website %}
+                <a href="{{ n.author.website }}" target="_blank" class="text-decoration-none">{{ n.author.name }}</a>
+              {% else %}
+                <span>{{ n.author.name }}</span>
+              {% endif %}
+            {% endif %}
         </div>
         
         <!-- Короткое описание -->
