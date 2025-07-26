@@ -85,6 +85,20 @@
         {% else %}
           <div class="text-muted mb-4">Нет данных о сделках.</div>
         {% endif %}
+        
+        {% if company.pitch %}
+        <hr class="my-4">
+        <h5 class="mt-4 mb-2">Питч компании</h5>
+        <div class="card mb-4">
+          <div class="card-body">
+            <p class="mb-2">{{ company.pitch }}</p>
+            {% if company.pitch_date %}
+            <small class="text-muted">Добавлен: {{ company.pitch_date.strftime('%d.%m.%Y') }}</small>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        
         <hr class="my-4">
         <h5 class="mt-4 mb-2">Вакансии</h5>
         {% if jobs %}

@@ -1,6 +1,7 @@
 import psycopg2
 import os
 from datetime import datetime
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Данные для подключения к продакшн базе данных Render
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -271,5 +272,59 @@ def migrate_production_database():
             conn.close()
         return False
 
+def run_migration():
+    try:
+        # Подключаемся к базе данных
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
+        
+        print("Подключение к базе данных успешно установлено")
+        
+        # Проверяем, существуют ли уже поля pitch и pitch_date
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'company' 
+            AND column_name IN ('pitch', 'pitch_date')
+        """)
+        
+        existing_columns = [row[0] for row in cursor.fetchall()]
+        
+        # Добавляем поле pitch, если его нет
+        if 'pitch' not in existing_columns:
+            print("Добавляем поле 'pitch'...")
+            cursor.execute("ALTER TABLE company ADD COLUMN pitch TEXT")
+            print("Поле 'pitch' добавлено успешно")
+        else:
+            print("Поле 'pitch' уже существует")
+        
+        # Добавляем поле pitch_date, если его нет
+        if 'pitch_date' not in existing_columns:
+            print("Добавляем поле 'pitch_date'...")
+            cursor.execute("ALTER TABLE company ADD COLUMN pitch_date TIMESTAMP")
+            print("Поле 'pitch_date' добавлено успешно")
+        else:
+            print("Поле 'pitch_date' уже существует")
+        
+        print("Миграция завершена успешно!")
+        
+    except Exception as e:
+        print(f"Ошибка при выполнении миграции: {e}")
+        return False
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+    
+    return True
+
 if __name__ == "__main__":
-    migrate_production_database() 
+    print("Начинаем миграцию базы данных...")
+    success = run_migration()
+    if success:
+        print("Миграция выполнена успешно!")
+    else:
+        print("Миграция завершилась с ошибкой!")
+        exit(1) 

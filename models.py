@@ -30,6 +30,8 @@ class Company(Base):
     founded_date = Column(Date)
     website = Column(String(256))
     logo = Column(String(256), nullable=True)  # путь к файлу логотипа
+    pitch = Column(Text, nullable=True)  # питч компании
+    pitch_date = Column(DateTime, nullable=True)  # дата добавления питча
     team = relationship('Person', secondary=company_person, backref='companies')
     deals = relationship('Deal', backref='company')
     jobs = relationship('Job', backref='company')

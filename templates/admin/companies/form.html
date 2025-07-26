@@ -17,6 +17,9 @@
               <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">Сделки</button>
             </li>
             <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pitch-tab" data-bs-toggle="tab" data-bs-target="#pitch" type="button" role="tab">Питч</button>
+            </li>
+            <li class="nav-item" role="presentation">
               <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs" type="button" role="tab">Вакансии</button>
             </li>
           </ul>
@@ -141,6 +144,23 @@
                     <tr><td colspan="8" class="text-muted">Нет сделок.</td></tr>
                   </tbody>
                 </table>
+              </div>
+              <div class="tab-pane fade" id="pitch" role="tabpanel">
+                <div class="mb-3">
+                  <label for="pitch" class="form-label">Питч компании</label>
+                  <textarea class="form-control" id="pitch" name="pitch" rows="6" placeholder="Краткое описание миссии, видения и уникального предложения компании...">{{ company.pitch if company else '' }}</textarea>
+                  <div class="form-text">Краткое продающее описание компании, её миссии и уникального предложения</div>
+                </div>
+                {% if company and company.pitch_date %}
+                <div class="mb-3">
+                  <label class="form-label">Дата добавления питча</label>
+                  <div class="form-control-plaintext">{{ company.pitch_date.strftime('%d.%m.%Y %H:%M') }}</div>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="submit" class="btn btn-primary">Сохранить</button>
+                  <a href="{{ url_for('admin_companies') }}" class="btn btn-outline-secondary">Отмена</a>
+                </div>
               </div>
               <div class="tab-pane fade" id="jobs" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">

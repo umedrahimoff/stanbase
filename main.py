@@ -855,6 +855,10 @@ async def admin_edit_startup_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    company.pitch = form.get('pitch')
+    # Устанавливаем дату питча только если питч был добавлен и его раньше не было
+    if form.get('pitch') and not company.pitch_date:
+        company.pitch_date = datetime.datetime.utcnow()
     company.updated_at = datetime.datetime.utcnow()
 
     # --- обработка логотипа ---
@@ -2272,6 +2276,10 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    company.pitch = form.get('pitch')
+    # Устанавливаем дату питча только если питч был добавлен и его раньше не было
+    if form.get('pitch') and not company.pitch_date:
+        company.pitch_date = datetime.datetime.utcnow()
     company.updated_at = datetime.datetime.utcnow()
 
     # --- обработка логотипа ---
