@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import uvicorn
 import os
+import secrets
 from typing import Optional
 from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -21,6 +22,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from email.utils import parseaddr
 import re
 import unicodedata
+from utils.security import verify_password, get_password_hash, create_access_token, verify_token
+from utils.csrf import get_csrf_token, verify_csrf_token
+from services.api import api_router
+from services.notifications import NotificationService, NotificationTemplates
+from services.comments import CommentService, CommentValidator
+from services.cache import QueryCache, CacheInvalidator
+from services.pagination import PaginationHelper, DatabasePagination
 
 app = FastAPI()
 
@@ -28,7 +36,24 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# Middleware для генерации session_id для CSRF защиты
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SessionIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Проверяем, что сессия доступна
+        try:
+            if hasattr(request, 'session') and request.session:
+                if "session_id" not in request.session:
+                    request.session["session_id"] = secrets.token_hex(16)
+        except AssertionError:
+            # SessionMiddleware еще не инициализирован, пропускаем
+            pass
+        response = await call_next(request)
+        return response
+
 app.add_middleware(SessionMiddleware, secret_key="stanbase_secret_2024", https_only=False)
+app.add_middleware(SessionIDMiddleware)
 
 def generate_slug(title):
     """Генерирует SEO-friendly slug из заголовка новости"""
@@ -96,11 +121,14 @@ async def login(request: Request):
         email = form.get("email")
         password = form.get("password")
         db = SessionLocal()
-        user = db.query(User).filter_by(email=email, password=password).first()
+        user = db.query(User).filter_by(email=email).first()
         db.close()
-        if user:
+        
+        if user and verify_password(password, user.password):
             request.session["user_id"] = user.id
             request.session["role"] = user.role
+            request.session["user_email"] = user.email
+            request.session["user_name"] = user.first_name
             print("LOGIN SESSION SET:", dict(request.session))
             return JSONResponse({"success": True})
         else:
@@ -155,7 +183,7 @@ async def register(request: Request):
         return templates.TemplateResponse("auth/register.html", {"request": request, "countries": get_countries(), "error": error_msg, "session": request.session})
     user = User(
         email=email,
-        password=password,
+        password=get_password_hash(password),
         role=role,
         first_name=first_name,
         last_name=last_name,
@@ -227,24 +255,93 @@ def sitemap_xml():
     return RedirectResponse(url="/static/sitemap.xml")
 
 @app.get("/companies", response_class=HTMLResponse)
-def companies(request: Request, q: str = Query('', alias='q'), country: str = Query('', alias='country'), stage: str = Query('', alias='stage'), industry: str = Query('', alias='industry')):
+def companies(
+    request: Request, 
+    q: str = Query('', alias='q'), 
+    country: str = Query('', alias='country'), 
+    stage: str = Query('', alias='stage'), 
+    industry: str = Query('', alias='industry'),
+    page: int = Query(1, alias='page'),
+    per_page: int = Query(20, alias='per_page')
+):
     print("COMPANIES SESSION:", dict(request.session))
+    
+    # Получаем параметры пагинации
+    pagination_params = PaginationHelper.get_pagination_params(page, per_page, max_per_page=100)
+    
+    # Используем кешированный запрос
+    cached_result = QueryCache.get_companies_with_filters(
+        country=country,
+        stage=stage,
+        industry=industry,
+        limit=pagination_params['per_page'],
+        offset=pagination_params['offset']
+    )
+    
+    if cached_result:
+        companies = cached_result['companies']
+        total = cached_result['total']
+    else:
+        # Если кеш не найден, выполняем запрос к БД
+        db = SessionLocal()
+        try:
+            query = db.query(Company).filter(Company.status == 'active')
+            if q:
+                query = query.filter(Company.name.ilike(f'%{q}%'))
+            if country:
+                query = query.filter_by(country=country)
+            if stage:
+                query = query.filter_by(stage=stage)
+            if industry:
+                query = query.filter_by(industry=industry)
+            
+            # Применяем пагинацию
+            paginated_query, total = DatabasePagination.paginate_query(
+                query, 
+                pagination_params['page'], 
+                pagination_params['per_page']
+            )
+            companies = paginated_query.order_by(Company.name).all()
+        finally:
+            db.close()
+    
+    # Получаем фильтры (кешированные)
     db = SessionLocal()
-    query = db.query(Company)
-    if q:
-        query = query.filter(Company.name.ilike(f'%{q}%'))
-    if country:
-        query = query.filter_by(country=country)
-    if stage:
-        query = query.filter_by(stage=stage)
-    if industry:
-        query = query.filter_by(industry=industry)
-    companies = query.order_by(Company.name).all()
-    countries = [c[0] for c in db.query(Company.country).distinct().order_by(Company.country) if c[0]]
-    stages = [s[0] for s in db.query(Company.stage).distinct().order_by(Company.stage) if s[0]]
-    industries = [i[0] for i in db.query(Company.industry).distinct().order_by(Company.industry) if i[0]]
-    db.close()
-    return templates.TemplateResponse("public/companies/list.html", {"request": request, "session": request.session, "companies": companies, "countries": countries, "stages": stages, "industries": industries})
+    try:
+        countries = [c[0] for c in db.query(Company.country).distinct().order_by(Company.country) if c[0]]
+        stages = [s[0] for s in db.query(Company.stage).distinct().order_by(Company.stage) if s[0]]
+        industries = [i[0] for i in db.query(Company.industry).distinct().order_by(Company.industry) if i[0]]
+    finally:
+        db.close()
+    
+    # Создаем объект пагинации
+    query_params = {
+        'q': q if q else None,
+        'country': country if country else None,
+        'stage': stage if stage else None,
+        'industry': industry if industry else None,
+        'per_page': pagination_params['per_page']
+    }
+    
+    pagination = PaginationHelper.create_pagination(
+        items=companies,
+        total=total,
+        page=pagination_params['page'],
+        per_page=pagination_params['per_page'],
+        request_url=str(request.url).split('?')[0],
+        query_params=query_params
+    )
+    
+    return templates.TemplateResponse("public/companies/list.html", {
+        "request": request, 
+        "session": request.session, 
+        "companies": companies, 
+        "countries": countries, 
+        "stages": stages, 
+        "industries": industries,
+        "pagination": pagination,
+        "show_per_page_selector": True
+    })
 
 @app.get("/company/{id}", response_class=HTMLResponse)
 def company_profile(request: Request, id: int = Path(...)):
@@ -690,7 +787,7 @@ async def admin_create_user(request: Request):
             if not password:
                 error = 'Пароль обязателен при создании пользователя'
             else:
-                user = User(email=email, password=password, role=role, status=status_val, first_name=first_name, last_name=last_name, country_id=country_id, city=city, phone=phone, telegram=telegram, linkedin=linkedin)
+                user = User(email=email, password=get_password_hash(password), role=role, status=status_val, first_name=first_name, last_name=last_name, country_id=country_id, city=city, phone=phone, telegram=telegram, linkedin=linkedin)
                 db.add(user)
                 db.commit()
                 db.close()
@@ -722,7 +819,7 @@ async def admin_edit_user_post(request: Request, user_id: int):
     user = db.query(User).get(user_id)
     form = await request.form()
     if form.get('password'):
-        user.password = form.get('password')
+        user.password = get_password_hash(form.get('password'))
     user.email = form.get('email')
     user.role = form.get('role')
     user.status = form.get('status')
@@ -1980,19 +2077,19 @@ def create_full_test_data():
     try:
         if not session.query(User).filter_by(email="admin@stanbase.test").first():
             print(f"Создаём admin с country_id={kz_id}")
-            admin_user = User(email="admin@stanbase.test", password="admin123", role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
+            admin_user = User(email="admin@stanbase.test", password=get_password_hash("admin123"), role="admin", first_name="Admin", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234567", status="active")
             session.add(admin_user)
             session.commit()
         if not session.query(User).filter_by(email="moderator@stanbase.test").first():
             print(f"Создаём moderator с country_id={kz_id}")
-            moderator_user = User(email="moderator@stanbase.test", password="mod123", role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
+            moderator_user = User(email="moderator@stanbase.test", password=get_password_hash("mod123"), role="moderator", first_name="Mod", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234568", status="active")
             session.add(moderator_user)
             session.commit()
         if not session.query(User).filter_by(email="startuper@stanbase.test").first():
             companies = session.query(Company).all()
             if companies:
                 print(f"Создаём startuper с country_id={kz_id}")
-                startuper_user = User(email="startuper@stanbase.test", password="startuper123", role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", company_id=companies[0].id, status="active")
+                startuper_user = User(email="startuper@stanbase.test", password=get_password_hash("startuper123"), role="startuper", first_name="Start", last_name="Stanbase", country_id=kz_id, city="Алматы", phone="+77001234569", company_id=companies[0].id, status="active")
                 session.add(startuper_user)
                 session.commit()
     except Exception as e:
@@ -2069,6 +2166,7 @@ def test_db():
         db.close()
 
 app.include_router(router)
+app.include_router(api_router)
 
 
 
@@ -2595,6 +2693,125 @@ async def admin_delete_deal(request: Request, deal_id: int):
         db.close()
     
     return RedirectResponse(url=f"/admin/deals?message=Сделка успешно удалена", status_code=302)
+
+# === Уведомления ===
+
+@app.get("/notifications", response_class=HTMLResponse)
+async def notifications_page(request: Request):
+    """Страница уведомлений"""
+    if not request.session.get("user_id"):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    user_id = request.session.get("user_id")
+    notifications = NotificationService.get_user_notifications(user_id, limit=50)
+    unread_count = NotificationService.get_unread_count(user_id)
+    
+    return templates.TemplateResponse("notifications/list.html", {
+        "request": request,
+        "notifications": notifications,
+        "unread_count": unread_count,
+        "session": request.session
+    })
+
+@app.post("/notifications/{notification_id}/read")
+async def mark_notification_read_web(request: Request, notification_id: int):
+    """Отметить уведомление как прочитанное (веб)"""
+    if not request.session.get("user_id"):
+        return JSONResponse({"success": False, "error": "Не авторизован"})
+    
+    user_id = request.session.get("user_id")
+    success = NotificationService.mark_as_read(notification_id, user_id)
+    
+    return JSONResponse({"success": success})
+
+@app.post("/notifications/read-all")
+async def mark_all_notifications_read_web(request: Request):
+    """Отметить все уведомления как прочитанные (веб)"""
+    if not request.session.get("user_id"):
+        return JSONResponse({"success": False, "error": "Не авторизован"})
+    
+    user_id = request.session.get("user_id")
+    count = NotificationService.mark_all_as_read(user_id)
+    
+    return JSONResponse({"success": True, "count": count})
+
+# === Комментарии ===
+
+@app.post("/comments/add")
+async def add_comment(request: Request):
+    """Добавить комментарий"""
+    if not request.session.get("user_id"):
+        return JSONResponse({"success": False, "error": "Не авторизован"})
+    
+    form = await request.form()
+    entity_type = form.get("entity_type")
+    entity_id = int(form.get("entity_id"))
+    content = form.get("content", "").strip()
+    parent_id = form.get("parent_id")
+    
+    if parent_id:
+        parent_id = int(parent_id)
+    
+    # Валидация
+    if not CommentValidator.is_valid_entity_type(entity_type):
+        return JSONResponse({"success": False, "error": "Неверный тип сущности"})
+    
+    validation_errors = CommentValidator.validate_content(content)
+    if validation_errors:
+        return JSONResponse({"success": False, "error": f"Ошибки валидации: {validation_errors}"})
+    
+    # Создание комментария
+    user_id = request.session.get("user_id")
+    comment = CommentService.create_comment(
+        user_id=user_id,
+        content=content,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        parent_id=parent_id
+    )
+    
+    return JSONResponse({
+        "success": True,
+        "comment": {
+            "id": comment.id,
+            "content": comment.content,
+            "user_name": f"{comment.user.first_name} {comment.user.last_name}",
+            "created_at": comment.created_at.strftime("%d.%m.%Y %H:%M")
+        }
+    })
+
+@app.get("/comments/{entity_type}/{entity_id}")
+async def get_comments_web(request: Request, entity_type: str, entity_id: int):
+    """Получить комментарии для сущности (веб)"""
+    if not CommentValidator.is_valid_entity_type(entity_type):
+        return JSONResponse({"success": False, "error": "Неверный тип сущности"})
+    
+    comments = CommentService.get_comments(entity_type, entity_id, limit=50)
+    
+    result = []
+    for comment in comments:
+        replies = CommentService.get_replies(comment.id)
+        result.append({
+            "id": comment.id,
+            "content": comment.content,
+            "user_name": f"{comment.user.first_name} {comment.user.last_name}",
+            "created_at": comment.created_at.strftime("%d.%m.%Y %H:%M"),
+            "replies": [
+                {
+                    "id": reply.id,
+                    "content": reply.content,
+                    "user_name": f"{reply.user.first_name} {reply.user.last_name}",
+                    "created_at": reply.created_at.strftime("%d.%m.%Y %H:%M")
+                }
+                for reply in replies
+            ]
+        })
+    
+    return JSONResponse({
+        "success": True,
+        "comments": result,
+        "total": CommentService.get_comment_count(entity_type, entity_id)
+    })
 
 @app.get("/admin/deals", response_class=HTMLResponse, name="admin_deals")
 async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):

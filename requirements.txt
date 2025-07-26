@@ -7,3 +7,5 @@ jinja2
 psycopg2-binary
 python-multipart
 requests
+passlib[bcrypt]
+python-jose[cryptography]

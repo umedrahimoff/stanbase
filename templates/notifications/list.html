@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block title %}Уведомления - StanBase{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Уведомления</h1>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+                        Отметить все как прочитанные
+                    </button>
+                    <span class="badge bg-primary fs-6" id="unread-badge">{{ unread_count }}</span>
+                </div>
+            </div>
+
+            {% if notifications %}
+                <div class="notifications-list">
+                    {% for notification in notifications %}
+                    <div class="card mb-3 notification-item {% if not notification.is_read %}unread{% endif %}" 
+                         data-id="{{ notification.id }}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1">
+                                        {{ notification.title }}
+                                        {% if not notification.is_read %}
+                                            <span class="badge bg-primary ms-2">Новое</span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="card-text text-muted mb-2">{{ notification.message }}</p>
+                                    <small class="text-muted">
+                                        {{ notification.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            onclick="markAsRead({{ notification.id }})">
+                                        Отметить как прочитанное
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteNotification({{ notification.id }})">
+                                        Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">Нет уведомлений</h3>
+                    <p class="text-muted">У вас пока нет уведомлений</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notification = document.querySelector(`[data-id="${notificationId}"]`);
+            notification.classList.remove('unread');
+            notification.querySelector('.badge').remove();
+            notification.querySelector('.btn-outline-success').remove();
+            updateUnreadCount();
+        }
+    });
+}
+
+function markAllAsRead() {
+    fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.classList.remove('unread');
+                const badge = item.querySelector('.badge');
+                if (badge) badge.remove();
+                const btn = item.querySelector('.btn-outline-success');
+                if (btn) btn.remove();
+            });
+            updateUnreadCount();
+        }
+    });
+}
+
+function deleteNotification(notificationId) {
+    if (confirm('Вы уверены, что хотите удалить это уведомление?')) {
+        fetch(`/notifications/${notificationId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notification = document.querySelector(`[data-id="${notificationId}"]`);
+                notification.remove();
+                updateUnreadCount();
+            }
+        });
+    }
+}
+
+function updateUnreadCount() {
+    const unreadItems = document.querySelectorAll('.notification-item.unread').length;
+    const badge = document.getElementById('unread-badge');
+    badge.textContent = unreadItems;
+    
+    if (unreadItems === 0) {
+        badge.style.display = 'none';
+    } else {
+        badge.style.display = 'inline';
+    }
+}
+</script>
+
+<style>
+.notification-item.unread {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+}
+
+.notification-item:hover {
+    background-color: #f1f3f4;
+}
+
+.notifications-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %} 

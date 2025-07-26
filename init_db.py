@@ -3,6 +3,7 @@ import models
 from models import *
 from datetime import date, datetime, timedelta
 from sqlalchemy import func
+from security import get_password_hash
 
 # Создать все таблицы
 Base.metadata.create_all(bind=engine)
@@ -217,7 +218,7 @@ if not session.query(Event).first():
 if not session.query(User).filter_by(email="admin@stanbase.test").first():
     admin_user = User(
         email="admin@stanbase.test",
-        password="admin123",
+        password=get_password_hash("admin123"),
         role="admin",
         first_name="Alice",
         last_name="Johnson",
@@ -231,7 +232,7 @@ if not session.query(User).filter_by(email="admin@stanbase.test").first():
 if not session.query(User).filter_by(email="moderator@stanbase.test").first():
     moderator_user = User(
         email="moderator@stanbase.test",
-        password="mod123",
+        password=get_password_hash("mod123"),
         role="moderator",
         first_name="Bob",
         last_name="Smith",
@@ -247,7 +248,7 @@ if not session.query(User).filter_by(email="company_owner@stanbase.test").first(
     if company:
         company_owner_user = User(
             email="company_owner@stanbase.test",
-            password="company_owner123",
+            password=get_password_hash("company_owner123"),
             role="company_owner",
             first_name="Charlie",
             last_name="Brown",

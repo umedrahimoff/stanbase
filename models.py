@@ -1,5 +1,5 @@
 from db import Base
-from sqlalchemy import Column, Integer, String, Text, Date, DateTime, Float, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, Date, DateTime, Float, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship, backref
 from datetime import datetime
 
@@ -142,7 +142,7 @@ class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     email = Column(String(128), unique=True, nullable=False)
-    password = Column(String(128), nullable=False)
+    password = Column(String(255), nullable=False)  # Увеличиваем для хешированных паролей
     role = Column(String(32), nullable=False)
     first_name = Column(String(64), nullable=False)
     last_name = Column(String(64), nullable=False)
@@ -206,4 +206,49 @@ class Pitch(Base):
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(String(64), nullable=True) 
+    created_by = Column(String(64), nullable=True)
+
+class Comment(Base):
+    __tablename__ = 'comment'
+    id = Column(Integer, primary_key=True)
+    content = Column(Text, nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    entity_type = Column(String(32), nullable=False)  # 'company', 'investor', 'news', 'job'
+    entity_id = Column(Integer, nullable=False)
+    parent_id = Column(Integer, ForeignKey('comment.id'), nullable=True)  # для ответов
+    status = Column(String(16), default='active')
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Отношения
+    user = relationship('User', backref='comments')
+    replies = relationship('Comment', backref=backref('parent', remote_side=[id]))
+
+class Notification(Base):
+    __tablename__ = 'notification'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    title = Column(String(256), nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String(32), nullable=False)  # 'info', 'success', 'warning', 'error'
+    entity_type = Column(String(32), nullable=True)  # 'company', 'investor', 'news', 'job'
+    entity_id = Column(Integer, nullable=True)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Отношения
+    user = relationship('User', backref='notifications')
+
+class UserActivity(Base):
+    __tablename__ = 'user_activity'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    action = Column(String(64), nullable=False)  # 'login', 'logout', 'create', 'update', 'delete'
+    entity_type = Column(String(32), nullable=True)
+    entity_id = Column(Integer, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Отношения
+    user = relationship('User', backref='activities') 

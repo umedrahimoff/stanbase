@@ -71,6 +71,11 @@
                 <span class="d-none d-md-inline">{{ session.get('user_name', 'Пользователь') }}</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="/notifications">
+                  <i class="bi bi-bell me-2"></i>Уведомления
+                  <span class="badge bg-primary ms-2" id="nav-notifications-count">0</span>
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="/logout">Выйти</a></li>
               </ul>
             </li>
