@@ -147,9 +147,19 @@
               </div>
               <div class="tab-pane fade" id="pitch" role="tabpanel">
                 <div class="mb-3">
-                  <label for="pitch" class="form-label">Питч компании</label>
-                  <textarea class="form-control" id="pitch" name="pitch" rows="6" placeholder="Краткое описание миссии, видения и уникального предложения компании...">{{ company.pitch if company else '' }}</textarea>
-                  <div class="form-text">Краткое продающее описание компании, её миссии и уникального предложения</div>
+                  <label for="pitch" class="form-label">Питч компании (PDF)</label>
+                  {% if company and company.pitch %}
+                    <div class="mb-2">
+                      <div class="alert alert-info">
+                        <i class="bi bi-file-pdf text-danger me-2"></i>
+                        <strong>Текущий питч:</strong> 
+                        <a href="{{ company.pitch }}" target="_blank" class="text-decoration-none">{{ company.pitch.split('/')[-1] }}</a>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deletePitch()">Удалить</button>
+                      </div>
+                    </div>
+                  {% endif %}
+                  <input type="file" class="form-control" id="pitch" name="pitch" accept=".pdf">
+                  <div class="form-text">Загрузите PDF файл с питчем компании (максимум 10 МБ)</div>
                 </div>
                 {% if company and company.pitch_date %}
                 <div class="mb-3">
@@ -284,5 +294,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// Функция для удаления питча
+function deletePitch() {
+  if (confirm('Вы уверены, что хотите удалить питч компании?')) {
+    // Создаем скрытое поле для удаления питча
+    const deleteInput = document.createElement('input');
+    deleteInput.type = 'hidden';
+    deleteInput.name = 'delete_pitch';
+    deleteInput.value = '1';
+    document.querySelector('form').appendChild(deleteInput);
+    
+    // Отправляем форму
+    document.querySelector('form').submit();
+  }
+}
 </script>
 {% endblock %} 

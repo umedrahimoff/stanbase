@@ -294,10 +294,23 @@ def run_migration():
         # Добавляем поле pitch, если его нет
         if 'pitch' not in existing_columns:
             print("Добавляем поле 'pitch'...")
-            cursor.execute("ALTER TABLE company ADD COLUMN pitch TEXT")
+            cursor.execute("ALTER TABLE company ADD COLUMN pitch VARCHAR(256)")
             print("Поле 'pitch' добавлено успешно")
         else:
-            print("Поле 'pitch' уже существует")
+            # Изменяем тип поля pitch на VARCHAR(256) если оно существует как TEXT
+            cursor.execute("""
+                SELECT data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'company' 
+                AND column_name = 'pitch'
+            """)
+            current_type = cursor.fetchone()[0]
+            if current_type == 'text':
+                print("Изменяем тип поля 'pitch' с TEXT на VARCHAR(256)...")
+                cursor.execute("ALTER TABLE company ALTER COLUMN pitch TYPE VARCHAR(256)")
+                print("Тип поля 'pitch' изменен успешно")
+            else:
+                print("Поле 'pitch' уже имеет правильный тип")
         
         # Добавляем поле pitch_date, если его нет
         if 'pitch_date' not in existing_columns:

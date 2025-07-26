@@ -842,6 +842,7 @@ async def admin_edit_startup(request: Request, company_id: int):
 async def admin_edit_startup_post(request: Request, company_id: int):
     from models import Company
     import datetime
+    import os
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     db = SessionLocal()
@@ -855,10 +856,42 @@ async def admin_edit_startup_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
-    company.pitch = form.get('pitch')
-    # Устанавливаем дату питча только если питч был добавлен и его раньше не было
-    if form.get('pitch') and not company.pitch_date:
-        company.pitch_date = datetime.datetime.utcnow()
+    
+    # --- обработка питча ---
+    pitch_file = form.get('pitch')
+    delete_pitch = form.get('delete_pitch')
+    
+    if delete_pitch:
+        # Удаляем старый файл если есть
+        if company.pitch and os.path.exists(company.pitch.lstrip('/')):
+            try:
+                os.remove(company.pitch.lstrip('/'))
+            except:
+                pass
+        company.pitch = None
+        company.pitch_date = None
+    elif pitch_file and hasattr(pitch_file, 'filename') and pitch_file.filename:
+        # Удаляем старый файл если есть
+        if company.pitch and os.path.exists(company.pitch.lstrip('/')):
+            try:
+                os.remove(company.pitch.lstrip('/'))
+            except:
+                pass
+        
+        # Сохраняем новый файл
+        filename = f"pitch_{company_id}_{pitch_file.filename}"
+        save_dir = os.path.join("static", "pitches")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await pitch_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        company.pitch = f"/static/pitches/{filename}"
+        
+        # Устанавливаем дату питча только если его раньше не было
+        if not company.pitch_date:
+            company.pitch_date = datetime.datetime.utcnow()
+    
     company.updated_at = datetime.datetime.utcnow()
 
     # --- обработка логотипа ---
@@ -2276,10 +2309,42 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
-    company.pitch = form.get('pitch')
-    # Устанавливаем дату питча только если питч был добавлен и его раньше не было
-    if form.get('pitch') and not company.pitch_date:
-        company.pitch_date = datetime.datetime.utcnow()
+    
+    # --- обработка питча ---
+    pitch_file = form.get('pitch')
+    delete_pitch = form.get('delete_pitch')
+    
+    if delete_pitch:
+        # Удаляем старый файл если есть
+        if company.pitch and os.path.exists(company.pitch.lstrip('/')):
+            try:
+                os.remove(company.pitch.lstrip('/'))
+            except:
+                pass
+        company.pitch = None
+        company.pitch_date = None
+    elif pitch_file and hasattr(pitch_file, 'filename') and pitch_file.filename:
+        # Удаляем старый файл если есть
+        if company.pitch and os.path.exists(company.pitch.lstrip('/')):
+            try:
+                os.remove(company.pitch.lstrip('/'))
+            except:
+                pass
+        
+        # Сохраняем новый файл
+        filename = f"pitch_{company_id}_{pitch_file.filename}"
+        save_dir = os.path.join("static", "pitches")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, filename)
+        contents = await pitch_file.read()
+        with open(save_path, "wb") as f:
+            f.write(contents)
+        company.pitch = f"/static/pitches/{filename}"
+        
+        # Устанавливаем дату питча только если его раньше не было
+        if not company.pitch_date:
+            company.pitch_date = datetime.datetime.utcnow()
+    
     company.updated_at = datetime.datetime.utcnow()
 
     # --- обработка логотипа ---

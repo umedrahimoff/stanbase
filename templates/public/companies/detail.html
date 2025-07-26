@@ -91,10 +91,18 @@
         <h5 class="mt-4 mb-2">Питч компании</h5>
         <div class="card mb-4">
           <div class="card-body">
-            <p class="mb-2">{{ company.pitch }}</p>
-            {% if company.pitch_date %}
-            <small class="text-muted">Добавлен: {{ company.pitch_date.strftime('%d.%m.%Y') }}</small>
-            {% endif %}
+            <div class="d-flex align-items-center mb-3">
+              <i class="bi bi-file-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+              <div>
+                <h6 class="mb-1">{{ company.pitch.split('/')[-1] }}</h6>
+                {% if company.pitch_date %}
+                <small class="text-muted">Добавлен: {{ company.pitch_date.strftime('%d.%m.%Y') }}</small>
+                {% endif %}
+              </div>
+            </div>
+            <a href="{{ company.pitch }}" target="_blank" class="btn btn-outline-primary">
+              <i class="bi bi-download me-2"></i>Скачать питч
+            </a>
           </div>
         </div>
         {% endif %}
