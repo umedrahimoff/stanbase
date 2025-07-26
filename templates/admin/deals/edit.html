@@ -1,0 +1,78 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h3 class="mb-4">Редактировать сделку</h3>
+          {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+          <form method="post">
+            <div class="mb-3">
+              <label for="deal_type" class="form-label">Стадия стартапа *</label>
+              <select class="form-select" id="deal_type" name="deal_type" required>
+                <option value="">Выберите стадию</option>
+                {% for stage in stages %}
+                  <option value="{{ stage.name }}" {% if deal.type == stage.name %}selected{% endif %}>
+                    {{ stage.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="amount" class="form-label">Сумма *</label>
+              <input type="number" class="form-control" id="amount" name="amount" step="0.01" value="{{ deal.amount }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="investors" class="form-label">Инвесторы</label>
+              <select class="form-select" id="investors" name="investors" multiple>
+                {% for investor in investors %}
+                  {% set selected = false %}
+                  {% if deal.investors %}
+                    {% for investor_name in deal.investors.split(',') %}
+                      {% if investor_name.strip() == investor.name %}
+                        {% set selected = true %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                  <option value="{{ investor.name }}" {% if selected %}selected{% endif %}>{{ investor.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Удерживайте Ctrl (Cmd на Mac) для выбора нескольких инвесторов</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="deal_date" class="form-label">Дата сделки</label>
+                <input type="date" class="form-control" id="deal_date" name="deal_date" value="{{ deal.date.strftime('%Y-%m-%d') if deal.date else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label for="status" class="form-label">Статус</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="active" {% if deal.status == 'active' %}selected{% endif %}>Активная</option>
+                  <option value="inactive" {% if deal.status == 'inactive' %}selected{% endif %}>Неактивная</option>
+                  <option value="completed" {% if deal.status == 'completed' %}selected{% endif %}>Завершена</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+              <a href="{{ url_for('admin_deals') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="text-muted mb-3">Информация о сделке</h6>
+          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ deal.id }}</span></div>
+          <div class="meta-row"><span class="meta-label">Компания:</span> <span class="meta-value">{{ deal.company.name }}</span></div>
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ deal.status }}</span></div>
+          <div class="meta-row"><span class="meta-label">Создана:</span> <span class="meta-value">{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

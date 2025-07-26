@@ -73,11 +73,9 @@ class Deal(Base):
     amount = Column(Float)
     valuation = Column(Float, nullable=True)
     date = Column(Date)
-    currency_id = Column(Integer, ForeignKey('currency.id'))
     company_id = Column(Integer, ForeignKey('company.id'))
     investors = Column(String(256))
     status = Column(String(16), default='active')
-    currency = relationship('Currency', backref='deals')
 
 class Person(Base):
     __tablename__ = 'person'
@@ -85,6 +83,9 @@ class Person(Base):
     name = Column(String(128), nullable=False)
     country = Column(String(64))
     linkedin = Column(String(256))
+    telegram = Column(String(256))
+    website = Column(String(256))
+    instagram = Column(String(256))
     role = Column(String(64))
     status = Column(String(16), default='active')
 
@@ -194,19 +195,13 @@ class Author(Base):
     status = Column(String(16), default='active')
     news = relationship('News', backref='author')
 
-class Currency(Base):
-    __tablename__ = 'currency'
-    id = Column(Integer, primary_key=True)
-    code = Column(String(8), unique=True, nullable=False)  # USD, EUR, KZT, etc.
-    name = Column(String(64), nullable=False)  # Доллар США, Евро, Тенге
-    symbol = Column(String(8))  # $, €, ₸
-    status = Column(String(16), default='active')
+
 
 class Pitch(Base):
     __tablename__ = 'pitch'
     id = Column(Integer, primary_key=True)
     name = Column(String(128), nullable=False)  # название питча
-    file_path = Column(String(256), nullable=False)  # путь к PDF файлу
+    url = Column(String(512), nullable=False)  # ссылка на питч
     status = Column(String(16), default='active')  # active, inactive, archived, draft
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

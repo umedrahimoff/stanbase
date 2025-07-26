@@ -249,13 +249,19 @@ def companies(request: Request, q: str = Query('', alias='q'), country: str = Qu
 @app.get("/company/{id}", response_class=HTMLResponse)
 def company_profile(request: Request, id: int = Path(...)):
     db = SessionLocal()
-    company = db.query(Company).options(joinedload(Company.deals).joinedload(Deal.currency)).get(id)
+    company = db.query(Company).options(
+        joinedload(Company.deals),
+        joinedload(Company.pitches),
+        joinedload(Company.team),
+        joinedload(Company.jobs)
+    ).get(id)
     if not company:
         db.close()
         raise HTTPException(status_code=404)
     team = list(company.team)
     deals = list(company.deals)
     jobs = list(company.jobs)
+    pitches = list(company.pitches)
     investors = db.query(Investor).all()
     investor_dict = {inv.name: inv for inv in investors}
 
@@ -275,7 +281,7 @@ def company_profile(request: Request, id: int = Path(...)):
     db.close()
     return templates.TemplateResponse(
         "public/companies/detail.html",
-        {"request": request, "company": company, "team": team, "deals": deals, "jobs": jobs, "investor_dict": investor_dict, "session": request.session, "similar": similar}
+        {"request": request, "company": company, "team": team, "deals": deals, "jobs": jobs, "pitches": pitches, "investor_dict": investor_dict, "session": request.session, "similar": similar}
     )
 
 @app.get("/investors", response_class=HTMLResponse)
@@ -857,6 +863,15 @@ async def admin_edit_startup_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    # Обработка даты основания
+    founded_date_str = form.get('founded_date')
+    if founded_date_str:
+        try:
+            company.founded_date = datetime.datetime.strptime(founded_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    else:
+        company.founded_date = None
     company.updated_at = datetime.datetime.utcnow()
     
     # --- обработка питча ---
@@ -1589,123 +1604,7 @@ async def admin_delete_news(request: Request, news_id: int):
     db.commit()
     return RedirectResponse(url="/admin/news", status_code=302)
 
-# --- Deals CRUD ---
-@app.get("/admin/deals", response_class=HTMLResponse, name="admin_deals")
-def admin_deals(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import Deal
-    from sqlalchemy.orm import joinedload
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    query = db.query(Deal).options(joinedload(Deal.company), joinedload(Deal.currency))
-    if q:
-        query = query.filter(Deal.type.ilike(f'%{q}%'))
-    if status:
-        query = query.filter(Deal.status == status)
-    total = query.count()
-    deals = query.order_by(Deal.id).offset((page-1)*per_page).limit(per_page).all()
-    db.close()
-    return templates.TemplateResponse("admin/deals/list.html", {"request": request, "session": request.session, "deals": deals, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
 
-@app.route("/admin/deals/create", methods=["GET", "POST"], name="admin_create_deal")
-async def admin_create_deal(request: Request):
-    from models import Deal, Company, Investor, Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    error = None
-    db = SessionLocal()
-    companies = db.query(Company).all()
-    investors = db.query(Investor).all()
-    currencies = db.query(Currency).filter_by(status='active').all()
-    
-    if request.method == "POST":
-        form = await request.form()
-        deal_type = form.get('type')
-        amount_str = form.get('amount', '').replace(' ', '').replace(',', '')
-        valuation_str = form.get('valuation', '').replace(' ', '').replace(',', '')
-        date = form.get('date')
-        currency_id = int(form.get('currency_id')) if form.get('currency_id') else None
-        company_id = int(form.get('company_id'))
-        investors_list = form.getlist('investors')  # Множественный выбор
-        investors_str = ', '.join(investors_list) if investors_list else ''
-        status = form.get('status')
-        
-        # Преобразуем строки в числа
-        amount = int(amount_str) if amount_str else None
-        valuation = int(valuation_str) if valuation_str else None
-        
-        if db.query(Deal).filter_by(type=deal_type, company_id=company_id).first():
-            error = 'Сделка с такими параметрами уже существует'
-        else:
-            deal = Deal(
-                type=deal_type,
-                amount=amount,
-                valuation=valuation,
-                date=date,
-                currency_id=currency_id,
-                company_id=company_id,
-                investors=investors_str,
-                status=status
-            )
-            db.add(deal)
-            db.commit()
-            db.close()
-            return RedirectResponse(url="/admin/deals", status_code=302)
-    
-    db.close()
-    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": None, "companies": companies, "investors": investors, "currencies": currencies})
-
-@app.get("/admin/deals/edit/{deal_id}", response_class=HTMLResponse, name="admin_edit_deal")
-async def admin_edit_deal(request: Request, deal_id: int):
-    from models import Deal, Company, Investor, Currency
-    from sqlalchemy.orm import joinedload
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    deal = db.query(Deal).options(joinedload(Deal.company), joinedload(Deal.currency)).get(deal_id)
-    companies = db.query(Company).all()
-    investors = db.query(Investor).all()
-    currencies = db.query(Currency).filter_by(status='active').all()
-    error = None
-    db.close()
-    return templates.TemplateResponse("admin/deals/form.html", {"request": request, "session": request.session, "error": error, "deal": deal, "companies": companies, "investors": investors, "currencies": currencies})
-
-@app.post("/admin/deals/edit/{deal_id}", name="admin_edit_deal_post")
-async def admin_edit_deal_post(request: Request, deal_id: int):
-    from models import Deal
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
-    form = await request.form()
-    deal.type = form.get('type')
-    
-    # Обработка чисел с разделителями
-    amount_str = form.get('amount', '').replace(' ', '').replace(',', '')
-    valuation_str = form.get('valuation', '').replace(' ', '').replace(',', '')
-    
-    deal.amount = int(amount_str) if amount_str else None
-    deal.valuation = int(valuation_str) if valuation_str else None
-    deal.date = form.get('date')
-    deal.currency_id = int(form.get('currency_id')) if form.get('currency_id') else None
-    deal.company_id = int(form.get('company_id'))
-    investors_list = form.getlist('investors')  # Множественный выбор
-    deal.investors = ', '.join(investors_list) if investors_list else ''
-    deal.status = form.get('status')
-    db.commit()
-    db.close()
-    return RedirectResponse(url="/admin/deals", status_code=302)
-
-@app.post("/admin/deals/delete/{deal_id}", name="admin_delete_deal")
-async def admin_delete_deal(request: Request, deal_id: int):
-    from models import Deal
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
-    db.delete(deal)
-    db.commit()
-    return RedirectResponse(url="/admin/deals", status_code=302)
 
 @app.get("/admin/investors", response_class=HTMLResponse, name="admin_investors")
 async def admin_investors(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
@@ -1849,6 +1748,30 @@ async def admin_city_search(q: str = Query('', alias='q')):
     return {"results": results}
 
 # --- Добавление участника команды из админки ---
+@app.get("/admin/team/create", name="admin_create_team_member_form")
+async def admin_create_team_member_form(request: Request):
+    from models import Company
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    # Получаем компанию из query параметра
+    company_id = request.query_params.get('company_id')
+    if not company_id:
+        return RedirectResponse(url="/admin/companies", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        company = db.query(Company).get(int(company_id))
+        if not company:
+            return RedirectResponse(url="/admin/companies", status_code=302)
+        
+        return templates.TemplateResponse("admin/team/create.html", {
+            "request": request, 
+            "company": company
+        })
+    finally:
+        db.close()
+
 @app.post("/admin/team/create", name="admin_create_team_member")
 async def admin_create_team_member(request: Request):
     from models import Person, Company
@@ -1858,9 +1781,12 @@ async def admin_create_team_member(request: Request):
     name = form.get('name')
     role = form.get('role')
     linkedin = form.get('linkedin')
+    telegram = form.get('telegram')
+    website = form.get('website')
+    instagram = form.get('instagram')
     company_id = int(request.query_params.get('company_id')) if request.query_params.get('company_id') else None
     db = SessionLocal()
-    person = Person(name=name, role=role, linkedin=linkedin)
+    person = Person(name=name, role=role, linkedin=linkedin, telegram=telegram, website=website, instagram=instagram)
     db.add(person)
     db.commit()
     if company_id:
@@ -1869,7 +1795,36 @@ async def admin_create_team_member(request: Request):
             company.team.append(person)
             db.commit()
     db.close()
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team&message=Участник команды успешно добавлен", status_code=302)
+
+@app.get("/admin/team/{person_id}/edit", name="admin_edit_team_member_form")
+async def admin_edit_team_member_form(request: Request, person_id: int):
+    from models import Person
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        person = db.query(Person).get(person_id)
+        if not person:
+            return RedirectResponse(url="/admin/companies", status_code=302)
+        
+        # Получаем компанию из query параметра
+        company_id = request.query_params.get('company_id')
+        if not company_id:
+            return RedirectResponse(url="/admin/companies", status_code=302)
+        
+        company = db.query(Company).get(int(company_id))
+        if not company:
+            return RedirectResponse(url="/admin/companies", status_code=302)
+        
+        return templates.TemplateResponse("admin/team/edit.html", {
+            "request": request, 
+            "person": person, 
+            "company": company
+        })
+    finally:
+        db.close()
 
 @app.post("/admin/team/{person_id}/edit", name="admin_edit_team_member")
 async def admin_edit_team_member(request: Request, person_id: int):
@@ -1881,6 +1836,9 @@ async def admin_edit_team_member(request: Request, person_id: int):
     name = form.get('name')
     role = form.get('role')
     linkedin = form.get('linkedin')
+    telegram = form.get('telegram')
+    website = form.get('website')
+    instagram = form.get('instagram')
     company_id = form.get('company_id')
     
     db = SessionLocal()
@@ -1890,13 +1848,16 @@ async def admin_edit_team_member(request: Request, person_id: int):
             person.name = name
             person.role = role
             person.linkedin = linkedin
+            person.telegram = telegram
+            person.website = website
+            person.instagram = instagram
             db.commit()
     except Exception as e:
         db.rollback()
     finally:
         db.close()
     
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team&message=Участник команды успешно обновлен", status_code=302)
 
 @app.post("/admin/team/{person_id}/delete", name="admin_delete_team_member")
 async def admin_delete_team_member(request: Request, person_id: int):
@@ -1921,7 +1882,7 @@ async def admin_delete_team_member(request: Request, person_id: int):
     finally:
         db.close()
     
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team", status_code=302)
+    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team&message=Участник команды успешно удален", status_code=302)
 
 @app.get("/admin/admins", response_class=HTMLResponse, name="admin_admins")
 def admin_admins(request: Request):
@@ -2109,83 +2070,7 @@ def test_db():
 
 app.include_router(router)
 
-@app.get("/admin/currencies", response_class=HTMLResponse, name="admin_currencies")
-async def admin_currencies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    query = db.query(Currency)
-    if q:
-        query = query.filter(Currency.name.ilike(f'%{q}%') | Currency.code.ilike(f'%{q}%'))
-    if status:
-        query = query.filter(Currency.status == status)
-    total = query.count()
-    currencies = query.order_by(Currency.code).offset((page-1)*per_page).limit(per_page).all()
-    db.close()
-    return templates.TemplateResponse("admin/currencies/list.html", {"request": request, "session": request.session, "currencies": currencies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
 
-@app.route("/admin/currencies/create", methods=["GET", "POST"], name="admin_create_currency")
-async def admin_create_currency(request: Request):
-    from models import Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    error = None
-    if request.method == "POST":
-        form = await request.form()
-        code = form.get('code').upper()
-        name = form.get('name')
-        symbol = form.get('symbol')
-        db = SessionLocal()
-        if db.query(Currency).filter_by(code=code).first():
-            error = 'Валюта с таким кодом уже существует'
-        else:
-            currency = Currency(code=code, name=name, symbol=symbol)
-            db.add(currency)
-            db.commit()
-            db.close()
-            return RedirectResponse(url="/admin/currencies", status_code=302)
-        db.close()
-    return templates.TemplateResponse("admin/currencies/form.html", {"request": request, "session": request.session, "error": error, "currency": None})
-
-@app.get("/admin/currencies/edit/{currency_id}", response_class=HTMLResponse, name="admin_edit_currency")
-async def admin_edit_currency(request: Request, currency_id: int):
-    from models import Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    currency = db.query(Currency).get(currency_id)
-    error = None
-    db.close()
-    return templates.TemplateResponse("admin/currencies/form.html", {"request": request, "session": request.session, "error": error, "currency": currency})
-
-@app.post("/admin/currencies/edit/{currency_id}", name="admin_edit_currency_post")
-async def admin_edit_currency_post(request: Request, currency_id: int):
-    from models import Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    currency = db.query(Currency).get(currency_id)
-    form = await request.form()
-    currency.code = form.get('code').upper()
-    currency.name = form.get('name')
-    currency.symbol = form.get('symbol')
-    currency.status = form.get('status')
-    db.commit()
-    db.close()
-    return RedirectResponse(url="/admin/currencies", status_code=302)
-
-@app.post("/admin/currencies/delete/{currency_id}", name="admin_delete_currency")
-async def admin_delete_currency(request: Request, currency_id: int):
-    from models import Currency
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    currency = db.query(Currency).get(currency_id)
-    db.delete(currency)
-    db.commit()
-    db.close()
-    return RedirectResponse(url="/admin/currencies", status_code=302)
 
 @app.get("/admin/company_stages", response_class=HTMLResponse, name="admin_company_stages")
 async def admin_company_stages(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
@@ -2329,7 +2214,7 @@ async def admin_delete_company(request: Request, company_id: int):
 
 @app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
 async def admin_edit_company(request: Request, company_id: int):
-    from models import Company, Country, City
+    from models import Company, Country, City, Deal
     from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -2341,8 +2226,20 @@ async def admin_edit_company(request: Request, company_id: int):
     team = company.team if company else []
     jobs = company.jobs if company else []
     pitches = company.pitches if company else []
+    deals = db.query(Deal).filter(Deal.company_id == company_id).all() if company else []
+    # Преобразуем в список, чтобы избежать проблем с lazy loading
+    deals_list = []
+    for deal in deals:
+        deals_list.append({
+            'id': deal.id,
+            'type': deal.type,
+            'amount': deal.amount,
+            'investors': deal.investors,
+            'date': deal.date,
+            'status': deal.status
+        })
     db.close()
-    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team, "jobs": jobs, "pitches": pitches})
+    return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": company, "countries": countries, "cities": cities, "error": error, "team": team, "jobs": jobs, "pitches": pitches, "deals": deals_list})
 
 @app.post("/admin/companies/edit/{company_id}", name="admin_edit_company_post")
 async def admin_edit_company_post(request: Request, company_id: int):
@@ -2362,6 +2259,15 @@ async def admin_edit_company_post(request: Request, company_id: int):
     company.stage = form.get('stage')
     company.industry = form.get('industry')
     company.website = form.get('website')
+    # Обработка даты основания
+    founded_date_str = form.get('founded_date')
+    if founded_date_str:
+        try:
+            company.founded_date = datetime.datetime.strptime(founded_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    else:
+        company.founded_date = None
     company.updated_at = datetime.datetime.utcnow()
     
     # --- обработка питча ---
@@ -2421,7 +2327,6 @@ async def admin_edit_company_post(request: Request, company_id: int):
 async def admin_create_pitch(request: Request):
     from models import Pitch, Company
     import datetime
-    import os
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
@@ -2429,14 +2334,14 @@ async def admin_create_pitch(request: Request):
     # Получаем company_id из query параметров
     company_id = request.query_params.get('company_id')
     name = form.get('name')
+    url = form.get('url')
     status = form.get('status', 'active')
     
     if not company_id:
         return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
     
-    pitch_file = form.get('file')
-    if not pitch_file or not hasattr(pitch_file, 'filename') or not pitch_file.filename:
-        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch&error=Файл не выбран", status_code=302)
+    if not url:
+        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch&error=URL питча не указан", status_code=302)
     
     db = SessionLocal()
     try:
@@ -2445,19 +2350,10 @@ async def admin_create_pitch(request: Request):
         if not company:
             return RedirectResponse(url="/admin/companies?error=Компания не найдена", status_code=302)
         
-        # Сохраняем файл
-        filename = f"pitch_{company_id}_{int(datetime.datetime.utcnow().timestamp())}_{pitch_file.filename}"
-        save_dir = os.path.join("static", "pitches")
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, filename)
-        contents = await pitch_file.read()
-        with open(save_path, "wb") as f:
-            f.write(contents)
-        
         # Создаем запись в БД
         pitch = Pitch(
             name=name,
-            file_path=f"/static/pitches/{filename}",
+            url=url,
             status=status,
             company_id=company_id,
             created_by=request.session.get('user_email', 'admin')
@@ -2499,7 +2395,6 @@ async def admin_update_pitch_status(request: Request, pitch_id: int):
 @app.post("/admin/pitch/{pitch_id}/delete", name="admin_delete_pitch")
 async def admin_delete_pitch(request: Request, pitch_id: int):
     from models import Pitch
-    import os
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
@@ -2507,13 +2402,6 @@ async def admin_delete_pitch(request: Request, pitch_id: int):
     try:
         pitch = db.query(Pitch).get(pitch_id)
         if pitch:
-            # Удаляем файл
-            if pitch.file_path and os.path.exists(pitch.file_path.lstrip('/')):
-                try:
-                    os.remove(pitch.file_path.lstrip('/'))
-                except:
-                    pass
-            
             # Удаляем запись из БД
             db.delete(pitch)
             db.commit()
@@ -2523,6 +2411,234 @@ async def admin_delete_pitch(request: Request, pitch_id: int):
         db.close()
     
     return Response(status_code=200)
+
+# CRUD операции для сделок
+@app.get("/admin/deals/create", name="admin_create_deal_form")
+async def admin_create_deal_form(request: Request):
+    from models import CompanyStage, Company, Investor
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    company_id = request.query_params.get('company_id')
+    
+    db = SessionLocal()
+    stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
+    investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
+    db.close()
+    
+    return templates.TemplateResponse("admin/deals/create.html", {
+        "request": request, 
+        "company_id": company_id,
+        "stages": stages,
+        "companies": companies,
+        "investors": investors
+    })
+
+@app.post("/admin/deals/create", name="admin_create_deal")
+async def admin_create_deal(request: Request):
+    from models import Deal, Company
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    company_id = form.get('company_id')
+    deal_type = form.get('deal_type')
+    amount = form.get('amount')
+    investors_list = form.getlist('investors')
+    investors = ', '.join(investors_list) if investors_list else ''
+    deal_date_str = form.get('deal_date')
+    status = form.get('status', 'active')
+    
+    if not company_id:
+        return RedirectResponse(url="/admin/deals/create?error=Выберите компанию", status_code=302)
+    
+    if not deal_type or not amount:
+        return RedirectResponse(url=f"/admin/deals/create?company_id={company_id}&error=Заполните все обязательные поля", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        # Проверяем существование компании
+        company = db.query(Company).get(company_id)
+        if not company:
+            return RedirectResponse(url="/admin/companies?error=Компания не найдена", status_code=302)
+        
+        # Обработка даты
+        deal_date = None
+        if deal_date_str:
+            try:
+                deal_date = datetime.datetime.strptime(deal_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
+        # Создаем запись в БД
+        deal = Deal(
+            type=deal_type,
+            amount=float(amount) if amount else None,
+            investors=investors,
+            date=deal_date,
+            status=status,
+            company_id=int(company_id)
+        )
+        db.add(deal)
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/deals/create?company_id={company_id}&error=Ошибка при создании сделки", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно добавлена", status_code=302)
+
+@app.get("/admin/deals/{deal_id}/edit", name="admin_edit_deal_form")
+async def admin_edit_deal_form(request: Request, deal_id: int):
+    from models import Deal, CompanyStage, Investor
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    company_id = request.query_params.get('company_id')
+    if not company_id:
+        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
+    
+    db = SessionLocal()
+    deal = db.query(Deal).get(deal_id)
+    stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+    investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
+    db.close()
+    
+    if not deal:
+        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=deals&error=Сделка не найдена", status_code=302)
+    
+    return templates.TemplateResponse("admin/deals/edit.html", {
+        "request": request, 
+        "deal": deal,
+        "company_id": company_id,
+        "stages": stages,
+        "investors": investors
+    })
+
+@app.post("/admin/deals/{deal_id}/edit", name="admin_edit_deal")
+async def admin_edit_deal(request: Request, deal_id: int):
+    from models import Deal
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    company_id = request.query_params.get('company_id')
+    deal_type = form.get('deal_type')
+    amount = form.get('amount')
+    investors_list = form.getlist('investors')
+    investors = ', '.join(investors_list) if investors_list else ''
+
+    deal_date_str = form.get('deal_date')
+    status = form.get('status', 'active')
+    
+    if not company_id:
+        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
+    
+    if not deal_type or not amount:
+        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?company_id={company_id}&error=Заполните все обязательные поля", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        deal = db.query(Deal).get(deal_id)
+        if not deal:
+            return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=deals&error=Сделка не найдена", status_code=302)
+        
+        # Обработка даты
+        deal_date = None
+        if deal_date_str:
+            try:
+                deal_date = datetime.datetime.strptime(deal_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
+        # Обновляем запись
+        deal.type = deal_type
+        deal.amount = float(amount) if amount else None
+        deal.investors = investors
+        deal.date = deal_date
+        deal.status = status
+        
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?company_id={company_id}&error=Ошибка при обновлении сделки", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно обновлена", status_code=302)
+
+@app.post("/admin/deals/{deal_id}/delete", name="admin_delete_deal")
+async def admin_delete_deal(request: Request, deal_id: int):
+    from models import Deal
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    company_id = request.query_params.get('company_id')
+    if not company_id:
+        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        deal = db.query(Deal).get(deal_id)
+        if deal:
+            db.delete(deal)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно удалена", status_code=302)
+
+@app.get("/admin/deals", response_class=HTMLResponse, name="admin_deals")
+async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    from models import Deal, Company
+    from sqlalchemy import or_
+    from sqlalchemy.orm import joinedload
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    
+    # Базовый запрос с eager loading
+    query = db.query(Deal).options(joinedload(Deal.company))
+    
+    # Поиск
+    if q:
+        query = query.join(Company).filter(
+            or_(
+                Deal.type.contains(q),
+                Deal.status.contains(q),
+                Company.name.contains(q)
+            )
+        )
+    
+    # Общее количество
+    total = query.count()
+    
+    # Пагинация
+    deals = query.offset((page - 1) * per_page).limit(per_page).all()
+    
+    # Подсчет страниц
+    total_pages = (total + per_page - 1) // per_page
+    
+    db.close()
+    
+    return templates.TemplateResponse("admin/deals/list.html", {
+        "request": request,
+        "deals": deals,
+        "q": q,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": total_pages
+    })
 
 if __name__ == "__main__":
     print('SERVER STARTED')

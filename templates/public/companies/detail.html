@@ -46,12 +46,34 @@
         {% if team %}
           <ul class="list-group mb-4">
             {% for person in team %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
+              <li class="list-group-item team-member-item">
                 {% if session is defined and session.get('user_id') %}
                   <span><a href="#">{{ person.name }}</a> — {{ person.role }}</span>
-                  {% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank"><img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/linkedin.svg" width="20" alt="LinkedIn"></a>{% endif %}
+                  <div class="social-icons-container">
+                    {% if person.linkedin %}
+                      <a href="{{ person.linkedin }}" target="_blank" class="social-icon social-icon-linkedin" title="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                      </a>
+                    {% endif %}
+                    {% if person.telegram %}
+                      <a href="{% if person.telegram.startswith('@') %}https://t.me/{{ person.telegram[1:] }}{% elif person.telegram.startswith('http') %}{{ person.telegram }}{% else %}https://t.me/{{ person.telegram }}{% endif %}" target="_blank" class="social-icon social-icon-telegram" title="Telegram">
+                        <i class="bi bi-telegram"></i>
+                      </a>
+                    {% endif %}
+                    {% if person.website %}
+                      <a href="{{ person.website }}" target="_blank" class="social-icon social-icon-website" title="Веб-сайт">
+                        <i class="bi bi-globe"></i>
+                      </a>
+                    {% endif %}
+                    {% if person.instagram %}
+                      <a href="{% if person.instagram.startswith('@') %}https://instagram.com/{{ person.instagram[1:] }}{% elif person.instagram.startswith('http') %}{{ person.instagram }}{% else %}https://instagram.com/{{ person.instagram }}{% endif %}" target="_blank" class="social-icon social-icon-instagram" title="Instagram">
+                        <i class="bi bi-instagram"></i>
+                      </a>
+                    {% endif %}
+                  </div>
                 {% else %}
                   <span>{{ person.name[:2] }}****</span>
+                  <div class="social-icons-container"></div>
                 {% endif %}
               </li>
             {% endfor %}
@@ -65,7 +87,7 @@
           <ul class="list-group mb-4">
             {% for deal in deals %}
               <li class="list-group-item">
-                <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ "{:,}".format(deal.amount|int) }} {{ deal.currency.code if deal.currency else '—' }}{% else %}{{ (deal.amount|string)[:2] }}**** {{ deal.currency.code if deal.currency else '—' }}{% endif %}
+                <b>{{ deal.type }}</b> — {% if session is defined and session.get('user_id') %}{{ "{:,}".format(deal.amount|int) }}{% else %}{{ (deal.amount|string)[:2] }}****{% endif %}
                 <span class="text-muted small">({{ deal.date.strftime('%d.%m.%Y') if deal.date else '' }})</span><br>
                 <span class="text-muted small">Оценка: {% if session is defined and session.get('user_id') %}{{ "{:,}".format(deal.valuation|int) if deal.valuation else '—' }}{% else %}{{ (deal.valuation|string)[:2] if deal.valuation else '--' }}****{% endif %}</span><br>
                 <span class="text-muted small">Инвестор(ы):
@@ -102,7 +124,7 @@
                   {% endif %}
                 </div>
               </div>
-              <a href="{{ pitch.file_path }}" target="_blank" class="btn btn-outline-primary">
+              <a href="{{ pitch.url }}" target="_blank" class="btn btn-outline-primary">
                 <i class="bi bi-download me-2"></i>Скачать питч
               </a>
             </div>
@@ -184,6 +206,8 @@
 </div>
 {% endblock %}
 
+
+
 {% block styles %}
 {{ super() }}
 <style>
@@ -198,4 +222,5 @@
 .card { margin-bottom: 2rem; }
 hr.my-4 { margin-top: 2rem; margin-bottom: 2rem; }
 </style>
-{% endblock %} 
+{% endblock %}
+

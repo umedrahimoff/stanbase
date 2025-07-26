@@ -1,0 +1,79 @@
+/* Единые стили для иконок социальных сетей */
+.social-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 16px;
+    transition: opacity 0.2s ease;
+}
+
+/* Фиксированная высота для блоков команды */
+.team-member-item {
+    height: 48px !important;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+}
+
+.team-member-item .social-icons-container {
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.team-member-item span {
+    flex: 1;
+    line-height: 1.2;
+}
+
+/* Единые стили для всех иконок социальных сетей */
+.social-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 16px;
+    transition: opacity 0.2s ease;
+    color: #000 !important;
+}
+
+.social-icon i {
+    color: #000 !important;
+}
+
+
+
+.social-icon:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+.social-icon-linkedin {
+    background-color: #fff;
+    color: #000;
+}
+
+.social-icon-telegram {
+    background-color: #fff;
+    color: #000;
+}
+
+.social-icon-website {
+    background-color: #fff;
+    color: #000;
+}
+
+.social-icon-instagram {
+    background-color: #fff;
+    color: #000;
+}
+
+ 

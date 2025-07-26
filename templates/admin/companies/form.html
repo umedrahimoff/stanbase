@@ -76,15 +76,19 @@
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label for="stage" class="form-label">Стадия</label>
                     <input type="text" class="form-control" id="stage" name="stage" value="{{ company.stage if company else '' }}">
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
                     <label for="industry" class="form-label">Отрасль</label>
                     <input type="text" class="form-control" id="industry" name="industry" value="{{ company.industry if company else '' }}">
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-3">
+                    <label for="founded_date" class="form-label">Дата основания</label>
+                    <input type="date" class="form-control" id="founded_date" name="founded_date" value="{{ company.founded_date.strftime('%Y-%m-%d') if company and company.founded_date else '' }}">
+                  </div>
+                  <div class="col-md-3">
                     <label for="website" class="form-label">Сайт</label>
                     <input type="url" class="form-control" id="website" name="website" value="{{ company.website if company else '' }}">
                   </div>
@@ -94,141 +98,175 @@
                   <a href="{{ url_for('admin_companies') }}" class="btn btn-outline-secondary">Отмена</a>
                 </div>
               </div>
-              <div class="tab-pane fade" id="team" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0">Команда</h5>
-                  <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addTeamMemberModal">Добавить</button>
-                </div>
-                <table class="table table-sm table-hover">
-                  <thead><tr><th>Имя</th><th>Должность</th><th>LinkedIn</th><th></th></tr></thead>
-                  <tbody>
-                    {% if team and team|length > 0 %}
-                      {% for person in team %}
-                        <tr>
-                          <td>{{ person.name }}</td>
-                          <td>{{ person.role }}</td>
-                          <td>{% if person.linkedin %}<a href="{{ person.linkedin }}" target="_blank">LinkedIn</a>{% endif %}</td>
-                          <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTeamMember({{ person.id }}, event)" title="Редактировать">
-                              <i class="bi bi-pencil-fill"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamMember({{ person.id }})" title="Удалить">
-                              <i class="bi bi-trash-fill"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      {% endfor %}
-                    {% else %}
-                      <tr><td colspan="4" class="text-muted">Нет данных о команде.</td></tr>
-                    {% endif %}
-                  </tbody>
-                </table>
-              </div>
-              <div class="tab-pane fade" id="deals" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0">Сделки</h5>
-                  <a href="#" class="btn btn-outline-primary btn-sm">Добавить сделку</a>
-                </div>
-                <form class="row g-2 mb-3">
-                  <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm" placeholder="Поиск по сделкам..." name="q">
-                  </div>
-                  <div class="col-md-3">
-                    <select class="form-select form-select-sm" name="status">
-                      <option value="">Статус (все)</option>
-                      <option value="active">Активна</option>
-                      <option value="inactive">Неактивна</option>
-                      <option value="archived">Архив</option>
-                      <option value="draft">Черновик</option>
-                    </select>
-                  </div>
-                  <div class="col-md-2">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Фильтр</button>
-                  </div>
-                </form>
-                <table class="table table-sm table-hover">
-                  <thead><tr><th>ID</th><th>Тип</th><th>Сумма</th><th>Оценка</th><th>Дата</th><th>Инвесторы</th><th>Статус</th><th></th></tr></thead>
-                  <tbody>
-                    <tr><td colspan="8" class="text-muted">Нет сделок.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="tab-pane fade" id="pitch" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0">Питчи компании</h5>
-                  <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addPitchModal">Добавить питч</button>
-                </div>
-                <table class="table table-sm table-hover">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Название питча</th>
-                      <th>Статус</th>
-                      <th>Дата создания</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% if pitches and pitches|length > 0 %}
-                      {% for pitch in pitches %}
-                        <tr>
-                          <td>{{ pitch.id }}</td>
-                          <td>
-                            <a href="{{ pitch.file_path }}" target="_blank" class="text-decoration-none">
-                              <i class="bi bi-file-pdf text-danger me-1"></i>{{ pitch.name }}
-                            </a>
-                          </td>
-                          <td>
-                            <select class="form-select form-select-sm" onchange="updatePitchStatus({{ pitch.id }}, this.value)" style="width: auto;">
-                              <option value="active" {% if pitch.status == 'active' %}selected{% endif %}>Активен</option>
-                              <option value="inactive" {% if pitch.status == 'inactive' %}selected{% endif %}>Неактивен</option>
-                              <option value="archived" {% if pitch.status == 'archived' %}selected{% endif %}>Архив</option>
-                              <option value="draft" {% if pitch.status == 'draft' %}selected{% endif %}>Черновик</option>
-                            </select>
-                          </td>
-                          <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
-                          <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})" title="Редактировать">
-                              <i class="bi bi-pencil-fill"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})" title="Удалить">
-                              <i class="bi bi-trash-fill"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      {% endfor %}
-                    {% else %}
-                      <tr><td colspan="5" class="text-muted">Нет питчей.</td></tr>
-                    {% endif %}
-                  </tbody>
-                </table>
-              </div>
-              <div class="tab-pane fade" id="jobs" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0">Вакансии</h5>
-                  <a href="/admin/jobs/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Создать вакансию</a>
-                </div>
-                <table class="table table-sm table-hover">
-                  <thead><tr><th>Должность</th><th>Город</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
-                  <tbody>
-                    {% if jobs and jobs|length > 0 %}
-                      {% for job in jobs %}
-                        <tr>
-                          <td>{{ job.title }}</td>
-                          <td>{{ job.city }}</td>
-                          <td>{{ job.job_type }}</td>
-                          <td>{{ job.status }}</td>
-                          <td><a href="/admin/jobs/edit/{{ job.id }}" class="btn btn-sm btn-outline-secondary">Редактировать</a></td>
-                        </tr>
-                      {% endfor %}
-                    {% else %}
-                      <tr><td colspan="5" class="text-muted">Нет вакансий.</td></tr>
-                    {% endif %}
-                  </tbody>
-                </table>
-              </div>
             </div>
           </form>
+
+          <!-- Остальные табы вынесены за пределы основной формы -->
+          <div class="tab-content" id="companyTabContent2">
+            <div class="tab-pane fade" id="team" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Команда</h5>
+                <a href="/admin/team/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Добавить</a>
+              </div>
+              <table class="table table-sm table-hover">
+                <thead><tr><th>Имя</th><th>Должность</th><th>Социальные сети</th><th></th></tr></thead>
+                <tbody>
+                  {% if team and team|length > 0 %}
+                    {% for person in team %}
+                      <tr>
+                        <td>{{ person.name }}</td>
+                        <td>{{ person.role }}</td>
+                        <td>
+                          <div class="d-flex flex-wrap gap-1">
+                            {% if person.linkedin %}
+                              <a href="{{ person.linkedin }}" target="_blank" class="social-icon social-icon-linkedin" title="LinkedIn">
+                                <i class="bi bi-linkedin"></i>
+                              </a>
+                            {% endif %}
+                            {% if person.telegram %}
+                              <a href="{% if person.telegram.startswith('@') %}https://t.me/{{ person.telegram[1:] }}{% elif person.telegram.startswith('http') %}{{ person.telegram }}{% else %}https://t.me/{{ person.telegram }}{% endif %}" target="_blank" class="social-icon social-icon-telegram" title="Telegram">
+                                <i class="bi bi-telegram"></i>
+                              </a>
+                            {% endif %}
+                            {% if person.website %}
+                              <a href="{{ person.website }}" target="_blank" class="social-icon social-icon-website" title="Веб-сайт">
+                                <i class="bi bi-globe"></i>
+                              </a>
+                            {% endif %}
+                            {% if person.instagram %}
+                              <a href="{% if person.instagram.startswith('@') %}https://instagram.com/{{ person.instagram[1:] }}{% elif person.instagram.startswith('http') %}{{ person.instagram }}{% else %}https://instagram.com/{{ person.instagram }}{% endif %}" target="_blank" class="social-icon social-icon-instagram" title="Instagram">
+                                <i class="bi bi-instagram"></i>
+                              </a>
+                            {% endif %}
+                          </div>
+                        </td>
+                        <td class="text-end">
+                          <a href="/admin/team/{{ person.id }}/edit?company_id={{ company.id }}" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
+                            <i class="bi bi-pencil-fill"></i>
+                          </a>
+                          <form method="POST" action="/admin/team/{{ person.id }}/delete?company_id={{ company.id }}" style="display: inline;" onsubmit="return confirm('Удалить участника команды?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="4" class="text-muted">Нет данных о команде.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="deals" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Сделки</h5>
+                <a href="/admin/deals/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Добавить сделку</a>
+              </div>
+              <table class="table table-sm table-hover">
+                <thead><tr><th>Стадия стартапа</th><th>Сумма</th><th>Инвесторы</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+                <tbody>
+                  {% if deals and deals|length > 0 %}
+                    {% for deal in deals %}
+                                            <tr>
+                        <td>{{ deal['type'] }}</td>
+                        <td>{{ "{:,.0f}".format(deal['amount']) if deal['amount'] else '—' }}</td>
+                        <td>{{ deal['investors'] if deal['investors'] else '—' }}</td>
+                        <td>{{ deal['date'].strftime('%d.%m.%Y') if deal['date'] else '—' }}</td>
+                        <td>{{ deal['status'] }}</td>
+                        <td class="text-end">
+                          <a href="/admin/deals/{{ deal['id'] }}/edit?company_id={{ company.id }}" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
+                            <i class="bi bi-pencil-fill"></i>
+                          </a>
+                          <form method="POST" action="/admin/deals/{{ deal['id'] }}/delete?company_id={{ company.id }}" style="display: inline;" onsubmit="return confirm('Удалить сделку?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="text-muted">Нет сделок.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="pitch" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Питчи компании</h5>
+                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addPitchModal">Добавить питч</button>
+              </div>
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Название питча</th>
+                    <th>Статус</th>
+                    <th>Дата создания</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if pitches and pitches|length > 0 %}
+                    {% for pitch in pitches %}
+                      <tr>
+                        <td>{{ pitch.id }}</td>
+                        <td>
+                          <a href="{{ pitch.url }}" target="_blank" class="text-decoration-none">
+<i class="bi bi-link-45deg text-primary me-1"></i>{{ pitch.name }}
+                          </a>
+                        </td>
+                        <td>
+                          <select class="form-select form-select-sm" onchange="updatePitchStatus({{ pitch.id }}, this.value)" style="width: auto;">
+                            <option value="active" {% if pitch.status == 'active' %}selected{% endif %}>Активен</option>
+                            <option value="inactive" {% if pitch.status == 'inactive' %}selected{% endif %}>Неактивен</option>
+                            <option value="archived" {% if pitch.status == 'archived' %}selected{% endif %}>Архив</option>
+                            <option value="draft" {% if pitch.status == 'draft' %}selected{% endif %}>Черновик</option>
+                          </select>
+                        </td>
+                        <td>{{ pitch.created_at.strftime('%d.%m.%Y %H:%M') if pitch.created_at else '—' }}</td>
+                        <td class="text-end">
+                          <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPitch({{ pitch.id }})" title="Редактировать">
+                            <i class="bi bi-pencil-fill"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" onclick="deletePitch({{ pitch.id }})" title="Удалить">
+                            <i class="bi bi-trash-fill"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="text-muted">Нет питчей.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="jobs" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Вакансии</h5>
+                <a href="/admin/jobs/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Создать вакансию</a>
+              </div>
+              <table class="table table-sm table-hover">
+                <thead><tr><th>Должность</th><th>Город</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
+                <tbody>
+                  {% if jobs and jobs|length > 0 %}
+                    {% for job in jobs %}
+                      <tr>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.city }}</td>
+                        <td>{{ job.job_type }}</td>
+                        <td>{{ job.status }}</td>
+                        <td><a href="/admin/jobs/edit/{{ job.id }}" class="btn btn-sm btn-outline-secondary">Редактировать</a></td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="text-muted">Нет вакансий.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -249,37 +287,7 @@
     </div>
   </div>
 </div>
-<!-- Модалка добавления члена команды (вынесена вне основной формы) -->
-<div class="modal fade" id="addTeamMemberModal" tabindex="-1" aria-labelledby="addTeamMemberModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addTeamMemberModalLabel">Добавить члена команды</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-      </div>
-      <form id="team-member-form" method="post" action="/admin/team/create?company_id={{ company.id }}">
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Имя и фамилия <span class="text-danger">*</span></label>
-            <input type="text" name="name" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Должность <span class="text-danger">*</span></label>
-            <input type="text" name="role" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">LinkedIn</label>
-            <input type="url" name="linkedin" class="form-control" placeholder="https://linkedin.com/in/username">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-          <button type="submit" class="btn btn-primary">Добавить</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+
 
 <!-- Модалка добавления питча -->
 <div class="modal fade" id="addPitchModal" tabindex="-1" aria-labelledby="addPitchModalLabel" aria-hidden="true">
@@ -289,16 +297,16 @@
         <h5 class="modal-title" id="addPitchModalLabel">Добавить питч</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
-      <form id="pitch-form" method="post" action="/admin/pitch/create?company_id={{ company.id }}" enctype="multipart/form-data">
+      <form id="pitch-form" method="post" action="/admin/pitch/create?company_id={{ company.id }}">
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Название питча <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">PDF файл <span class="text-danger">*</span></label>
-            <input type="file" name="file" class="form-control" accept=".pdf" required>
-            <div class="form-text">Максимум 10 МБ</div>
+            <label class="form-label">Ссылка на питч <span class="text-danger">*</span></label>
+            <input type="url" name="url" class="form-control" placeholder="https://example.com/pitch.pdf" required>
+            <div class="form-text">Введите ссылку на PDF файл или презентацию</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Статус</label>
@@ -375,30 +383,125 @@
 {% block scripts %}
 {{ super() }}
 <script>
+console.log('=== СКРИПТ ЗАГРУЖЕН ===');
+
+// Простые формы для редактирования и удаления участников команды
+
 // Сохраняем активный таб в localStorage и hidden input
 const tabKey = 'adminCompanyTabActive';
 document.addEventListener('DOMContentLoaded', function() {
-  // Восстановить активный таб из query-параметра
-  const urlParams = new URLSearchParams(window.location.search);
-  const tabFromUrl = urlParams.get('tab');
-  if (tabFromUrl && document.querySelector(`#${tabFromUrl}-tab`)) {
-    var tab = new bootstrap.Tab(document.querySelector(`#${tabFromUrl}-tab`));
-    tab.show();
-    document.getElementById('active_tab_input').value = tabFromUrl;
+  console.log('=== DOMContentLoaded ВЫПОЛНЕН ===');
+  console.log('Bootstrap доступен:', typeof bootstrap !== 'undefined');
+  console.log('Bootstrap.Tab доступен:', typeof bootstrap !== 'undefined' && typeof bootstrap.Tab !== 'undefined');
+  
+  // Небольшая задержка для гарантии полной загрузки DOM
+  setTimeout(function() {
+    // Восстановить активный таб из query-параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabFromUrl = urlParams.get('tab');
+    const message = urlParams.get('message');
+    console.log('tabFromUrl:', tabFromUrl);
+    console.log('message:', message);
+  
+  // Показать уведомление, если есть
+  if (message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+    
+    // Автоматически скрыть через 5 секунд
+    setTimeout(() => {
+      if (alertDiv.parentNode) {
+        alertDiv.remove();
+      }
+    }, 5000);
+  }
+  
+  if (tabFromUrl) {
+    console.log('tabFromUrl найден:', tabFromUrl);
+    const tabElement = document.querySelector(`#${tabFromUrl}-tab`);
+    console.log('tabElement найден:', tabElement);
+    
+    if (tabElement) {
+      console.log('Найдена вкладка:', `#${tabFromUrl}-tab`);
+      
+      // Используем Bootstrap Tab API для активации
+      try {
+        const tab = new bootstrap.Tab(tabElement);
+        tab.show();
+        document.getElementById('active_tab_input').value = tabFromUrl;
+        console.log('Вкладка активирована через Bootstrap:', tabFromUrl);
+        
+        // Обновляем URL если он еще не содержит правильный tab
+        const currentUrl = new URL(window.location);
+        if (currentUrl.searchParams.get('tab') !== tabFromUrl) {
+          currentUrl.searchParams.set('tab', tabFromUrl);
+          window.history.replaceState({}, '', currentUrl);
+          console.log('URL обновлен при активации вкладки:', currentUrl.toString());
+        }
+      } catch (error) {
+        console.error('Ошибка при активации вкладки через Bootstrap:', error);
+        
+        // Fallback: ручная активация
+        try {
+          // Убираем активный класс со всех вкладок
+          document.querySelectorAll('#companyTab .nav-link').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          document.querySelectorAll('#companyTabContent2 .tab-pane').forEach(pane => {
+            pane.classList.remove('active', 'show');
+          });
+          
+          // Активируем нужную вкладку
+          tabElement.classList.add('active');
+          const targetPane = document.querySelector(tabElement.getAttribute('data-bs-target'));
+          if (targetPane) {
+            targetPane.classList.add('active', 'show');
+          }
+          
+          document.getElementById('active_tab_input').value = tabFromUrl;
+          console.log('Вкладка активирована вручную (fallback):', tabFromUrl);
+        } catch (fallbackError) {
+          console.error('Ошибка при ручной активации вкладки:', fallbackError);
+        }
+      }
+    } else {
+      console.log('Элемент вкладки не найден для:', tabFromUrl);
+    }
   } else {
+    console.log('tabFromUrl не найден, проверяем localStorage');
     // Восстановить активный таб из localStorage
     const savedTab = localStorage.getItem(tabKey);
+    console.log('savedTab из localStorage:', savedTab);
     if (savedTab && document.querySelector(savedTab)) {
-      var tab = new bootstrap.Tab(document.querySelector(savedTab));
-      tab.show();
-      document.getElementById('active_tab_input').value = savedTab.replace('-tab','');
+      try {
+        var tab = new bootstrap.Tab(document.querySelector(savedTab));
+        tab.show();
+        document.getElementById('active_tab_input').value = savedTab.replace('-tab','');
+        console.log('Вкладка восстановлена из localStorage:', savedTab);
+      } catch (error) {
+        console.error('Ошибка при восстановлении вкладки из localStorage:', error);
+      }
+    } else {
+      console.log('Никакая вкладка не найдена, оставляем по умолчанию');
     }
   }
   // Сохранять активный таб при переключении
   document.querySelectorAll('#companyTab button[data-bs-toggle="tab"]').forEach(function(btn) {
     btn.addEventListener('shown.bs.tab', function(e) {
+      const tabId = e.target.getAttribute('id').replace('-tab', '');
       localStorage.setItem(tabKey, '#' + e.target.getAttribute('id'));
       document.getElementById('active_tab_input').value = e.target.getAttribute('data-bs-target').replace('#', '');
+      
+      // Обновляем URL без перезагрузки страницы
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tabId);
+      window.history.pushState({}, '', url);
+      console.log('URL обновлен на:', url.toString());
     });
   });
   // Перед сабмитом формы обновлять hidden input
@@ -408,7 +511,13 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('active_tab_input').value = activeTab.getAttribute('data-bs-target').replace('#', '');
     }
   });
+
+  // Убираем сложное делегирование событий, используем прямые вызовы функций
+  console.log('Делегирование событий отключено, используем прямые вызовы');
+  }, 100); // Задержка 100мс
 });
+
+
 
 // Функции для работы с питчами
 function updatePitchStatus(pitchId, status) {
@@ -446,43 +555,6 @@ function deletePitch(pitchId) {
   }
 }
 
-// Функции для работы с членами команды
-function editTeamMember(personId, event) {
-  console.log('editTeamMember вызвана с personId:', personId);
-  
-  // Получаем данные текущего члена команды
-  const row = event.target.closest('tr');
-  console.log('Найдена строка:', row);
-  
-  const name = row.cells[0].textContent.trim();
-  const role = row.cells[1].textContent.trim();
-  const linkedin = row.cells[2].querySelector('a') ? row.cells[2].querySelector('a').href : '';
-  
-  console.log('Данные:', { name, role, linkedin });
-  
-  // Заполняем модальное окно для редактирования
-  const modal = document.getElementById('editTeamMemberModal');
-  if (!modal) {
-    console.error('Модальное окно editTeamMemberModal не найдено!');
-    alert('Ошибка: модальное окно не найдено');
-    return;
-  }
-  
-  modal.querySelector('input[name="name"]').value = name;
-  modal.querySelector('input[name="role"]').value = role;
-  modal.querySelector('input[name="linkedin"]').value = linkedin;
-  modal.querySelector('input[name="person_id"]').value = personId;
-  modal.querySelector('input[name="company_id"]').value = {{ company.id }};
-  
-  // Обновляем action формы
-  modal.querySelector('form').action = `/admin/team/${personId}/edit`;
-  
-  console.log('Модальное окно заполнено, показываем...');
-  
-  // Показываем модальное окно
-  new bootstrap.Modal(modal).show();
-}
-
 // Функция для отправки формы редактирования через AJAX
 function submitEditTeamMemberForm(event) {
   event.preventDefault();
@@ -511,33 +583,6 @@ function submitEditTeamMemberForm(event) {
     console.error('Ошибка сети:', error);
     alert('Ошибка сети при обновлении члена команды');
   });
-}
-
-function deleteTeamMember(personId) {
-  console.log('deleteTeamMember вызвана с personId:', personId);
-  
-  if (confirm('Вы уверены, что хотите удалить этого члена команды?')) {
-    console.log('Подтверждение получено, отправляем запрос...');
-    
-    fetch(`/admin/team/${personId}/delete?company_id={{ company.id }}`, {
-      method: 'POST'
-    }).then(response => {
-      console.log('Ответ сервера при удалении:', response.status);
-      if (response.ok) {
-        console.log('Член команды успешно удален');
-        // Перезагружаем страницу с сохранением вкладки
-        window.location.href = `/admin/companies/edit/{{ company.id }}?tab=team`;
-      } else {
-        console.error('Ошибка при удалении члена команды');
-        alert('Ошибка при удалении члена команды');
-      }
-    }).catch(error => {
-      console.error('Ошибка сети при удалении:', error);
-      alert('Ошибка сети при удалении члена команды');
-    });
-  } else {
-    console.log('Удаление отменено пользователем');
-  }
 }
 </script>
 {% endblock %} 

@@ -130,25 +130,10 @@ if not session.query(Job).first():
         ))
 session.commit()
 
-# --- Валюты ---
-if not session.query(Currency).first():
-    currencies = [
-        Currency(code="USD", name="Доллар США", symbol="$", status="active"),
-        Currency(code="EUR", name="Евро", symbol="€", status="active"),
-        Currency(code="KZT", name="Тенге", symbol="₸", status="active"),
-        Currency(code="RUB", name="Рубль", symbol="₽", status="active"),
-        Currency(code="UZS", name="Сум", symbol="so'm", status="active"),
-        Currency(code="GBP", name="Фунт стерлингов", symbol="£", status="active"),
-        Currency(code="CNY", name="Юань", symbol="¥", status="active"),
-    ]
-    for currency in currencies:
-        session.add(currency)
-    session.commit()
+
 
 # --- Сделки и портфели ---
 if not session.query(Deal).first():
-    usd = session.query(Currency).filter_by(code="USD").first()
-    eur = session.query(Currency).filter_by(code="EUR").first()
     for i, company in enumerate(company_objs):
         invs = investor_objs[i % len(investor_objs): (i % len(investor_objs)) + 2]
         deal = Deal(
@@ -156,7 +141,6 @@ if not session.query(Deal).first():
             amount=500000 + i*100000,
             valuation=2000000 + i*500000,
             date=date(2023, 3, 15 + i),
-            currency_id=usd.id if i % 2 == 0 else eur.id,
             company_id=company.id,
             investors=", ".join([inv.name for inv in invs]),
             status="active"

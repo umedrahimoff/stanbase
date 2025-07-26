@@ -70,12 +70,34 @@
         <h5 class="mb-2">Команда</h5>
         <ul class="list-group mb-3">
           {% for p in investor.team %}
-            <li class="list-group-item">
+            <li class="list-group-item team-member-item">
               {% if session is defined and session.get('user_id') %}
                 <span><b>{{ p.name }}</b> — {{ p.role }}</span>
-                {% if p.linkedin %}<a href="{{ p.linkedin }}" target="_blank" class="ms-2">LinkedIn</a>{% endif %}
+                <div class="social-icons-container">
+                  {% if p.linkedin %}
+                    <a href="{{ p.linkedin }}" target="_blank" class="social-icon social-icon-linkedin" title="LinkedIn">
+                      <i class="bi bi-linkedin"></i>
+                    </a>
+                  {% endif %}
+                  {% if p.telegram %}
+                    <a href="{% if p.telegram.startswith('@') %}https://t.me/{{ p.telegram[1:] }}{% elif p.telegram.startswith('http') %}{{ p.telegram }}{% else %}https://t.me/{{ p.telegram }}{% endif %}" target="_blank" class="social-icon social-icon-telegram" title="Telegram">
+                      <i class="bi bi-telegram"></i>
+                    </a>
+                  {% endif %}
+                  {% if p.website %}
+                    <a href="{{ p.website }}" target="_blank" class="social-icon social-icon-website" title="Веб-сайт">
+                      <i class="bi bi-globe"></i>
+                    </a>
+                  {% endif %}
+                  {% if p.instagram %}
+                    <a href="{% if p.instagram.startswith('@') %}https://instagram.com/{{ p.instagram[1:] }}{% elif p.instagram.startswith('http') %}{{ p.instagram }}{% else %}https://instagram.com/{{ p.instagram }}{% endif %}" target="_blank" class="social-icon social-icon-instagram" title="Instagram">
+                      <i class="bi bi-instagram"></i>
+                    </a>
+                  {% endif %}
+                </div>
               {% else %}
                 <span>{{ p.name[:2] }}****</span>
+                <div class="social-icons-container"></div>
               {% endif %}
             </li>
           {% endfor %}

@@ -1,0 +1,75 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h3 class="mb-4">Создать сделку</h3>
+          {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+          <form method="post">
+            <div class="mb-3">
+              <label for="company_id" class="form-label">Компания *</label>
+              <select class="form-select" id="company_id" name="company_id" required>
+                <option value="">Выберите компанию</option>
+                {% for company in companies %}
+                  <option value="{{ company.id }}" {% if company_id and company_id|int == company.id %}selected{% endif %}>{{ company.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="deal_type" class="form-label">Стадия стартапа *</label>
+              <select class="form-select" id="deal_type" name="deal_type" required>
+                <option value="">Выберите стадию</option>
+                {% for stage in stages %}
+                  <option value="{{ stage.name }}">{{ stage.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="amount" class="form-label">Сумма *</label>
+              <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label for="investors" class="form-label">Инвесторы</label>
+              <select class="form-select" id="investors" name="investors" multiple>
+                {% for investor in investors %}
+                  <option value="{{ investor.name }}">{{ investor.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Удерживайте Ctrl (Cmd на Mac) для выбора нескольких инвесторов</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="deal_date" class="form-label">Дата сделки</label>
+                <input type="date" class="form-control" id="deal_date" name="deal_date">
+              </div>
+              <div class="col-md-6">
+                <label for="status" class="form-label">Статус</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="active" selected>Активная</option>
+                  <option value="inactive">Неактивная</option>
+                  <option value="completed">Завершена</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button type="submit" class="btn btn-primary">Создать</button>
+              <a href="{{ url_for('admin_deals') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="text-muted mb-3">Информация о сделке</h6>
+          <div class="meta-row"><span class="meta-label">Тип:</span> <span class="meta-value">Создание новой сделки</span></div>
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">Черновик</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

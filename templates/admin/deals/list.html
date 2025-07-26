@@ -1,84 +1,164 @@
-{% extends 'admin/layout.html' %}
+{% extends "admin/layout.html" %}
+
+{% block title %}Сделки{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0">Сделки</h2>
-  <a href="{{ url_for('admin_create_deal') }}" class="btn btn-primary">Создать сделку</a>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Сделки</h1>
+                <a href="/admin/deals/create" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>Добавить сделку
+                </a>
+            </div>
+
+            <!-- Сообщения -->
+            {% if request.query_params.get('message') %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ request.query_params.get('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+            {% if request.query_params.get('error') %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ request.query_params.get('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <!-- Поиск -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="q" class="form-label">Поиск</label>
+                            <input type="text" class="form-control" id="q" name="q" value="{{ q }}" placeholder="Поиск по типу, статусу или компании...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="per_page" class="form-label">На странице</label>
+                            <select class="form-select" id="per_page" name="per_page">
+                                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-search me-2"></i>Поиск
+                            </button>
+                            <a href="/admin/deals" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Сброс
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Таблица сделок -->
+            <div class="card">
+                <div class="card-body">
+                    {% if deals %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Компания</th>
+                                        <th>Стадия стартапа</th>
+                                        <th>Сумма</th>
+                                        <th>Инвесторы</th>
+                                        <th>Дата</th>
+                                        <th>Статус</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for deal in deals %}
+                                    <tr>
+                                        <td>
+                                            <a href="/admin/companies/edit/{{ deal.company.id }}" class="text-decoration-none">
+                                                {{ deal.company.name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ deal.type }}</td>
+                                        <td>{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }}</td>
+                                        <td>{{ deal.investors if deal.investors else '—' }}</td>
+                                        <td>{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</td>
+                                        <td>{{ deal.status }}</td>
+                                        <td class="text-end">
+                                            <a href="/admin/deals/{{ deal.id }}/edit?company_id={{ deal.company.id }}" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <form method="POST" action="/admin/deals/{{ deal.id }}/delete?company_id={{ deal.company.id }}" style="display: inline;" onsubmit="return confirm('Удалить сделку?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Пагинация -->
+                        {% if total_pages > 1 %}
+                        <nav aria-label="Навигация по страницам">
+                            <ul class="pagination justify-content-center">
+                                {% if page > 1 %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page - 1 }}&q={{ q }}&per_page={{ per_page }}">Предыдущая</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for p in range(1, total_pages + 1) %}
+                                    {% if p == page %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ p }}</span>
+                                        </li>
+                                    {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ p }}&q={{ q }}&per_page={{ per_page }}">{{ p }}</a>
+                                        </li>
+                                    {% elif p == 4 and page > 5 %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% elif p == total_pages - 3 and page < total_pages - 4 %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page < total_pages %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page + 1 }}&q={{ q }}&per_page={{ per_page }}">Следующая</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                        <!-- Статистика -->
+                        <div class="text-center text-muted mt-3">
+                            {% set start_item = (page - 1) * per_page + 1 %}
+                            {% set end_item = page * per_page if page * per_page < total else total %}
+                            Показано {{ start_item }}-{{ end_item }} из {{ total }} сделок
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h4 class="mt-3">Сделки не найдены</h4>
+                            <p class="text-muted">Попробуйте изменить параметры поиска или добавьте новую сделку.</p>
+                            <a href="/admin/deals/create" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-2"></i>Добавить сделку
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<form class="row g-3 mb-3" method="get" action="">
-  <div class="col-md-4">
-    <input type="text" name="q" class="form-control" placeholder="Поиск по типу..." value="{{ q }}">
-  </div>
-  <div class="col-md-2">
-    <select name="status" class="form-select" onchange="this.form.submit()">
-      <option value="">Все статусы</option>
-      <option value="active" {% if request.query_params.get('status')=='active' %}selected{% endif %}>Активна</option>
-      <option value="inactive" {% if request.query_params.get('status')=='inactive' %}selected{% endif %}>Неактивна</option>
-      <option value="archived" {% if request.query_params.get('status')=='archived' %}selected{% endif %}>Архив</option>
-      <option value="draft" {% if request.query_params.get('status')=='draft' %}selected{% endif %}>Черновик</option>
-    </select>
-  </div>
-  <div class="col-md-2">
-    <select name="per_page" class="form-select" onchange="this.form.submit()">
-      {% for n in [10, 20, 50, 100] %}
-        <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>Показать {{ n }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2">
-    <button type="submit" class="btn btn-outline-primary">Найти</button>
-  </div>
-</form>
-<table class="table table-striped table-hover align-middle bg-white rounded-0 border-0">
-  <thead class="table-light">
-          <tr>
-        <th>ID</th>
-        <th>Тип</th>
-        <th>Сумма</th>
-        <th>Оценка</th>
-        <th>Дата</th>
-        <th>Компания</th>
-        <th>Инвесторы</th>
-        <th>Валюта</th>
-        <th>Статус</th>
-        <th class="text-end">Действия</th>
-      </tr>
-  </thead>
-  <tbody>
-    {% for deal in deals %}
-      <tr>
-        <td>{{ deal.id }}</td>
-        <td>{{ deal.type }}</td>
-        <td>{{ "{:,}".format(deal.amount) if deal.amount else '—' }}</td>
-        <td>{{ "{:,}".format(deal.valuation) if deal.valuation else '—' }}</td>
-        <td>{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</td>
-        <td>{{ deal.company.name if deal.company else '—' }}</td>
-        <td>{{ deal.investors }}</td>
-        <td>{{ deal.currency.code if deal.currency else '—' }}</td>
-        <td>{{ deal.status }}</td>
-        <td class="text-end">
-          <a href="{{ url_for('admin_edit_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
-          <form action="{{ url_for('admin_delete_deal', deal_id=deal.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Удалить сделку?');">
-            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
-          </form>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% set last_page = (total // per_page) + (1 if total % per_page else 0) %}
-{% if last_page > 1 %}
-<nav>
-  <ul class="pagination justify-content-center">
-    <li class="page-item {% if page == 1 %}disabled{% endif %}">
-      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page-1 }}">&laquo;</a>
-    </li>
-    {% for p in range(1, last_page+1) %}
-      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ p }}">{{ p }}</a></li>
-    {% endfor %}
-    <li class="page-item {% if page == last_page %}disabled{% endif %}">
-      <a class="page-link" href="?q={{ q }}&per_page={{ per_page }}&page={{ page+1 }}">&raquo;</a>
-    </li>
-  </ul>
-</nav>
-{% endif %}
 {% endblock %} 

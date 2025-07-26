@@ -1,0 +1,66 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Редактировать участника команды{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Редактировать участника команды</h1>
+        <a href="/admin/companies/edit/{{ company.id }}?tab=team" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Назад к компании
+        </a>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <form method="POST" action="/admin/team/{{ person.id }}/edit">
+            <input type="hidden" name="company_id" value="{{ company.id }}">
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="name" class="form-label">Имя *</label>
+                  <input type="text" class="form-control" id="name" name="name" value="{{ person.name }}" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="role" class="form-label">Должность *</label>
+                  <input type="text" class="form-control" id="role" name="role" value="{{ person.role }}" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="linkedin" class="form-label">LinkedIn</label>
+              <input type="url" class="form-control" id="linkedin" name="linkedin" value="{{ person.linkedin or '' }}" placeholder="https://linkedin.com/in/...">
+            </div>
+
+            <div class="mb-3">
+              <label for="telegram" class="form-label">Telegram</label>
+              <input type="text" class="form-control" id="telegram" name="telegram" value="{{ person.telegram or '' }}" placeholder="@username или https://t.me/username">
+            </div>
+
+            <div class="mb-3">
+              <label for="website" class="form-label">Веб-сайт</label>
+              <input type="url" class="form-control" id="website" name="website" value="{{ person.website or '' }}" placeholder="https://example.com">
+            </div>
+
+            <div class="mb-3">
+              <label for="instagram" class="form-label">Instagram</label>
+              <input type="text" class="form-control" id="instagram" name="instagram" value="{{ person.instagram or '' }}" placeholder="@username или https://instagram.com/username">
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+              <a href="/admin/companies/edit/{{ company.id }}?tab=team" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
