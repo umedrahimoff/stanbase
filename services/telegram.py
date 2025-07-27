@@ -12,15 +12,18 @@ class TelegramService:
     """Сервис для работы с Telegram Bot API"""
     
     def __init__(self, bot_token: Optional[str] = None, chat_id: Optional[str] = None):
-        # Импортируем конфигурацию
-        try:
-            from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-            self.bot_token = bot_token or TELEGRAM_BOT_TOKEN
-            self.chat_id = chat_id or TELEGRAM_CHAT_ID
-        except ImportError:
-            # Fallback к переменным окружения
-            self.bot_token = bot_token or os.getenv('TELEGRAM_BOT_TOKEN', '')
-            self.chat_id = chat_id or os.getenv('TELEGRAM_CHAT_ID', '')
+        # Сначала проверяем переменные окружения
+        self.bot_token = bot_token or os.getenv('TELEGRAM_BOT_TOKEN', '')
+        self.chat_id = chat_id or os.getenv('TELEGRAM_CHAT_ID', '')
+        
+        # Если не найдены в переменных окружения, пробуем config.py
+        if not self.bot_token or not self.chat_id:
+            try:
+                from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+                self.bot_token = self.bot_token or TELEGRAM_BOT_TOKEN
+                self.chat_id = self.chat_id or TELEGRAM_CHAT_ID
+            except ImportError:
+                pass
         
         self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
     

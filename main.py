@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import subprocess
 from fastapi import APIRouter
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.exc import SQLAlchemyError, InternalError
 from datetime import datetime
 
@@ -24,6 +24,7 @@ import re
 import unicodedata
 from utils.security import verify_password, get_password_hash, create_access_token, verify_token
 from utils.csrf import get_csrf_token, verify_csrf_token
+from utils.image_processor import ImageProcessor
 from services.api import api_router
 from services.notifications import NotificationService, NotificationTemplates
 from services.comments import CommentService, CommentValidator
@@ -220,6 +221,90 @@ async def logout(request: Request):
     return RedirectResponse(url="/", status_code=302)
 
 # Главная страница
+@app.get("/search", response_class=HTMLResponse)
+async def universal_search(request: Request, q: str = Query('', alias='q')):
+    """
+    Универсальный поиск по всем основным сущностям:
+    - Компании (name, description, industry, country, city, stage)
+    - Инвесторы (name, description, focus, country, stages)
+    - Новости (title, summary, content)
+    - Вакансии (title, description, city, job_type, contact)
+    """
+    if not q or not q.strip():
+        return RedirectResponse(url="/")
+    q = q.strip()
+    db = SessionLocal()
+    try:
+        from sqlalchemy import or_
+        # Компании
+        companies = db.query(Company).filter(
+            Company.status == 'active',
+            or_(
+                Company.name.ilike(f'%{q}%'),
+                Company.description.ilike(f'%{q}%'),
+                Company.industry.ilike(f'%{q}%'),
+                Company.country.ilike(f'%{q}%'),
+                Company.city.ilike(f'%{q}%'),
+                Company.stage.ilike(f'%{q}%')
+            )
+        ).order_by(Company.id.desc()).limit(20).all()
+
+        # Инвесторы
+        investors = db.query(Investor).filter(
+            Investor.status == 'active',
+            or_(
+                Investor.name.ilike(f'%{q}%'),
+                Investor.description.ilike(f'%{q}%'),
+                Investor.focus.ilike(f'%{q}%'),
+                Investor.country.ilike(f'%{q}%'),
+                Investor.stages.ilike(f'%{q}%')
+            )
+        ).order_by(Investor.id.desc()).limit(20).all()
+
+        # Новости
+        news = db.query(News).options(joinedload(News.author)).filter(
+            News.status == 'active',
+            or_(
+                News.title.ilike(f'%{q}%'),
+                News.summary.ilike(f'%{q}%'),
+                News.content.ilike(f'%{q}%')
+            )
+        ).order_by(News.date.desc()).limit(20).all()
+
+        # Вакансии
+        jobs = db.query(Job).options(joinedload(Job.company)).filter(
+            Job.status == 'active',
+            or_(
+                Job.title.ilike(f'%{q}%'),
+                Job.description.ilike(f'%{q}%'),
+                Job.city.ilike(f'%{q}%'),
+                Job.job_type.ilike(f'%{q}%'),
+                Job.contact.ilike(f'%{q}%')
+            )
+        ).order_by(Job.id.desc()).limit(20).all()
+
+        total_results = len(companies) + len(investors) + len(news) + len(jobs)
+        print(f"[SEARCH] Запрос: '{q}' | Компании: {len(companies)}, Инвесторы: {len(investors)}, Новости: {len(news)}, Вакансии: {len(jobs)}")
+    except Exception as e:
+        print(f"[SEARCH ERROR] Ошибка при поиске: {e}")
+        companies = []
+        investors = []
+        news = []
+        jobs = []
+        total_results = 0
+    finally:
+        db.close()
+    return templates.TemplateResponse("public/search.html", {
+        "request": request,
+        "session": request.session,
+        "query": q,
+        "companies": companies,
+        "investors": investors,
+        "news": news,
+        "jobs": jobs,
+        "total_results": total_results
+    })
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     print("INDEX SESSION:", dict(request.session))
@@ -271,6 +356,7 @@ def companies(
     
     # Используем кешированный запрос
     cached_result = QueryCache.get_companies_with_filters(
+        q=q,
         country=country,
         stage=stage,
         industry=industry,
@@ -287,7 +373,14 @@ def companies(
         try:
             query = db.query(Company).filter(Company.status == 'active')
             if q:
-                query = query.filter(Company.name.ilike(f'%{q}%'))
+                # Поиск по названию, описанию и индустрии
+                from sqlalchemy import or_
+                search_filter = or_(
+                    Company.name.ilike(f'%{q}%'),
+                    Company.description.ilike(f'%{q}%'),
+                    Company.industry.ilike(f'%{q}%')
+                )
+                query = query.filter(search_filter)
             if country:
                 query = query.filter_by(country=country)
             if stage:

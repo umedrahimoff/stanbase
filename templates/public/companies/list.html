@@ -88,6 +88,17 @@
   </div>
 </form>
 
+{% if request.query_params.get('q') %}
+  <div class="alert alert-info mb-4">
+    <strong>Результаты поиска:</strong> 
+    {% if companies %}
+      Найдено {{ companies|length }} компаний по запросу "{{ request.query_params.get('q') }}"
+    {% else %}
+      По запросу "{{ request.query_params.get('q') }}" ничего не найдено
+    {% endif %}
+  </div>
+{% endif %}
+
 {% if companies %}
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for c in companies %}

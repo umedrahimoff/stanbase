@@ -161,16 +161,24 @@ class QueryCache:
     
     @staticmethod
     @cached("query", ttl=600)  # 10 минут для запросов
-    def get_companies_with_filters(country: str = "", stage: str = "", industry: str = "", limit: int = 20, offset: int = 0):
+    def get_companies_with_filters(q: str = "", country: str = "", stage: str = "", industry: str = "", limit: int = 20, offset: int = 0):
         """Кешированный запрос компаний с фильтрами"""
         from db import SessionLocal
         from models import Company
-        from sqlalchemy import and_
+        from sqlalchemy import and_, or_
         
         db = SessionLocal()
         try:
             query = db.query(Company).filter(Company.status == 'active')
             
+            if q:
+                # Поиск по названию, описанию и индустрии
+                search_filter = or_(
+                    Company.name.ilike(f'%{q}%'),
+                    Company.description.ilike(f'%{q}%'),
+                    Company.industry.ilike(f'%{q}%')
+                )
+                query = query.filter(search_filter)
             if country:
                 query = query.filter(Company.country == country)
             if stage:

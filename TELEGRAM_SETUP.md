@@ -3,9 +3,52 @@
 ## ✅ Текущая конфигурация
 
 **Бот**: @teststanbasebot  
-**Токен**: `8350354186:AAGPNR44pg4L0qHgpO8RAJRDoylKHlSFBak`  
+**Токен**: `YOUR_BOT_TOKEN_HERE`  
 **Группа**: хайрми  
-**Chat ID**: `-4753525145`
+**Chat ID**: `YOUR_CHAT_ID_HERE`
+
+### ⚠️ ВАЖНО: Безопасность
+
+1. **Создайте файл `.env`** в корне проекта:
+```bash
+cp env.example .env
+```
+
+2. **Добавьте реальные значения** в `.env`:
+```bash
+TELEGRAM_BOT_TOKEN=ваш_реальный_токен_бота
+TELEGRAM_CHAT_ID=ваш_реальный_chat_id
+```
+
+3. **НИКОГДА не коммитьте `.env` файл** - он уже добавлен в `.gitignore`
+
+4. **В продакшене используйте переменные окружения** сервера
+
+### 🚀 Запуск сервера
+
+**Стандартный запуск:**
+```bash
+python3 main.py
+```
+
+**С переменными окружения (для продакшена):**
+```bash
+export TELEGRAM_BOT_TOKEN="ваш_токен"
+export TELEGRAM_CHAT_ID="ваш_chat_id"
+python3 main.py
+```
+
+**Через .env файл:**
+```bash
+# Создайте .env файл с токенами
+python3 -c "
+import os
+from dotenv import load_dotenv
+load_dotenv()
+import uvicorn
+uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)
+"
+```
 
 ## 🚀 Как использовать
 
@@ -86,11 +129,11 @@ python3 test_telegram_send.py
 ### Проверка бота:
 ```bash
 # Проверка информации о боте
-curl "https://api.telegram.org/bot8350354186:AAGPNR44pg4L0qHgpO8RAJRDoylKHlSFBak/getMe"
+curl "https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/getMe"
 
 # Отправка тестового сообщения
-curl -X POST "https://api.telegram.org/bot8350354186:AAGPNR44pg4L0qHgpO8RAJRDoylKHlSFBak/sendMessage" \
-  -d "chat_id=-4753525145" \
+curl -X POST "https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/sendMessage" \
+    -d "chat_id=YOUR_CHAT_ID_HERE" \
   -d "text=🧪 Тестовое сообщение" \
   -d "parse_mode=HTML"
 ```
