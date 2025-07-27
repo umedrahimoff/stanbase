@@ -391,6 +391,64 @@ def companies(
     # Простая пагинация
     total_pages = (total + per_page - 1) // per_page
     
+    # Создаем объект пагинации с нужными атрибутами
+    class SimplePagination:
+        def __init__(self, page, per_page, total, total_pages):
+            self.page = page
+            self.per_page = per_page
+            self.total = total
+            self.pages = total_pages
+            self.has_prev = page > 1
+            self.has_next = page < total_pages
+            self.prev_page = page - 1 if page > 1 else None
+            self.next_page = page + 1 if page < total_pages else None
+            self.start_index = (page - 1) * per_page
+            self.end_index = min(page * per_page, total)
+            
+        def get_page_url(self, page_num):
+            if page_num is None:
+                return "#"
+            url = str(request.url).split('?')[0]
+            params = []
+            if q:
+                params.append(f"q={q}")
+            if country:
+                params.append(f"country={country}")
+            if stage:
+                params.append(f"stage={stage}")
+            if industry:
+                params.append(f"industry={industry}")
+            params.append(f"per_page={per_page}")
+            params.append(f"page={page_num}")
+            return f"{url}?{'&'.join(params)}"
+            
+        def get_pagination_links(self, max_links=5):
+            links = []
+            start_page = max(1, page - max_links // 2)
+            end_page = min(total_pages, start_page + max_links - 1)
+            
+            if start_page > 1:
+                links.append({"page": 1, "url": self.get_page_url(1), "is_current": False, "is_ellipsis": False})
+                if start_page > 2:
+                    links.append({"page": "...", "url": "#", "is_current": False, "is_ellipsis": True})
+            
+            for p in range(start_page, end_page + 1):
+                links.append({
+                    "page": p,
+                    "url": self.get_page_url(p),
+                    "is_current": p == page,
+                    "is_ellipsis": False
+                })
+            
+            if end_page < total_pages:
+                if end_page < total_pages - 1:
+                    links.append({"page": "...", "url": "#", "is_current": False, "is_ellipsis": True})
+                links.append({"page": total_pages, "url": self.get_page_url(total_pages), "is_current": False, "is_ellipsis": False})
+            
+            return links
+    
+    pagination = SimplePagination(page, per_page, total, total_pages)
+    
     return templates.TemplateResponse("public/companies/list.html", {
         "request": request, 
         "session": request.session, 
@@ -398,16 +456,7 @@ def companies(
         "countries": countries, 
         "stages": stages, 
         "industries": industries,
-        "pagination": {
-            "page": page,
-            "per_page": per_page,
-            "total": total,
-            "total_pages": total_pages,
-            "has_prev": page > 1,
-            "has_next": page < total_pages,
-            "prev_page": page - 1 if page > 1 else None,
-            "next_page": page + 1 if page < total_pages else None
-        },
+        "pagination": pagination,
         "show_per_page_selector": True
     })
 
