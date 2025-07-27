@@ -122,11 +122,11 @@
 {% block content %}
 <div class="row justify-content-center mb-3">
   <div class="col-lg-8 text-center">
-    <h1 class="display-5 mb-2">stanbase</h1>
-    <p class="mb-3">База компаний, инвесторов, сделок, новостей, вакансий и мероприятий Центральной Азии</p>
+    <h1 class="display-5 mb-2">Найдите инвестиции быстрее</h1>
+    <p class="mb-3">Полная база данных стартапов и инвесторов Центральной Азии</p>
     <form action="/search" method="get" class="mb-3">
       <div class="input-group shadow-sm">
-        <input type="text" name="q" class="form-control" placeholder="Поиск по компаниям, людям, инвесторам..." aria-label="Поиск">
+        <input type="text" name="q" class="form-control" placeholder="Поиск по стартапам, инвесторам, новостям..." aria-label="Поиск">
         <button class="btn btn-primary px-4" type="submit">Найти</button>
       </div>
     </form>
@@ -135,7 +135,7 @@
 
 <div class="section-divider"></div>
 <div class="container-lg">
-  <div class="section-title">Компании</div>
+  <div class="section-title">Стартапы</div>
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for c in companies[:6] %}
     <div class="col">
@@ -158,7 +158,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="text-end mt-4"><a href="/companies" class="btn btn-outline-primary">Все компании <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
+  <div class="text-end mt-4"><a href="/companies" class="btn btn-outline-primary">Все стартапы <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></a></div>
 </div>
 
 <div class="section-divider"></div>
