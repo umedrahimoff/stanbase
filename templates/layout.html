@@ -75,12 +75,18 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
       }
       
-      /* Скрытие на мобильных устройствах */
+      /* Адаптивность для мобильных устройств */
       @media (max-width: 767.98px) {
-        .feedback-button-container {
-          display: none;
+        .feedback-button {
+          width: 50px;
+          height: 50px;
+          font-size: 1rem;
+          bottom: 15px;
+          right: 15px;
         }
       }
+      
+
     </style>
     {% block head %}{% endblock %}
   </head>
