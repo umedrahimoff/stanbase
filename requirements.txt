@@ -10,3 +10,4 @@ requests
 passlib[bcrypt]
 python-jose[cryptography]
 aiohttp
+pillow
