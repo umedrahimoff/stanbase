@@ -310,12 +310,13 @@ def index(request: Request):
     print("INDEX SESSION:", dict(request.session))
     db = SessionLocal()
     try:
-        companies = db.query(Company).order_by(Company.id.desc()).limit(20).all()
-        investors = db.query(Investor).order_by(Investor.id.desc()).limit(20).all()
-        news = db.query(News).options(joinedload(News.author)).order_by(News.date.desc()).limit(10).all()
-        podcasts = db.query(Podcast).order_by(Podcast.date.desc()).limit(10).all()
-        jobs = db.query(Job).order_by(Job.id.desc()).limit(10).all()
-        events = db.query(Event).order_by(Event.date.desc()).limit(10).all()
+        # Простые запросы без сервисов
+        companies = db.query(Company).filter(Company.status == 'active').order_by(Company.id.desc()).limit(20).all()
+        investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.id.desc()).limit(20).all()
+        news = db.query(News).options(joinedload(News.author)).filter(News.status == 'active').order_by(News.date.desc()).limit(10).all()
+        podcasts = db.query(Podcast).filter(Podcast.status == 'active').order_by(Podcast.date.desc()).limit(10).all()
+        jobs = db.query(Job).filter(Job.status == 'active').order_by(Job.id.desc()).limit(10).all()
+        events = db.query(Event).filter(Event.status == 'active').order_by(Event.date.desc()).limit(10).all()
     except Exception as e:
         print(f"Ошибка при загрузке данных: {e}")
         # Возвращаем пустые списки в случае ошибки
@@ -351,79 +352,44 @@ def companies(
 ):
     print("COMPANIES SESSION:", dict(request.session))
     
-    # Получаем параметры пагинации
-    pagination_params = PaginationHelper.get_pagination_params(page, per_page, max_per_page=100)
+    # Простая пагинация без сервисов
+    per_page = min(per_page, 100)  # Максимум 100
+    offset = (page - 1) * per_page
     
-    # Используем кешированный запрос
-    cached_result = QueryCache.get_companies_with_filters(
-        q=q,
-        country=country,
-        stage=stage,
-        industry=industry,
-        limit=pagination_params['per_page'],
-        offset=pagination_params['offset']
-    )
-    
-    if cached_result:
-        companies = cached_result['companies']
-        total = cached_result['total']
-    else:
-        # Если кеш не найден, выполняем запрос к БД
-        db = SessionLocal()
-        try:
-            query = db.query(Company).filter(Company.status == 'active')
-            if q:
-                # Поиск по названию, описанию и индустрии
-                from sqlalchemy import or_
-                search_filter = or_(
-                    Company.name.ilike(f'%{q}%'),
-                    Company.description.ilike(f'%{q}%'),
-                    Company.industry.ilike(f'%{q}%')
-                )
-                query = query.filter(search_filter)
-            if country:
-                query = query.filter_by(country=country)
-            if stage:
-                query = query.filter_by(stage=stage)
-            if industry:
-                query = query.filter_by(industry=industry)
-            
-            # Применяем пагинацию
-            paginated_query, total = DatabasePagination.paginate_query(
-                query, 
-                pagination_params['page'], 
-                pagination_params['per_page']
-            )
-            companies = paginated_query.order_by(Company.name).all()
-        finally:
-            db.close()
-    
-    # Получаем фильтры (кешированные)
     db = SessionLocal()
     try:
+        query = db.query(Company).filter(Company.status == 'active')
+        if q:
+            # Поиск по названию, описанию и индустрии
+            from sqlalchemy import or_
+            search_filter = or_(
+                Company.name.ilike(f'%{q}%'),
+                Company.description.ilike(f'%{q}%'),
+                Company.industry.ilike(f'%{q}%')
+            )
+            query = query.filter(search_filter)
+        if country:
+            query = query.filter_by(country=country)
+        if stage:
+            query = query.filter_by(stage=stage)
+        if industry:
+            query = query.filter_by(industry=industry)
+        
+        # Получаем общее количество
+        total = query.count()
+        
+        # Применяем пагинацию
+        companies = query.order_by(Company.name).offset(offset).limit(per_page).all()
+        
+        # Получаем фильтры
         countries = [c[0] for c in db.query(Company.country).distinct().order_by(Company.country) if c[0]]
         stages = [s[0] for s in db.query(Company.stage).distinct().order_by(Company.stage) if s[0]]
         industries = [i[0] for i in db.query(Company.industry).distinct().order_by(Company.industry) if i[0]]
     finally:
         db.close()
     
-    # Создаем объект пагинации
-    query_params = {
-        'q': q if q else None,
-        'country': country if country else None,
-        'stage': stage if stage else None,
-        'industry': industry if industry else None,
-        'per_page': pagination_params['per_page']
-    }
-    
-    pagination = PaginationHelper.create_pagination(
-        items=companies,
-        total=total,
-        page=pagination_params['page'],
-        per_page=pagination_params['per_page'],
-        request_url=str(request.url).split('?')[0],
-        query_params=query_params
-    )
+    # Простая пагинация
+    total_pages = (total + per_page - 1) // per_page
     
     return templates.TemplateResponse("public/companies/list.html", {
         "request": request, 
@@ -432,7 +398,16 @@ def companies(
         "countries": countries, 
         "stages": stages, 
         "industries": industries,
-        "pagination": pagination,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages,
+            "has_prev": page > 1,
+            "has_next": page < total_pages,
+            "prev_page": page - 1 if page > 1 else None,
+            "next_page": page + 1 if page < total_pages else None
+        },
         "show_per_page_selector": True
     })
 
@@ -479,7 +454,7 @@ def company_profile(request: Request, id: int = Path(...)):
 def investors(request: Request, q: str = Query('', alias='q'), country: str = Query('', alias='country'), focus: str = Query('', alias='focus'), stages: str = Query('', alias='stages')):
     db = SessionLocal()
     try:
-        query = db.query(Investor).options(joinedload(Investor.portfolio), joinedload(Investor.team))
+        query = db.query(Investor).filter(Investor.status == 'active')
         if q:
             query = query.filter(Investor.name.ilike(f'%{q}%'))
         if country:
