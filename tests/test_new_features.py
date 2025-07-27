@@ -27,7 +27,7 @@ def test_notifications():
         notifications = [
             NotificationService.create_notification(
                 user_id=user.id,
-                title="Добро пожаловать в StanBase!",
+                title="Добро пожаловать в stanbase!",
                 message="Спасибо за регистрацию. Теперь вы можете комментировать и получать уведомления.",
                 notification_type="success"
             ),

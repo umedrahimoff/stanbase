@@ -1,16 +1,16 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ news.title }} — Новости компаний Центральной Азии | StanBase{% endblock %}
+{% block title %}{{ news.title }} — Новости компаний Центральной Азии | stanbase{% endblock %}
 
 {% block meta_description %}{{ news.summary }}{% if news.content %}{{ news.content[:100] }}{% endif %} Новости инновационных компаний и технологий в Центральной Азии.{% endblock %}
 
 {% block meta_keywords %}{{ news.title }}, новости компаний, Центральная Азия, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан, инновации, венчурные инвестиции, технологии{% endblock %}
 
-{% block og_title %}{{ news.title }} — Новости компаний Центральной Азии | StanBase{% endblock %}
+{% block og_title %}{{ news.title }} — Новости компаний Центральной Азии | stanbase{% endblock %}
 
 {% block og_description %}{{ news.summary }}{% if news.content %}{{ news.content[:100] }}{% endif %} Новости инновационных компаний и технологий в Центральной Азии.{% endblock %}
 
-{% block twitter_title %}{{ news.title }} — Новости компаний Центральной Азии | StanBase{% endblock %}
+{% block twitter_title %}{{ news.title }} — Новости компаний Центральной Азии | stanbase{% endblock %}
 
 {% block twitter_description %}{{ news.summary }}{% if news.content %}{{ news.content[:100] }}{% endif %} Новости инновационных компаний и технологий в Центральной Азии.{% endblock %}
 

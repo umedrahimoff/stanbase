@@ -2568,7 +2568,7 @@ async def not_found(request: Request, exc: StarletteHTTPException):
 
 @app.get("/")
 def root():
-    return "Stanbase API is running"
+    return "stanbase API is running"
 
 # Гарантируем создание таблиц при любом запуске
 Base.metadata.create_all(bind=engine)

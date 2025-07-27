@@ -1,16 +1,16 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | StanBase{% endblock %}
+{% block title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | stanbase{% endblock %}
 
 {% block meta_description %}{{ company.name }} - {{ company.industry }} компания на стадии {{ company.stage }} в {{ company.city }}, {{ company.country }}. {{ company.description[:150] }}{% if company.description|length > 150 %}...{% endif %}{% if company.founded_date %} Основана {{ company.founded_date.strftime('%d.%m.%Y') }}.{% endif %}{% if company.website %} Официальный сайт: {{ company.website }}{% endif %}{% endblock %}
 
 {% block meta_keywords %}{{ company.name }}, {{ company.industry }}, {{ company.stage }}, {{ company.city }}, {{ company.country }}, компания, инновации, технологические проекты, Центральная Азия{% endblock %}
 
-{% block og_title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | StanBase{% endblock %}
+{% block og_title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | stanbase{% endblock %}
 
 {% block og_description %}{{ company.name }} - {{ company.industry }} компания на стадии {{ company.stage }} в {{ company.city }}, {{ company.country }}. {{ company.description[:150] }}{% if company.description|length > 150 %}...{% endif %}{% if company.founded_date %} Основана {{ company.founded_date.strftime('%d.%m.%Y') }}.{% endif %}{% if company.website %} Официальный сайт: {{ company.website }}{% endif %}{% endblock %}
 
-{% block twitter_title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | StanBase{% endblock %}
+{% block twitter_title %}{{ company.name }} — {{ company.industry }} компания в {{ company.city }}, {{ company.country }} | stanbase{% endblock %}
 
 {% block twitter_description %}{{ company.name }} - {{ company.industry }} компания на стадии {{ company.stage }} в {{ company.city }}, {{ company.country }}. {{ company.description[:150] }}{% if company.description|length > 150 %}...{% endif %}{% endblock %}
 
