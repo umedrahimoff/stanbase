@@ -5,7 +5,7 @@
   <a href="{{ url_for('admin_create_event') }}" class="btn btn-primary">Создать мероприятие</a>
 </div>
 <form class="row g-3 mb-3" method="get" action="">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="text" name="q" class="form-control" placeholder="Поиск по названию..." value="{{ q }}">
   </div>
   <div class="col-md-2">
@@ -26,6 +26,16 @@
   </div>
   <div class="col-md-2">
     <button type="submit" class="btn btn-outline-primary">Найти</button>
+  </div>
+  <div class="col-md-3">
+    <select name="sort" class="form-select" onchange="this.form.submit()">
+      <option value="newest" {% if sort == 'newest' %}selected{% endif %}>По дате (новые)</option>
+      <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>По дате (старые)</option>
+      <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>По названию А-Я</option>
+      <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>По названию Я-А</option>
+      <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>По дате события ↑</option>
+      <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>По дате события ↓</option>
+    </select>
   </div>
 </form>
 <table class="table table-striped table-hover align-middle bg-white rounded-0 border-0">
@@ -83,13 +93,13 @@
 <nav>
   <ul class="pagination justify-content-center">
     <li class="page-item {% if page == 1 %}disabled{% endif %}">
-      <a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&page={{ page-1 }}">&laquo;</a>
+      <a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&sort={{ sort }}&page={{ page-1 }}">&laquo;</a>
     </li>
     {% for p in range(1, last_page+1) %}
-      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&page={{ p }}">{{ p }}</a></li>
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&sort={{ sort }}&page={{ p }}">{{ p }}</a></li>
     {% endfor %}
     <li class="page-item {% if page == last_page %}disabled{% endif %}">
-      <a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&page={{ page+1 }}">&raquo;</a>
+      <a class="page-link" href="?q={{ q }}&status={{ status }}&per_page={{ per_page }}&sort={{ sort }}&page={{ page+1 }}">&raquo;</a>
     </li>
   </ul>
 </nav>

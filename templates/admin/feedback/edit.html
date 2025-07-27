@@ -1,0 +1,171 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h3 class="mb-4">Обратная связь #{{ feedback.id }}</h3>
+          
+          <!-- Информация от пользователя -->
+          <div class="mb-4">
+            <h5 class="mb-3">Информация от пользователя</h5>
+            
+            <!-- Тип -->
+            <div class="mb-3">
+              <label class="form-label">Тип:</label>
+              <div>
+                {% if feedback.type == 'bug' %}
+                  <span class="badge bg-danger">Ошибка</span>
+                {% elif feedback.type == 'feature' %}
+                  <span class="badge bg-primary">Функция</span>
+                {% elif feedback.type == 'improvement' %}
+                  <span class="badge bg-warning">Улучшение</span>
+                {% else %}
+                  <span class="badge bg-secondary">Другое</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Описание -->
+            <div class="mb-3">
+              <label class="form-label">Описание проблемы:</label>
+              <div class="border rounded p-3 bg-light">
+                {{ feedback.description }}
+              </div>
+            </div>
+
+            <!-- Предложение -->
+            {% if feedback.suggestion %}
+            <div class="mb-3">
+              <label class="form-label">Предложение пользователя:</label>
+              <div class="border rounded p-3 bg-light">
+                {{ feedback.suggestion }}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Информация о пользователе -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Имя:</label>
+                <div>{{ feedback.name or 'Не указано' }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email:</label>
+                <div>
+                  {% if feedback.email %}
+                    <a href="mailto:{{ feedback.email }}">{{ feedback.email }}</a>
+                  {% else %}
+                    Не указан
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+          
+
+            <!-- Страница -->
+            {% if feedback.page_url %}
+            <div class="mb-3">
+              <label class="form-label">Страница:</label>
+              <div>
+                <a href="{{ feedback.page_url }}" target="_blank">{{ feedback.page_title or feedback.page_url }}</a>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <!-- Техническая информация -->
+      <div class="card mb-4 user-meta-card">
+        <div class="card-body">
+          <h6 class="text-muted mb-3">Тех. информация</h6>
+          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ feedback.id }}</span></div>
+          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ feedback.status }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата создания:</span> <span class="meta-value">{{ feedback.created_at.strftime('%d.%m.%Y %H:%M') if feedback.created_at else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата изменения:</span> <span class="meta-value">{{ feedback.updated_at.strftime('%d.%m.%Y %H:%M') if feedback.updated_at else '—' }}</span></div>
+          {% if feedback.processed_by %}
+          <div class="meta-row"><span class="meta-label">Обработано:</span> <span class="meta-value">{{ feedback.processed_by }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата обработки:</span> <span class="meta-value">{{ feedback.processed_at.strftime('%d.%m.%Y %H:%M') if feedback.processed_at else '—' }}</span></div>
+          {% endif %}
+          {% if feedback.is_authenticated %}
+          <div class="meta-row"><span class="meta-label">Авторизован:</span> <span class="meta-value">Да</span></div>
+          {% endif %}
+          {% if feedback.screen_size %}
+          <div class="meta-row"><span class="meta-label">Размер экрана:</span> <span class="meta-value">{{ feedback.screen_size }}</span></div>
+          {% endif %}
+          {% if feedback.user_agent %}
+          <div class="meta-row"><span class="meta-label">User Agent:</span> <span class="meta-value">{{ feedback.user_agent[:50] }}...</span></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Управление статусом -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Управление статусом</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('admin_feedback_status', feedback_id=feedback.id) }}">
+            <div class="mb-3">
+              <label for="status" class="form-label">Статус:</label>
+              <select class="form-select" id="status" name="status" required>
+                <option value="new" {% if feedback.status == 'new' %}selected{% endif %}>Новый</option>
+                <option value="in_progress" {% if feedback.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                <option value="resolved" {% if feedback.status == 'resolved' %}selected{% endif %}>Решено</option>
+                <option value="closed" {% if feedback.status == 'closed' %}selected{% endif %}>Закрыто</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="admin_notes" class="form-label">Заметки администратора:</label>
+              <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Внутренние заметки по обработке...">{{ feedback.admin_notes or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-save"></i> Обновить статус
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Быстрые действия -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Быстрые действия</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            {% if feedback.email %}
+            <a href="mailto:{{ feedback.email }}?subject=Re: Обратная связь #{{ feedback.id }}" class="btn btn-outline-primary">
+              <i class="bi bi-envelope"></i> Ответить пользователю
+            </a>
+            {% endif %}
+            
+            {% if feedback.page_url %}
+            <a href="{{ feedback.page_url }}" target="_blank" class="btn btn-outline-info">
+              <i class="bi bi-box-arrow-up-right"></i> Открыть страницу
+            </a>
+            {% endif %}
+            
+            <form method="post" action="{{ url_for('admin_feedback_delete', feedback_id=feedback.id) }}" class="d-grid" onsubmit="return confirm('Удалить эту обратную связь?')">
+              <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Удалить
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .meta-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-label { font-weight: 500; color: #6c757d; font-size: 0.875rem; }
+  .meta-value { font-weight: 600; color: #212529; font-size: 0.875rem; }
+</style>
+{% endblock %} 

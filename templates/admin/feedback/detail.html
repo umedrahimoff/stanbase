@@ -27,13 +27,13 @@
               <label class="form-label fw-bold">Тип:</label>
               <div>
                 {% if feedback.type == 'bug' %}
-                  <span class="badge bg-danger fs-6">🐛 Ошибка/Баг</span>
+                  <span class="badge bg-danger">Ошибка</span>
                 {% elif feedback.type == 'feature' %}
-                  <span class="badge bg-primary fs-6">💡 Предложение функции</span>
+                  <span class="badge bg-primary">Функция</span>
                 {% elif feedback.type == 'improvement' %}
-                  <span class="badge bg-warning fs-6">⚡ Улучшение</span>
+                  <span class="badge bg-warning">Улучшение</span>
                 {% else %}
-                  <span class="badge bg-secondary fs-6">📝 Другое</span>
+                  <span class="badge bg-secondary">Другое</span>
                 {% endif %}
               </div>
             </div>
@@ -57,7 +57,7 @@
           <div class="mb-3">
             <label class="form-label fw-bold">Описание проблемы:</label>
             <div class="border rounded p-3 bg-light">
-              {{ feedback.description | nl2br }}
+              {{ feedback.description }}
             </div>
           </div>
 
@@ -66,7 +66,7 @@
           <div class="mb-3">
             <label class="form-label fw-bold">Предложение пользователя:</label>
             <div class="border rounded p-3 bg-light">
-              {{ feedback.suggestion | nl2br }}
+              {{ feedback.suggestion }}
             </div>
           </div>
           {% endif %}

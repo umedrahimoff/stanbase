@@ -1054,21 +1054,7 @@ async def admin_delete_user(request: Request, user_id: int):
     return RedirectResponse(url="/admin/users", status_code=302)
 
 # --- Companies CRUD ---
-@app.get("/admin/companies", response_class=HTMLResponse, name="admin_companies")
-async def admin_startups(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
-    from models import Company
-    if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
-    db = SessionLocal()
-    query = db.query(Company)
-    if q:
-        query = query.filter(Company.name.ilike(f'%{q}%'))
-    if status:
-        query = query.filter(Company.status == status)
-    total = query.count()
-    companies = query.order_by(Company.id).offset((page-1)*per_page).limit(per_page).all()
-    db.close()
-    return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+
 
 @app.route("/admin/companies/create", methods=["GET", "POST"], name="admin_create_company")
 async def admin_create_startup(request: Request):
@@ -1557,7 +1543,7 @@ async def admin_delete_author(request: Request, author_id: int):
 
 # --- Jobs CRUD ---
 @app.get("/admin/jobs", response_class=HTMLResponse, name="admin_jobs")
-def admin_jobs(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+def admin_jobs(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
     from models import Job, Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -1565,12 +1551,27 @@ def admin_jobs(request: Request, q: str = Query('', alias='q'), per_page: int = 
     query = db.query(Job)
     if q:
         query = query.filter(Job.title.ilike(f'%{q}%'))
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(Job.id.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(Job.title.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Job.title.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Job.created_at.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Job.created_at.desc())
+    else:  # newest (по умолчанию)
+        query = query.order_by(Job.id.desc())
+    
     total = query.count()
-    jobs = query.order_by(Job.id).offset((page-1)*per_page).limit(per_page).all()
+    jobs = query.offset((page-1)*per_page).limit(per_page).all()
     companies_list = db.query(Company).all()
     companies = {s.id: s for s in companies_list}
     db.close()
-    return templates.TemplateResponse("admin/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "q": q, "per_page": per_page, "page": page, "total": total, "companies": companies})
+    return templates.TemplateResponse("admin/jobs/list.html", {"request": request, "session": request.session, "jobs": jobs, "q": q, "per_page": per_page, "page": page, "total": total, "companies": companies, "sort": sort})
 
 @app.route("/admin/jobs/create", methods=["GET", "POST"], name="admin_create_job")
 async def admin_create_job(request: Request):
@@ -1662,7 +1663,7 @@ async def admin_delete_job(request: Request, job_id: int):
 
 # --- Events CRUD ---
 @app.get("/admin/events", response_class=HTMLResponse, name="admin_events")
-def admin_events(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+def admin_events(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
     from models import Event
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -1672,9 +1673,24 @@ def admin_events(request: Request, q: str = Query('', alias='q'), status: str = 
         query = query.filter(Event.title.ilike(f'%{q}%'))
     if status:
         query = query.filter(Event.status == status)
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(Event.id.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(Event.title.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Event.title.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Event.date.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Event.date.desc())
+    else:  # newest (по умолчанию)
+        query = query.order_by(Event.id.desc())
+    
     total = query.count()
-    events = query.order_by(Event.id).offset((page-1)*per_page).limit(per_page).all()
-    response = templates.TemplateResponse("admin/events/list.html", {"request": request, "session": request.session, "events": events, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+    events = query.offset((page-1)*per_page).limit(per_page).all()
+    response = templates.TemplateResponse("admin/events/list.html", {"request": request, "session": request.session, "events": events, "q": q, "status": status, "per_page": per_page, "page": page, "total": total, "sort": sort})
     db.close()
     return response
 
@@ -1854,7 +1870,7 @@ async def admin_delete_event(request: Request, event_id: int):
 
 # --- News CRUD ---
 @app.get("/admin/news", response_class=HTMLResponse, name="admin_news")
-def admin_news(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+def admin_news(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
     from models import News
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -1862,9 +1878,24 @@ def admin_news(request: Request, q: str = Query('', alias='q'), per_page: int = 
     query = db.query(News).options(joinedload(News.author))
     if q:
         query = query.filter(News.title.ilike(f'%{q}%'))
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(News.id.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(News.title.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(News.title.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(News.created_at.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(News.created_at.desc())
+    else:  # newest (по умолчанию)
+        query = query.order_by(News.id.desc())
+    
     total = query.count()
-    news = query.order_by(News.id).offset((page-1)*per_page).limit(per_page).all()
-    response = templates.TemplateResponse("admin/news/list.html", {"request": request, "session": request.session, "news": news, "q": q, "per_page": per_page, "page": page, "total": total})
+    news = query.offset((page-1)*per_page).limit(per_page).all()
+    response = templates.TemplateResponse("admin/news/list.html", {"request": request, "session": request.session, "news": news, "q": q, "per_page": per_page, "page": page, "total": total, "sort": sort})
     db.close()
     return response
 
@@ -2116,7 +2147,7 @@ async def admin_delete_news(request: Request, news_id: int):
 
 
 @app.get("/admin/investors", response_class=HTMLResponse, name="admin_investors")
-async def admin_investors(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+async def admin_investors(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
     from models import Investor
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -2124,10 +2155,25 @@ async def admin_investors(request: Request, q: str = Query('', alias='q'), per_p
     query = db.query(Investor)
     if q:
         query = query.filter(Investor.name.ilike(f'%{q}%'))
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(Investor.id.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(Investor.name.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Investor.name.desc())
+    elif sort == 'date_asc':
+        query = query.order_by(Investor.created_at.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Investor.created_at.desc())
+    else:  # newest (по умолчанию)
+        query = query.order_by(Investor.id.desc())
+    
     total = query.count()
-    investors = query.order_by(Investor.id).offset((page-1)*per_page).limit(per_page).all()
+    investors = query.offset((page-1)*per_page).limit(per_page).all()
     db.close()
-    return templates.TemplateResponse("admin/investors/list.html", {"request": request, "session": request.session, "investors": investors, "q": q, "per_page": per_page, "page": page, "total": total})
+    return templates.TemplateResponse("admin/investors/list.html", {"request": request, "session": request.session, "investors": investors, "q": q, "per_page": per_page, "page": page, "total": total, "sort": sort})
 
 @app.route("/admin/investors/create", methods=["GET", "POST"], name="admin_create_investor")
 async def admin_create_investor(request: Request):
@@ -2748,7 +2794,7 @@ async def admin_delete_company_stage(request: Request, stage_id: int):
     return RedirectResponse(url="/admin/company_stages", status_code=302)
 
 @app.get("/admin/companies", response_class=HTMLResponse, name="admin_companies")
-async def admin_companies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+async def admin_companies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
     from models import Company
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -2758,10 +2804,21 @@ async def admin_companies(request: Request, q: str = Query('', alias='q'), statu
         query = query.filter(Company.name.ilike(f'%{q}%'))
     if status:
         query = query.filter(Company.status == status)
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(Company.id.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(Company.name.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(Company.name.desc())
+    else:  # newest (по умолчанию)
+        query = query.order_by(Company.id.desc())
+    
     total = query.count()
-    companies = query.order_by(Company.id).offset((page-1)*per_page).limit(per_page).all()
+    companies = query.offset((page-1)*per_page).limit(per_page).all()
     db.close()
-    return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+    return templates.TemplateResponse("admin/companies/list.html", {"request": request, "companies": companies, "q": q, "status": status, "per_page": per_page, "page": page, "total": total, "sort": sort})
 
 @app.route("/admin/companies/create", methods=["GET", "POST"], name="admin_create_company")
 async def admin_create_company(request: Request):
@@ -3383,8 +3440,8 @@ async def admin_feedback(request: Request, q: str = Query('', alias='q'), status
     if status:
         query = query.filter(Feedback.status == status)
     
-    # Сортировка по дате создания (новые сначала)
-    query = query.order_by(Feedback.created_at.desc())
+    # Сортировка по ID (новые записи сначала)
+    query = query.order_by(Feedback.id.desc())
     
     # Общее количество
     total = query.count()
@@ -3408,9 +3465,9 @@ async def admin_feedback(request: Request, q: str = Query('', alias='q'), status
         "total_pages": total_pages
     })
 
-@app.get("/admin/feedback/{feedback_id}", response_class=HTMLResponse, name="admin_feedback_detail")
-async def admin_feedback_detail(request: Request, feedback_id: int):
-    """Детальная информация об обратной связи"""
+@app.get("/admin/feedback/{feedback_id}/edit", response_class=HTMLResponse, name="admin_feedback_edit")
+async def admin_feedback_edit(request: Request, feedback_id: int):
+    """Редактирование обратной связи"""
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
@@ -3421,7 +3478,7 @@ async def admin_feedback_detail(request: Request, feedback_id: int):
     if not feedback:
         return RedirectResponse(url="/admin/feedback", status_code=302)
     
-    return templates.TemplateResponse("admin/feedback/detail.html", {
+    return templates.TemplateResponse("admin/feedback/edit.html", {
         "request": request,
         "feedback": feedback
     })
@@ -3437,7 +3494,7 @@ async def admin_feedback_status(request: Request, feedback_id: int):
     admin_notes = form.get('admin_notes', '')
     
     if new_status not in ['new', 'in_progress', 'resolved', 'closed']:
-        return RedirectResponse(url=f"/admin/feedback/{feedback_id}", status_code=302)
+        return RedirectResponse(url=f"/admin/feedback/{feedback_id}/edit", status_code=302)
     
     db = SessionLocal()
     feedback = db.query(Feedback).filter(Feedback.id == feedback_id).first()
@@ -3452,7 +3509,7 @@ async def admin_feedback_status(request: Request, feedback_id: int):
     
     db.close()
     
-    return RedirectResponse(url=f"/admin/feedback/{feedback_id}", status_code=302)
+    return RedirectResponse(url=f"/admin/feedback/{feedback_id}/edit", status_code=302)
 
 @app.post("/admin/feedback/{feedback_id}/delete", name="admin_feedback_delete")
 async def admin_feedback_delete(request: Request, feedback_id: int):
