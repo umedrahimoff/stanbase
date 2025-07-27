@@ -2690,6 +2690,76 @@ def test_db():
     finally:
         db.close()
 
+@router.get("/run-migration")
+def run_migration():
+    """Выполняет миграцию для добавления недостающих колонок"""
+    db = SessionLocal()
+    try:
+        # SQL команды для миграции
+        migrations = [
+            # Person table
+            "ALTER TABLE person ADD COLUMN IF NOT EXISTS telegram VARCHAR(256)",
+            "ALTER TABLE person ADD COLUMN IF NOT EXISTS instagram VARCHAR(256)",
+            
+            # News table
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS slug VARCHAR(256)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS seo_description VARCHAR(512)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)",
+            
+            # Event table
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS country VARCHAR(64)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS cover_image VARCHAR(256)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)",
+            
+            # Deal table
+            "ALTER TABLE deal ADD COLUMN IF NOT EXISTS company_id INTEGER",
+            "ALTER TABLE deal ADD COLUMN IF NOT EXISTS valuation FLOAT",
+            
+            # Company table
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            
+            # Investor table
+            "ALTER TABLE investor ADD COLUMN IF NOT EXISTS logo VARCHAR(256)",
+            
+            # User table
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS created_at TIMESTAMP',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)',
+        ]
+        
+        executed_migrations = []
+        for migration in migrations:
+            try:
+                db.execute(migration)
+                executed_migrations.append(migration)
+                print(f"Выполнена миграция: {migration}")
+            except Exception as e:
+                print(f"Ошибка миграции: {migration} - {e}")
+        
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": f"Миграция завершена. Выполнено {len(executed_migrations)} команд.",
+            "executed_migrations": executed_migrations
+        }
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при миграции: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
 app.include_router(router)
 app.include_router(api_router)
 
