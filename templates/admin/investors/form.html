@@ -13,6 +13,7 @@
             <li class="nav-item" role="presentation" id="portfolio-tab-li">
               <button class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab">Портфель</button>
             </li>
+
             <li class="nav-item" role="presentation" id="team-tab-li">
               <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">Команда</button>
             </li>
@@ -80,6 +81,126 @@
                   <button type="submit" class="btn btn-primary">Сохранить</button>
                   <a href="{{ url_for('admin_investors') }}" class="btn btn-outline-secondary">Отмена</a>
                 </div>
+              </div>
+              
+              <div class="tab-pane fade" id="portfolio" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Портфель инвестора</h5>
+                </div>
+                
+                <!-- Форма добавления портфельной записи -->
+                <form id="portfolio-entry-form" class="row g-3 mb-4">
+                  <div class="col-md-4">
+                    <label for="company-autocomplete" class="form-label">Компания *</label>
+                    <input type="text" class="form-control" id="company-autocomplete" placeholder="Начните вводить название компании..." required>
+                    <input type="hidden" id="company-id-hidden" name="company_id" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="amount-input" class="form-label">Сумма инвестиции *</label>
+                    <input type="text" class="form-control" id="amount-input" name="amount" placeholder="0" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="valuation-input" class="form-label">Оценка компании</label>
+                    <input type="text" class="form-control" id="valuation-input" name="valuation" placeholder="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="date-input" class="form-label">Дата *</label>
+                    <input type="date" class="form-control" id="date-input" name="date" required>
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                  </div>
+                </form>
+                
+                <div id="portfolio-entry-error" class="alert alert-danger d-none"></div>
+                
+                <!-- Таблица портфеля -->
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Компания</th>
+                      <th>Сумма инвестиции</th>
+                      <th>Оценка</th>
+                      <th>Дата</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="portfolio-table-body">
+                    {% if portfolio_entries %}
+                      {% for entry in portfolio_entries %}
+                        <tr>
+                          <td>{{ entry.company.name if entry.company else '—' }}</td>
+                          <td>{{ "{:,.0f}".format(entry.amount) if entry.amount else '—' }}</td>
+                          <td>{{ "{:,.0f}".format(entry.valuation) if entry.valuation else '—' }}</td>
+                          <td>{{ entry.date.strftime('%d.%m.%Y') if entry.date else '—' }}</td>
+                          <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger portfolio-delete-btn" data-entry-id="{{ entry.id }}" title="Удалить">
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="5" class="text-muted">Нет компаний в портфеле.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+                
+                <!-- Сделки в портфеле -->
+                {% if portfolio_deals %}
+                <hr class="my-4">
+                <h6 class="mb-3">Сделки в портфеле</h6>
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Компания</th>
+                      <th>Стадия</th>
+                      <th>Сумма инвестиции</th>
+                      <th>Оценка</th>
+                      <th>Дата</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for deal in portfolio_deals %}
+                      <tr>
+                        <td>
+                          {% if deal.company %}
+                            <a href="/admin/companies/edit/{{ deal.company.id }}">{{ deal.company.name }}</a>
+                          {% else %}
+                            —
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if deal.company and deal.company.stage %}
+                            <span class="badge bg-light text-dark">{{ deal.company.stage }}</span>
+                          {% else %}
+                            —
+                          {% endif %}
+                        </td>
+                        <td>{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }} $</td>
+                        <td>{{ "{:,.0f}".format(deal.valuation) if deal.valuation else '—' }} $</td>
+                        <td>{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</td>
+                        <td class="text-end">
+                          <a href="/admin/deals/{{ deal.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Редактировать">
+                            <i class="bi bi-pencil-fill"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                {% endif %}
+
+              </div>
+              
+              <div class="tab-pane fade" id="team" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Команда инвестора</h5>
+                </div>
+                
+                <!-- Здесь будет содержимое вкладки команды -->
+                <p class="text-muted">Функционал управления командой инвестора будет добавлен позже.</p>
               </div>
             </div>
           </form>
@@ -221,8 +342,7 @@ window.addEventListener('DOMContentLoaded', function() {
     $.ajax({
       url: '/admin/investors/{{ investor.id }}/portfolio/entry/add',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(data),
+      data: data,
       success: function(resp) {
         if (resp.success) {
           location.reload();
@@ -231,7 +351,13 @@ window.addEventListener('DOMContentLoaded', function() {
         }
       },
       error: function(xhr) {
-        var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Ошибка';
+        var msg = 'Ошибка при добавлении записи';
+        try {
+          var response = xhr.responseJSON;
+          if (response && response.error) {
+            msg = response.error;
+          }
+        } catch (e) {}
         $('#portfolio-entry-error').removeClass('d-none').text(msg);
       }
     });
@@ -240,17 +366,23 @@ window.addEventListener('DOMContentLoaded', function() {
   // --- AJAX удаление портфельной записи ---
   $('#portfolio-table-body').on('click', '.portfolio-delete-btn', function() {
     var entryId = $(this).data('entry-id');
+    var $row = $(this).closest('tr');
     if (!confirm('Удалить компанию из портфеля?')) return;
     $.ajax({
       url: '/admin/investors/{{ investor.id }}/portfolio/entry/delete/' + entryId,
       method: 'POST',
       success: function(resp) {
         if (resp.success) {
-          $('tr[data-entry-id="' + entryId + '"]').remove();
+          $row.remove();
           if ($('#portfolio-table-body tr').length === 0) {
             $('#portfolio-table-body').append('<tr><td colspan="5" class="text-muted">Нет компаний в портфеле.</td></tr>');
           }
+        } else {
+          alert(resp.error || 'Ошибка при удалении');
         }
+      },
+      error: function() {
+        alert('Ошибка при удалении записи');
       }
     });
   });

@@ -135,8 +135,14 @@ class Event(Base):
     date = Column(DateTime)
     format = Column(String(32))
     location = Column(String(128))
+    country = Column(String(64), nullable=True)  # страна проведения мероприятия
     registration_url = Column(String(256))
+    cover_image = Column(String(256), nullable=True)  # путь к обложке мероприятия
     status = Column(String(16), default='active')
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String(64), nullable=True)
+    updated_by = Column(String(64), nullable=True)
 
 class User(Base):
     __tablename__ = 'user'

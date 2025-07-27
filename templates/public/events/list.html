@@ -12,20 +12,239 @@
 {% block twitter_title %}Мероприятия компаний Центральной Азии — Конференции, митапы и события | StanBase{% endblock %}
 
 {% block twitter_description %}Мероприятия компаний и технологической экосистемы Центральной Азии. Конференции, митапы, хакатоны и другие события для предпринимателей, инвесторов и IT-специалистов в регионе.{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Мероприятия</h2>
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-  {% for e in events %}
-  <div class="col">
-    <div class="card h-100">
-      <div class="card-body">
-        <h5 class="card-title"><a href="/event/{{ e.id }}">{{ e.title }}</a></h5>
-        <div class="mb-2 text-muted small">{{ e.date.strftime('%d.%m.%Y %H:%M') if e.date else '' }} | {{ e.format }} | {{ e.location }}</div>
-        <p class="card-text">{{ e.description[:120] }}{% if e.description|length > 120 %}...{% endif %}</p>
-        <a href="/event/{{ e.id }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
+<div class="container-lg">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="h2 mb-4">Мероприятия</h1>
+      
+      <!-- Фильтры -->
+      <div class="card mb-3">
+        <div class="card-body py-3">
+          <form method="GET" action="/events" class="row g-2 align-items-end">
+            <!-- Поиск -->
+            <div class="col-md-4">
+              <label for="q" class="form-label mb-1">Поиск</label>
+              <input type="text" class="form-control" id="q" name="q" value="{{ q }}" placeholder="Название мероприятия...">
+            </div>
+            
+            <!-- Формат -->
+            <div class="col-md-2">
+              <label for="format" class="form-label mb-1">Формат</label>
+              <select class="form-select" id="format" name="format">
+                <option value="">Все форматы</option>
+                {% for format_option in formats %}
+                <option value="{{ format_option }}" {% if format == format_option %}selected{% endif %}>{{ format_option }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Страна -->
+            <div class="col-md-3">
+              <label for="country" class="form-label mb-1">Страна</label>
+              <select class="form-select" id="country" name="country">
+                <option value="">Все страны</option>
+                {% for country_option in countries %}
+                <option value="{{ country_option }}" {% if country == country_option %}selected{% endif %}>{{ country_option }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Кнопки -->
+            <div class="col-md-3 d-flex gap-2">
+              <button type="submit" class="btn btn-primary">Применить</button>
+              <a href="/events" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Календарь фильтрации по дням -->
+      <div class="card mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title mb-2">Фильтр по дням</h6>
+          <div class="calendar-filter">
+            <div class="calendar-scroll">
+              {% for date_info in calendar_dates %}
+              <a href="/events?date={{ date_info.date }}{% if q %}&q={{ q }}{% endif %}{% if format %}&format={{ format }}{% endif %}{% if country %}&country={{ country }}{% endif %}" 
+                 class="calendar-day {% if date_info.is_today %}today{% endif %} {% if date == date_info.date %}active{% endif %}">
+                <div class="day-name {% if date_info.is_weekend %}weekend{% endif %}">{{ date_info.day_name }}</div>
+                <div class="day-number {% if date_info.is_weekend %}weekend{% endif %}">{{ date_info.day }}</div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Результаты -->
+      <div class="row">
+        <div class="col-12">
+          {% if events %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+              {% for e in events %}
+              <div class="col">
+                <div class="card h-100">
+                  {% if e.cover_image %}
+                  <img src="{{ e.cover_image }}" class="card-img-top" alt="{{ e.title }}" style="height: 200px; object-fit: cover;">
+                  {% endif %}
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <a href="/event/{{ e.id }}" class="text-decoration-none">{{ e.title }}</a>
+                    </h5>
+                    <div class="mb-2 d-flex flex-wrap gap-2 align-items-center">
+                      <div class="text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        {{ e.date.strftime('%d.%m.%Y %H:%M') if e.date else '' }}
+                      </div>
+                      {% if e.country %}
+                      <div class="text-muted small">
+                        <i class="bi bi-flag me-1"></i>
+                        {{ e.country }}
+                      </div>
+                      {% endif %}
+                      <div class="text-muted small">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ e.location or 'Локация не указана' }}
+                      </div>
+                      {% if e.format %}
+                      {% set format_mapping = {'online': 'Онлайн', 'offline': 'Офлайн', 'hybrid': 'Гибрид', 'Online': 'Онлайн', 'Offline': 'Офлайн', 'Hybrid': 'Гибрид'} %}
+                      <span class="badge bg-primary">{{ format_mapping.get(e.format, e.format) }}</span>
+                      {% endif %}
+                    </div>
+                    <p class="card-text">{{ e.description[:120] }}{% if e.description|length > 120 %}...{% endif %}</p>
+                    <a href="/event/{{ e.id }}" class="btn btn-outline-primary btn-sm mt-2">Подробнее</a>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x display-1 text-muted"></i>
+              <h4 class="mt-3">Мероприятия не найдены</h4>
+              <p class="text-muted">Попробуйте изменить параметры поиска или выбрать другую дату</p>
+              <a href="/events" class="btn btn-primary">Показать все мероприятия</a>
+            </div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
-  {% endfor %}
 </div>
+
+<style>
+.calendar-filter {
+  overflow: hidden;
+}
+
+.calendar-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #dee2e6 transparent;
+}
+
+.calendar-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.calendar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-scroll::-webkit-scrollbar-thumb {
+  background-color: #dee2e6;
+  border-radius: 3px;
+}
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 45px;
+  height: 50px;
+  padding: 6px 3px;
+  text-decoration: none;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.calendar-day:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+  text-decoration: none;
+  color: #212529;
+}
+
+.calendar-day.today {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.calendar-day.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.calendar-day.active:hover {
+  background-color: #0b5ed7;
+  border-color: #0b5ed7;
+  color: white;
+}
+
+.calendar-day.active .day-name,
+.calendar-day.active .day-number,
+.calendar-day.today .day-name,
+.calendar-day.today .day-number {
+  color: white;
+}
+
+.day-name {
+  font-size: 10px;
+  font-weight: 500;
+  margin-bottom: 1px;
+}
+
+.day-name.weekend,
+.calendar-day .weekend {
+  color: #6c757d;
+}
+
+.calendar-day.today .day-name,
+.calendar-day.active .day-name {
+  color: inherit;
+}
+
+.day-number {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .calendar-day {
+    min-width: 40px;
+    height: 45px;
+    padding: 4px 2px;
+  }
+  
+  .day-name {
+    font-size: 9px;
+  }
+  
+  .day-number {
+    font-size: 12px;
+  }
+}
+</style>
 {% endblock %} 

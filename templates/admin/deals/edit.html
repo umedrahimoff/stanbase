@@ -19,9 +19,15 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="mb-3">
-              <label for="amount" class="form-label">Сумма *</label>
-              <input type="number" class="form-control" id="amount" name="amount" step="0.01" value="{{ deal.amount }}" required>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="amount" class="form-label">Сумма инвестиции *</label>
+                <input type="number" class="form-control" id="amount" name="amount" step="0.01" value="{{ deal.amount }}" required>
+              </div>
+              <div class="col-md-6">
+                <label for="valuation" class="form-label">Оценка компании</label>
+                <input type="number" class="form-control" id="valuation" name="valuation" step="0.01" value="{{ deal.valuation }}">
+              </div>
             </div>
             <div class="mb-3">
               <label for="investors" class="form-label">Инвесторы</label>
@@ -67,9 +73,11 @@
         <div class="card-body">
           <h6 class="text-muted mb-3">Информация о сделке</h6>
           <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ deal.id }}</span></div>
-          <div class="meta-row"><span class="meta-label">Компания:</span> <span class="meta-value">{{ deal.company.name }}</span></div>
+          <div class="meta-row"><span class="meta-label">Компания:</span> <span class="meta-value">{{ deal.company.name if deal.company else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Сумма инвестиции:</span> <span class="meta-value">{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Оценка:</span> <span class="meta-value">{{ "{:,.0f}".format(deal.valuation) if deal.valuation else '—' }}</span></div>
           <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ deal.status }}</span></div>
-          <div class="meta-row"><span class="meta-label">Создана:</span> <span class="meta-value">{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</span></div>
+          <div class="meta-row"><span class="meta-label">Дата:</span> <span class="meta-value">{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</span></div>
         </div>
       </div>
     </div>

@@ -113,6 +113,7 @@
           </ul>
         </li>
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_jobs' %}active{% endif %}" href="{{ url_for('admin_jobs') }}">Вакансии</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_events' %}active{% endif %}" href="{{ url_for('admin_events') }}">Мероприятия</a></li>
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint == 'admin_deals' %}active{% endif %}" href="{{ url_for('admin_deals') }}">
             Сделки

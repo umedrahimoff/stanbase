@@ -13,14 +13,186 @@
 {% block twitter_title %}{{ event.title }} — {{ event.format }} в {{ event.location }} | StanBase{% endblock %}
 
 {% block twitter_description %}{{ event.title }} - {{ event.format }} в {{ event.location }}{% if event.date %} {{ event.date.strftime('%d.%m.%Y %H:%M') }}{% endif %}. {{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}{% endblock %}
+
 {% block content %}
-<div class="mb-4">
-  <h2>{{ event.title }}</h2>
-  <div class="mb-2 text-muted small">{{ event.date.strftime('%d.%m.%Y %H:%M') if event.date else '' }} | {{ event.format }} | {{ event.location }}</div>
-  <div class="mb-3">{{ event.description }}</div>
-  {% if event.registration_url %}
-    <a href="{{ event.registration_url }}" class="btn btn-primary" target="_blank">Регистрация</a>
-  {% endif %}
+<div class="container-lg">
+  <div class="row">
+    <!-- Дополнительный отступ для мобильных устройств -->
+    <style>
+      @media (max-width: 767.98px) {
+        .event-detail {
+          margin-bottom: 2rem;
+        }
+        .event-detail footer {
+          margin-bottom: 1rem !important;
+        }
+      }
+    </style>
+    <!-- Левая колонка - Основное мероприятие -->
+    <div class="col-lg-8">
+      <article class="event-detail">
+        <header class="mb-4">
+          <h1 class="h2 mb-3">{{ event.title }}</h1>
+          <div class="d-flex align-items-center text-muted mb-3">
+            <i class="bi bi-calendar3 me-2"></i>
+            <span class="small">{{ event.date.strftime('%d.%m.%Y %H:%M') if event.date else 'Дата не указана' }}</span>
+            {% if event.country %}
+            <span class="mx-2">•</span>
+            <i class="bi bi-flag me-1"></i>
+            <span class="small">{{ event.country }}</span>
+            {% endif %}
+            <span class="mx-2">•</span>
+            <i class="bi bi-geo-alt me-1"></i>
+            <span class="small">{{ event.location or 'Локация не указана' }}</span>
+            {% if event.format %}
+            <span class="mx-2">•</span>
+            {% set format_mapping = {'online': 'Онлайн', 'offline': 'Офлайн', 'hybrid': 'Гибрид', 'Online': 'Онлайн', 'Offline': 'Офлайн', 'Hybrid': 'Гибрид'} %}
+            <span class="badge bg-primary small">{{ format_mapping.get(event.format, event.format) }}</span>
+            {% endif %}
+          </div>
+        </header>
+
+        {% if event.cover_image %}
+        <div class="event-image mb-4">
+          <img src="{{ event.cover_image }}" alt="{{ event.title }}" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+        </div>
+        {% endif %}
+
+        {% if event.description %}
+        <div class="event-content mb-4">
+          <div class="text-muted mb-3">{{ event.description }}</div>
+        </div>
+        {% endif %}
+
+        {% if event.registration_url %}
+        <div class="mb-4">
+          <a href="{{ event.registration_url }}" class="btn btn-primary" target="_blank">
+            <i class="bi bi-link-45deg me-1"></i>
+            Регистрация на мероприятие
+          </a>
+        </div>
+        {% endif %}
+
+        <footer class="border-top pt-4 mb-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+            <a href="/events" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i>
+              К списку мероприятий
+            </a>
+            <button class="btn btn-outline-primary" onclick="shareEvent()">
+              <i class="bi bi-share me-1"></i>
+              Поделиться
+            </button>
+          </div>
+        </footer>
+      </article>
+    </div>
+
+        <!-- Правая колонка - Дополнительный контент -->
+    <div class="col-lg-4">
+      <!-- Информация о мероприятии -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Информация</h5>
+          <ul class="list-unstyled">
+            {% if event.date %}
+            <li class="mb-2">
+              <i class="bi bi-calendar3 me-2 text-muted"></i>
+              <strong>Дата:</strong> {{ event.date.strftime('%d.%m.%Y %H:%M') }}
+            </li>
+            {% endif %}
+            {% if event.country %}
+            <li class="mb-2">
+              <i class="bi bi-flag me-2 text-muted"></i>
+              <strong>Страна:</strong> {{ event.country }}
+            </li>
+            {% endif %}
+            {% if event.location %}
+            <li class="mb-2">
+              <i class="bi bi-geo-alt me-2 text-muted"></i>
+              <strong>Место:</strong> {{ event.location }}
+            </li>
+            {% endif %}
+            {% if event.format %}
+            <li class="mb-2">
+              <i class="bi bi-camera-video me-2 text-muted"></i>
+              <strong>Формат:</strong> 
+              {% set format_mapping = {'online': 'Онлайн', 'offline': 'Офлайн', 'hybrid': 'Гибрид', 'Online': 'Онлайн', 'Offline': 'Офлайн', 'Hybrid': 'Гибрид'} %}
+              {{ format_mapping.get(event.format, event.format) }}
+            </li>
+            {% endif %}
+            {% if event.registration_url %}
+            <li class="mb-2">
+              <i class="bi bi-link-45deg me-2 text-muted"></i>
+              <strong>Регистрация:</strong> 
+              <a href="{{ event.registration_url }}" target="_blank" class="text-decoration-none">Открыть</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Другие мероприятия -->
+      {% if other_events %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Другие мероприятия</h5>
+          <ul class="list-group list-group-flush">
+            {% for other in other_events %}
+            <li class="list-group-item">
+              <div class="d-flex align-items-start">
+                {% if other.cover_image %}
+                <img src="{{ other.cover_image }}" alt="{{ other.title }}" class="me-3" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
+                {% endif %}
+                <div class="flex-grow-1">
+                  <a href="/event/{{ other.id }}" class="text-decoration-none small">{{ other.title }}</a><br>
+                  <span class="text-muted small">{{ other.date.strftime('%d.%m.%Y') if other.date else 'Дата не указана' }}</span>
+                  {% if other.location %}
+                  <br><span class="text-muted small">{{ other.location }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Последние новости -->
+      {% if upcoming_news %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="mb-3">Последние новости</h5>
+          <ul class="list-group list-group-flush">
+            {% for news in upcoming_news %}
+            <li class="list-group-item">
+              <a href="/news/{{ news.slug }}" class="text-decoration-none small">{{ news.title }}</a><br>
+              <span class="text-muted small">{{ news.date.strftime('%d.%m.%Y') }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
-<a href="/events" class="btn btn-outline-secondary">← К списку мероприятий</a>
+
+<script>
+function shareEvent() {
+  if (navigator.share) {
+    navigator.share({
+      title: '{{ event.title }}',
+      text: '{{ event.description[:100] if event.description else "" }}',
+      url: window.location.href
+    });
+  } else {
+    // Fallback для браузеров без поддержки Web Share API
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent('{{ event.title }}');
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`, '_blank');
+  }
+}
+</script>
 {% endblock %} 

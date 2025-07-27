@@ -164,21 +164,22 @@
                 <a href="/admin/deals/create?company_id={{ company.id }}" class="btn btn-outline-primary btn-sm">Добавить сделку</a>
               </div>
               <table class="table table-sm table-hover">
-                <thead><tr><th>Стадия стартапа</th><th>Сумма</th><th>Инвесторы</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
+                <thead><tr><th>Стадия стартапа</th><th>Сумма инвестиции</th><th>Оценка</th><th>Инвесторы</th><th>Дата</th><th>Статус</th><th></th></tr></thead>
                 <tbody>
                   {% if deals and deals|length > 0 %}
                     {% for deal in deals %}
                                             <tr>
                         <td>{{ deal['type'] }}</td>
                         <td>{{ "{:,.0f}".format(deal['amount']) if deal['amount'] else '—' }}</td>
+                        <td>{{ "{:,.0f}".format(deal['valuation']) if deal['valuation'] else '—' }}</td>
                         <td>{{ deal['investors'] if deal['investors'] else '—' }}</td>
                         <td>{{ deal['date'].strftime('%d.%m.%Y') if deal['date'] else '—' }}</td>
                         <td>{{ deal['status'] }}</td>
                         <td class="text-end">
-                          <a href="/admin/deals/{{ deal['id'] }}/edit?company_id={{ company.id }}" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
+                          <a href="/admin/deals/{{ deal['id'] }}/edit" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
                             <i class="bi bi-pencil-fill"></i>
                           </a>
-                          <form method="POST" action="/admin/deals/{{ deal['id'] }}/delete?company_id={{ company.id }}" style="display: inline;" onsubmit="return confirm('Удалить сделку?')">
+                          <form method="POST" action="/admin/deals/{{ deal['id'] }}/delete" style="display: inline;" onsubmit="return confirm('Удалить сделку?')">
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
                               <i class="bi bi-trash-fill"></i>
                             </button>
@@ -187,7 +188,7 @@
                       </tr>
                     {% endfor %}
                   {% else %}
-                    <tr><td colspan="5" class="text-muted">Нет сделок.</td></tr>
+                    <tr><td colspan="7" class="text-muted">Нет сделок.</td></tr>
                   {% endif %}
                 </tbody>
               </table>

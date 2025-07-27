@@ -48,15 +48,48 @@
         <hr>
         {% if investor.type in ['angel', 'venture'] %}
         <h5 class="mb-2">Портфель</h5>
-        {% if investor.portfolio %}
-          <ul class="list-group mb-3">
-            {% for company in investor.portfolio %}
+        {% if portfolio_companies %}
+          <ul class="list-group mb-4">
+            {% for item in portfolio_companies %}
               <li class="list-group-item">
                 {% if session is defined and session.get('user_id') %}
-                  <a href="/company/{{ company.id }}"><b>{{ company.name }}</b></a><br>
-                  <span class="text-muted small">{{ company.country }}, {{ company.city }} | {{ company.industry }}</span>
+                  <div class="d-flex align-items-center">
+                    {% if item.company.logo %}
+                      <img src="{{ item.company.logo }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
+                    {% else %}
+                      <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ item.company.name|urlencode }}" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
+                    {% endif %}
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center mb-1">
+                        <h6 class="card-title mb-0 me-2">
+                          <a href="/company/{{ item.company.id }}" class="text-decoration-none">{{ item.company.name }}</a>
+                        </h6>
+                        <span class="text-muted small me-2">{{ item.company.country }}{% if item.company.city %}, {{ item.company.city }}{% endif %}</span>
+                        {% if item.company_stage %}
+                          <span class="badge bg-light text-dark small">{{ item.company_stage }}</span>
+                        {% endif %}
+                      </div>
+                      <div class="small">
+                        {% if item.deal_amount %}
+                          <span class="me-2"><strong>{{ "{:,.0f}".format(item.deal_amount) }} $</strong></span>
+                        {% endif %}
+                        {% if item.deal_valuation %}
+                          <span class="me-2">Оценка: {{ "{:,.0f}".format(item.deal_valuation) }} $</span>
+                        {% endif %}
+                        {% if item.deal_date %}
+                          <span class="text-muted">{{ item.deal_date.strftime('%d.%m.%Y') }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
                 {% else %}
-                  <span>{{ company.name[:2] }}****</span>
+                  <div class="d-flex align-items-center">
+                    <img src="https://api.dicebear.com/7.x/identicon/svg?seed=hidden" alt="logo" width="32" height="32" class="rounded-circle me-2" style="object-fit:cover;">
+                    <div class="flex-grow-1">
+                      <h6 class="card-title mb-0">{{ item.company.name[:2] }}****</h6>
+                      <div class="text-muted small">Информация скрыта</div>
+                    </div>
+                  </div>
                 {% endif %}
               </li>
             {% endfor %}
@@ -65,6 +98,7 @@
           <div class="text-muted">Нет данных о портфеле.</div>
         {% endif %}
         {% endif %}
+        
         {% if investor.type == 'venture' and investor.team %}
         <hr>
         <h5 class="mb-2">Команда</h5>

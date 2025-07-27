@@ -13,7 +13,7 @@ import subprocess
 from fastapi import APIRouter
 from sqlalchemy import or_, func
 from sqlalchemy.exc import SQLAlchemyError, InternalError
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from db import SessionLocal, Base, engine
 from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage, Feedback
@@ -449,7 +449,8 @@ def company_profile(request: Request, id: int = Path(...)):
         db.close()
         raise HTTPException(status_code=404)
     team = list(company.team)
-    deals = list(company.deals)
+    # Сортируем сделки по ID в убывающем порядке (новые сначала)
+    deals = sorted(company.deals, key=lambda x: x.id, reverse=True)
     jobs = list(company.jobs)
     pitches = list(company.pitches)
     investors = db.query(Investor).all()
@@ -519,12 +520,35 @@ def investors(request: Request, q: str = Query('', alias='q'), country: str = Qu
 
 @app.get("/investor/{id}", response_class=HTMLResponse)
 def investor_profile(request: Request, id: int = Path(...)):
+    from models import Deal
     db = SessionLocal()
     investor = db.query(Investor).get(id)
-    portfolio = list(investor.portfolio) if investor else []
+    
+    # Получаем компании из сделок, где участвовал этот инвестор
+    portfolio_companies = []
+    if investor:
+        # Ищем сделки, где имя инвестора упоминается в поле investors
+        deals = db.query(Deal).options(joinedload(Deal.company)).all()
+        for deal in deals:
+            if deal.investors and investor.name in deal.investors and deal.company:
+                # Добавляем компанию с информацией о сделке
+                company_data = {
+                    'company': deal.company,
+                    'deal_type': deal.type,
+                    'deal_amount': deal.amount,
+                    'deal_valuation': deal.valuation,
+                    'deal_date': deal.date,
+                    'deal_status': deal.status,
+                    'company_stage': deal.company.stage if deal.company else None
+                }
+                portfolio_companies.append(company_data)
+        
+        # Сортируем по дате сделки (новые сначала)
+        portfolio_companies = sorted(portfolio_companies, key=lambda x: x['deal_date'] if x['deal_date'] else datetime.min, reverse=True)
+    
     team = list(investor.team) if investor else []
     db.close()
-    return templates.TemplateResponse("public/investors/detail.html", {"request": request, "session": request.session, "investor": investor, "portfolio": portfolio, "team": team})
+    return templates.TemplateResponse("public/investors/detail.html", {"request": request, "session": request.session, "investor": investor, "portfolio_companies": portfolio_companies, "team": team})
 
 @app.get("/news", response_class=HTMLResponse)
 def news_list(request: Request):
@@ -572,18 +596,108 @@ def news_detail(request: Request, slug: str = Path(...)):
     })
 
 @app.get("/events", response_class=HTMLResponse)
-def events_list(request: Request):
+def events_list(request: Request, q: str = Query('', alias='q'), date: str = Query('', alias='date'), format_: str = Query('', alias='format'), country: str = Query('', alias='country')):
     db = SessionLocal()
-    events = db.query(Event).order_by(Event.date.desc()).all()
+    query = db.query(Event)
+    
+    # Фильтр по поиску
+    if q:
+        query = query.filter(Event.title.ilike(f'%{q}%'))
+    
+    # Фильтр по дате
+    if date:
+        try:
+            filter_date = datetime.strptime(date, '%Y-%m-%d').date()
+            query = query.filter(Event.date >= filter_date, Event.date < filter_date + timedelta(days=1))
+        except ValueError:
+            pass
+    
+    # Фильтр по формату
+    if format_:
+        query = query.filter(Event.format == format_)
+    
+    # Фильтр по стране
+    if country:
+        query = query.filter(Event.country == country)
+    
+    events = query.order_by(Event.date.asc()).all()
+    
+    # Получаем уникальные значения для фильтров
+    formats = [f[0] for f in db.query(Event.format).distinct().order_by(Event.format) if f[0]]
+    # Получаем страны из справочника
+    countries = [c.name for c in db.query(Country).filter(Country.status == 'active').order_by(Country.name).all()]
+    
+    # Маппинг форматов на русские названия
+    format_mapping = {
+        'online': 'Онлайн',
+        'offline': 'Офлайн', 
+        'hybrid': 'Гибрид',
+        'Online': 'Онлайн',
+        'Offline': 'Офлайн',
+        'Hybrid': 'Гибрид'
+    }
+    
+    # Преобразуем форматы в русские названия
+    formats_russian = []
+    for format_item in formats:
+        formats_russian.append(format_mapping.get(format_item, format_item))
+    
+    # Генерируем календарь для фильтрации по дням
+    today = datetime.now().date()
+    calendar_dates = []
+    
+    # Генерируем даты на 30 дней вперед
+    day_names = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
+    for i in range(30):
+        date_obj = today + timedelta(days=i)
+        day_name = day_names[date_obj.weekday()]
+        is_weekend = date_obj.weekday() >= 5  # Суббота и воскресенье
+        calendar_dates.append({
+            'date': date_obj.strftime('%Y-%m-%d'),
+            'day': date_obj.day,
+            'day_name': day_name,
+            'is_weekend': is_weekend,
+            'is_today': date_obj == today
+        })
+    
     db.close()
-    return templates.TemplateResponse("public/events/list.html", {"request": request, "session": request.session, "events": events})
+    return templates.TemplateResponse("public/events/list.html", {
+        "request": request, 
+        "session": request.session, 
+        "events": events,
+        "q": q,
+        "date": date,
+        "format": format_,
+        "country": country,
+        "formats": formats_russian,
+        "countries": countries,
+        "calendar_dates": calendar_dates
+    })
 
 @app.get("/event/{id}", response_class=HTMLResponse)
 def event_detail(request: Request, id: int = Path(...)):
     db = SessionLocal()
     event = db.query(Event).get(id)
+    
+    # Получаем другие мероприятия
+    other_events = db.query(Event).filter(
+        Event.id != id,
+        Event.status == 'active'
+    ).order_by(Event.date.asc()).limit(5).all()
+    
+    # Получаем ближайшие новости
+    upcoming_news = db.query(News).filter(
+        News.status == 'active'
+    ).order_by(News.date.desc()).limit(3).all()
+    
     db.close()
-    return templates.TemplateResponse("public/events/detail.html", {"request": request, "session": request.session, "event": event})
+    return templates.TemplateResponse("public/events/detail.html", {
+        "request": request, 
+        "session": request.session, 
+        "event": event,
+        "other_events": other_events,
+        "upcoming_news": upcoming_news
+    })
 
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs_list(request: Request, q: str = Query('', alias='q'), city: str = Query('', alias='city'), job_type: str = Query('', alias='job_type'), company: str = Query('', alias='company')):
@@ -1030,7 +1144,20 @@ async def admin_edit_startup(request: Request, company_id: int):
     cities = db.query(City).options(joinedload(City.country)).order_by(City.name).all()
     error = None
     team = company.team if company else []
-    deals = company.deals if company else []
+    deals = []
+    if company:
+        # Сортируем сделки по ID в убывающем порядке (новые сначала)
+        sorted_deals = sorted(company.deals, key=lambda x: x.id, reverse=True)
+        for deal in sorted_deals:
+            deals.append({
+                'id': deal.id,
+                'type': deal.type,
+                'amount': deal.amount,
+                'valuation': deal.valuation,
+                'investors': deal.investors,
+                'date': deal.date,
+                'status': deal.status
+            })
     jobs = company.jobs if company else []
     db.close()
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": company, "team": team, "deals": deals, "jobs": jobs, "countries": countries, "cities": cities})
@@ -1533,6 +1660,198 @@ async def admin_delete_job(request: Request, job_id: int):
     db.commit()
     return RedirectResponse(url="/admin/jobs", status_code=302)
 
+# --- Events CRUD ---
+@app.get("/admin/events", response_class=HTMLResponse, name="admin_events")
+def admin_events(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    from models import Event
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    query = db.query(Event)
+    if q:
+        query = query.filter(Event.title.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(Event.status == status)
+    total = query.count()
+    events = query.order_by(Event.id).offset((page-1)*per_page).limit(per_page).all()
+    response = templates.TemplateResponse("admin/events/list.html", {"request": request, "session": request.session, "events": events, "q": q, "status": status, "per_page": per_page, "page": page, "total": total})
+    db.close()
+    return response
+
+@app.route("/admin/events/create", methods=["GET", "POST"], name="admin_create_event")
+async def admin_create_event(request: Request):
+    from models import Event
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    if request.method == "POST":
+        form = await request.form()
+        title = form.get('title')
+        description = form.get('description')
+        date_str = form.get('date')
+        format_ = form.get('format')
+        location = form.get('location')
+        country = form.get('country')
+        registration_url = form.get('registration_url')
+        status = form.get('status')
+        
+        # Обработка даты
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M') if date_str else None
+        except ValueError:
+            date = None
+        
+        # Обработка обложки
+        cover_image_path = None
+        files = await request.form()
+        if 'cover_image' in files:
+            cover_file = files['cover_image']
+            if cover_file and hasattr(cover_file, 'file') and cover_file.file:
+                # Создаем папку для изображений если её нет
+                import os
+                os.makedirs('static/event_images', exist_ok=True)
+                
+                # Генерируем уникальное имя файла
+                import uuid
+                file_extension = os.path.splitext(cover_file.filename)[1] if cover_file.filename else '.jpg'
+                filename = f"{uuid.uuid4()}{file_extension}"
+                file_path = f"static/event_images/{filename}"
+                
+                # Сохраняем файл
+                with open(file_path, 'wb') as f:
+                    content = cover_file.file.read()
+                    f.write(content)
+                
+                cover_image_path = f"/{file_path}"
+        
+        db = SessionLocal()
+        event = Event(
+            title=title,
+            description=description,
+            date=date,
+            format=format_,
+            location=location,
+            country=country,
+            registration_url=registration_url,
+            cover_image=cover_image_path,
+            status=status,
+            created_by=request.session.get('user_email', 'admin')
+        )
+        db.add(event)
+        db.commit()
+        db.close()
+        return RedirectResponse(url="/admin/events", status_code=302)
+    
+    # Получаем список стран из справочника
+    db = SessionLocal()
+    countries = db.query(Country).filter(Country.status == 'active').order_by(Country.name).all()
+    db.close()
+    
+    return templates.TemplateResponse("admin/events/form.html", {
+        "request": request, 
+        "session": request.session, 
+        "event": None,
+        "countries": countries
+    })
+
+@app.get("/admin/events/edit/{event_id}", response_class=HTMLResponse, name="admin_edit_event")
+async def admin_edit_event(request: Request, event_id: int):
+    from models import Event
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    event = db.query(Event).get(event_id)
+    if not event:
+        db.close()
+        return RedirectResponse(url="/admin/events", status_code=302)
+    
+    # Получаем список стран из справочника
+    countries = db.query(Country).filter(Country.status == 'active').order_by(Country.name).all()
+    
+    response = templates.TemplateResponse("admin/events/form.html", {
+        "request": request, 
+        "session": request.session, 
+        "event": event,
+        "countries": countries
+    })
+    db.close()
+    return response
+
+@app.post("/admin/events/edit/{event_id}", name="admin_edit_event_post")
+async def admin_edit_event_post(request: Request, event_id: int):
+    from models import Event
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    title = form.get('title')
+    description = form.get('description')
+    date_str = form.get('date')
+    format_ = form.get('format')
+    location = form.get('location')
+    country = form.get('country')
+    registration_url = form.get('registration_url')
+    status = form.get('status')
+    
+    # Обработка даты
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M') if date_str else None
+    except ValueError:
+        date = None
+    
+    # Обработка обложки
+    cover_image_path = None
+    files = await request.form()
+    if 'cover_image' in files:
+        cover_file = files['cover_image']
+        if cover_file and hasattr(cover_file, 'file') and cover_file.file:
+            # Создаем папку для изображений если её нет
+            import os
+            os.makedirs('static/event_images', exist_ok=True)
+            
+            # Генерируем уникальное имя файла
+            import uuid
+            file_extension = os.path.splitext(cover_file.filename)[1] if cover_file.filename else '.jpg'
+            filename = f"{uuid.uuid4()}{file_extension}"
+            file_path = f"static/event_images/{filename}"
+            
+            # Сохраняем файл
+            with open(file_path, 'wb') as f:
+                content = cover_file.file.read()
+                f.write(content)
+            
+            cover_image_path = f"/{file_path}"
+    
+    db = SessionLocal()
+    event = db.query(Event).get(event_id)
+    if event:
+        event.title = title
+        event.description = description
+        event.date = date
+        event.format = format_
+        event.location = location
+        event.country = country
+        event.registration_url = registration_url
+        if cover_image_path:
+            event.cover_image = cover_image_path
+        event.status = status
+        event.updated_by = request.session.get('user_email', 'admin')
+        db.commit()
+    db.close()
+    return RedirectResponse(url="/admin/events", status_code=302)
+
+@app.post("/admin/events/delete/{event_id}", name="admin_delete_event")
+async def admin_delete_event(request: Request, event_id: int):
+    from models import Event
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    db = SessionLocal()
+    event = db.query(Event).get(event_id)
+    db.delete(event)
+    db.commit()
+    return RedirectResponse(url="/admin/events", status_code=302)
+
 # --- News CRUD ---
 @app.get("/admin/news", response_class=HTMLResponse, name="admin_news")
 def admin_news(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
@@ -1845,7 +2164,7 @@ async def admin_create_investor(request: Request):
 
 @app.get("/admin/investors/edit/{investor_id}", response_class=HTMLResponse, name="admin_edit_investor")
 async def admin_edit_investor(request: Request, investor_id: int):
-    from models import Investor
+    from models import Investor, PortfolioEntry
     import datetime
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
@@ -1856,7 +2175,19 @@ async def admin_edit_investor(request: Request, investor_id: int):
     error = None
     today = datetime.date.today()
     import starlette.background
-    response = templates.TemplateResponse("admin/investors/form.html", {"request": request, "session": request.session, "investor": investor, "error": error, "today": today})
+    # Получаем сделки, где участвовал этот инвестор
+    portfolio_deals = []
+    if investor:
+        from models import Deal
+        # Ищем сделки, где имя инвестора упоминается в поле investors
+        deals = db.query(Deal).options(joinedload(Deal.company)).all()
+        for deal in deals:
+            if deal.investors and investor.name in deal.investors:
+                portfolio_deals.append(deal)
+        # Сортируем по ID в убывающем порядке (новые сначала)
+        portfolio_deals = sorted(portfolio_deals, key=lambda x: x.id, reverse=True)
+    
+    response = templates.TemplateResponse("admin/investors/form.html", {"request": request, "session": request.session, "investor": investor, "portfolio_entries": investor.portfolio_entries if investor else [], "portfolio_deals": portfolio_deals, "error": error, "today": today})
     response.background = starlette.background.BackgroundTask(db.close)
     return response
 
@@ -1904,6 +2235,86 @@ async def admin_delete_investor(request: Request, investor_id: int):
     db.commit()
     db.close()
     return RedirectResponse(url="/admin/investors", status_code=302)
+
+# === Админ панель: Портфель инвестора ===
+
+@app.post("/admin/investors/{investor_id}/portfolio/entry/add", name="admin_add_portfolio_entry")
+async def admin_add_portfolio_entry(request: Request, investor_id: int):
+    from fastapi.responses import JSONResponse
+    from models import Investor, PortfolioEntry, Company
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    company_id = form.get('company_id')
+    amount = form.get('amount')
+    valuation = form.get('valuation')
+    date_str = form.get('date')
+    
+    if not company_id or not amount or not date_str:
+        return JSONResponse({"error": "Заполните все обязательные поля"})
+    
+    db = SessionLocal()
+    try:
+        # Проверяем существование инвестора и компании
+        investor = db.query(Investor).get(investor_id)
+        company = db.query(Company).get(company_id)
+        
+        if not investor or not company:
+            return JSONResponse({"error": "Инвестор или компания не найдены"})
+        
+        # Обработка даты
+        try:
+            date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return JSONResponse({"error": "Неверный формат даты"})
+        
+        # Создаем запись в портфеле
+        portfolio_entry = PortfolioEntry(
+            investor_id=investor_id,
+            company_id=int(company_id),
+            amount=float(amount) if amount else None,
+            valuation=float(valuation) if valuation else None,
+            date=date
+        )
+        db.add(portfolio_entry)
+        db.commit()
+        
+        return JSONResponse({"success": True, "message": "Запись добавлена в портфель"})
+        
+    except Exception as e:
+        db.rollback()
+        return JSONResponse({"error": f"Ошибка при добавлении записи: {str(e)}"})
+    finally:
+        db.close()
+
+@app.post("/admin/investors/{investor_id}/portfolio/entry/delete/{entry_id}", name="admin_delete_portfolio_entry")
+async def admin_delete_portfolio_entry(request: Request, investor_id: int, entry_id: int):
+    from models import PortfolioEntry
+    from fastapi.responses import JSONResponse
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    try:
+        entry = db.query(PortfolioEntry).filter(
+            PortfolioEntry.id == entry_id,
+            PortfolioEntry.investor_id == investor_id
+        ).first()
+        
+        if entry:
+            db.delete(entry)
+            db.commit()
+            return JSONResponse({"success": True, "message": "Запись удалена из портфеля"})
+        else:
+            return JSONResponse({"error": "Запись не найдена"})
+            
+    except Exception as e:
+        db.rollback()
+        return JSONResponse({"error": f"Ошибка при удалении записи: {str(e)}"})
+    finally:
+        db.close()
 
 @app.get("/admin/company_search")
 async def admin_startup_search(q: str = Query('', alias='q')):
@@ -2637,6 +3048,7 @@ async def admin_create_deal(request: Request):
     company_id = form.get('company_id')
     deal_type = form.get('deal_type')
     amount = form.get('amount')
+    valuation = form.get('valuation')
     investors_list = form.getlist('investors')
     investors = ', '.join(investors_list) if investors_list else ''
     deal_date_str = form.get('deal_date')
@@ -2667,6 +3079,7 @@ async def admin_create_deal(request: Request):
         deal = Deal(
             type=deal_type,
             amount=float(amount) if amount else None,
+            valuation=float(valuation) if valuation else None,
             investors=investors,
             date=deal_date,
             status=status,
@@ -2686,26 +3099,22 @@ async def admin_create_deal(request: Request):
 @app.get("/admin/deals/{deal_id}/edit", name="admin_edit_deal_form")
 async def admin_edit_deal_form(request: Request, deal_id: int):
     from models import Deal, CompanyStage, Investor
+    from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
-    company_id = request.query_params.get('company_id')
-    if not company_id:
-        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
-    
     db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
+    deal = db.query(Deal).options(joinedload(Deal.company)).get(deal_id)
     stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
     investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
     db.close()
     
     if not deal:
-        return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=deals&error=Сделка не найдена", status_code=302)
+        return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
     
     return templates.TemplateResponse("admin/deals/edit.html", {
         "request": request, 
         "deal": deal,
-        "company_id": company_id,
         "stages": stages,
         "investors": investors
     })
@@ -2718,26 +3127,23 @@ async def admin_edit_deal(request: Request, deal_id: int):
         return RedirectResponse(url="/login", status_code=302)
     
     form = await request.form()
-    company_id = request.query_params.get('company_id')
     deal_type = form.get('deal_type')
     amount = form.get('amount')
+    valuation = form.get('valuation')
     investors_list = form.getlist('investors')
     investors = ', '.join(investors_list) if investors_list else ''
 
     deal_date_str = form.get('deal_date')
     status = form.get('status', 'active')
     
-    if not company_id:
-        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
-    
     if not deal_type or not amount:
-        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?company_id={company_id}&error=Заполните все обязательные поля", status_code=302)
+        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Заполните все обязательные поля", status_code=302)
     
     db = SessionLocal()
     try:
         deal = db.query(Deal).get(deal_id)
         if not deal:
-            return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=deals&error=Сделка не найдена", status_code=302)
+            return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
         
         # Обработка даты
         deal_date = None
@@ -2750,6 +3156,7 @@ async def admin_edit_deal(request: Request, deal_id: int):
         # Обновляем запись
         deal.type = deal_type
         deal.amount = float(amount) if amount else None
+        deal.valuation = float(valuation) if valuation else None
         deal.investors = investors
         deal.date = deal_date
         deal.status = status
@@ -2758,21 +3165,17 @@ async def admin_edit_deal(request: Request, deal_id: int):
         
     except Exception as e:
         db.rollback()
-        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?company_id={company_id}&error=Ошибка при обновлении сделки", status_code=302)
+        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Ошибка при обновлении сделки", status_code=302)
     finally:
         db.close()
     
-    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно обновлена", status_code=302)
+    return RedirectResponse(url="/admin/deals?message=Сделка успешно обновлена", status_code=302)
 
 @app.post("/admin/deals/{deal_id}/delete", name="admin_delete_deal")
 async def admin_delete_deal(request: Request, deal_id: int):
     from models import Deal
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
-    
-    company_id = request.query_params.get('company_id')
-    if not company_id:
-        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
     
     db = SessionLocal()
     try:
@@ -2907,7 +3310,7 @@ async def get_comments_web(request: Request, entity_type: str, entity_id: int):
     })
 
 @app.get("/admin/deals", response_class=HTMLResponse, name="admin_deals")
-async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+async def admin_deals(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
     from models import Deal, Company
     from sqlalchemy import or_
     from sqlalchemy.orm import joinedload
@@ -2929,14 +3332,15 @@ async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page:
             )
         )
     
+    # Фильтр по статусу
+    if status:
+        query = query.filter(Deal.status == status)
+    
     # Общее количество
     total = query.count()
     
     # Пагинация
-    deals = query.offset((page - 1) * per_page).limit(per_page).all()
-    
-    # Подсчет страниц
-    total_pages = (total + per_page - 1) // per_page
+    deals = query.order_by(Deal.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
     
     db.close()
     
@@ -2944,10 +3348,10 @@ async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page:
         "request": request,
         "deals": deals,
         "q": q,
+        "status": status,
         "page": page,
         "per_page": per_page,
-        "total": total,
-        "total_pages": total_pages
+        "total": total
     })
 
 # === Админ панель: Системное - Обратная связь ===

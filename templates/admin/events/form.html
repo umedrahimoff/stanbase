@@ -1,0 +1,142 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-4">{% if event %}Редактировать мероприятие{% else %}Создать мероприятие{% endif %}</h3>
+        <form method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+          <div class="mb-3">
+            <label for="title" class="form-label">Название мероприятия *</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ event.title if event else '' }}" required>
+            <div class="invalid-feedback">Введите название мероприятия</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="6">{{ event.description if event else '' }}</textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="date" class="form-label">Дата и время</label>
+                <input type="datetime-local" class="form-control" id="date" name="date" 
+                       value="{{ event.date.strftime('%Y-%m-%dT%H:%M') if event and event.date else '' }}">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="format" class="form-label">Формат</label>
+                <select class="form-select" id="format" name="format">
+                  <option value="">Выберите формат</option>
+                  <option value="online" {% if event and event.format == 'online' %}selected{% endif %}>Онлайн</option>
+                  <option value="offline" {% if event and event.format == 'offline' %}selected{% endif %}>Офлайн</option>
+                  <option value="hybrid" {% if event and event.format == 'hybrid' %}selected{% endif %}>Гибрид</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="country" class="form-label">Страна</label>
+                <select class="form-select" id="country" name="country">
+                  <option value="">Выберите страну</option>
+                  {% for country in countries %}
+                    <option value="{{ country.name }}" {% if event and event.country == country.name %}selected{% endif %}>{{ country.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="location" class="form-label">Место проведения</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ event.location if event else '' }}">
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="registration_url" class="form-label">Ссылка на регистрацию</label>
+            <input type="url" class="form-control" id="registration_url" name="registration_url" value="{{ event.registration_url if event else '' }}">
+          </div>
+          
+          <div class="mb-3">
+            <label for="cover_image" class="form-label">Обложка мероприятия</label>
+            {% if event and event.cover_image %}
+              <div class="mb-2">
+                <img src="{{ event.cover_image }}" alt="Обложка" style="max-width: 200px; max-height: 120px; border-radius: 8px; background: #f8f9fa;">
+              </div>
+            {% endif %}
+            <input type="file" class="form-control" id="cover_image" name="cover_image" accept="image/*">
+            <div class="form-text">PNG, JPG, до 2 МБ</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="status" class="form-label">Статус</label>
+            <select class="form-select" id="status" name="status" required>
+              <option value="active" {% if event and event.status == 'active' %}selected{% endif %}>Активно</option>
+              <option value="inactive" {% if event and event.status == 'inactive' %}selected{% endif %}>Неактивно</option>
+              <option value="draft" {% if event and event.status == 'draft' %}selected{% endif %}>Черновик</option>
+              <option value="archived" {% if event and event.status == 'archived' %}selected{% endif %}>Архив</option>
+            </select>
+          </div>
+          
+          <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('admin_events') }}" class="btn btn-outline-secondary">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+  <div class="card mb-4 user-meta-card">
+    <div class="card-body">
+      <h6 class="text-muted mb-3">Тех. информация</h6>
+      {% if event %}
+        <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ event.id }}</span></div>
+        <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ event.status }}</span></div>
+        <div class="meta-row"><span class="meta-label">Дата создания:</span> <span class="meta-value">{{ event.created_at.strftime('%d.%m.%Y %H:%M') if event.created_at else '—' }}</span></div>
+        <div class="meta-row"><span class="meta-label">Дата изменения:</span> <span class="meta-value">{{ event.updated_at.strftime('%d.%m.%Y %H:%M') if event.updated_at else '—' }}</span></div>
+        <div class="meta-row"><span class="meta-label">Создатель:</span> <span class="meta-value">{{ event.created_by or '—' }}</span></div>
+        {% if event.updated_by %}
+        <div class="meta-row"><span class="meta-label">Обновил:</span> <span class="meta-value">{{ event.updated_by }}</span></div>
+        {% endif %}
+      {% else %}
+        <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">Новая запись</span></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
+
+<script>
+// Валидация формы
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+</script>
+{% endblock %} 

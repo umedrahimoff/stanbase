@@ -26,9 +26,15 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="mb-3">
-              <label for="amount" class="form-label">Сумма *</label>
-              <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="amount" class="form-label">Сумма инвестиции *</label>
+                <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+              </div>
+              <div class="col-md-6">
+                <label for="valuation" class="form-label">Оценка компании</label>
+                <input type="number" class="form-control" id="valuation" name="valuation" step="0.01">
+              </div>
             </div>
             <div class="mb-3">
               <label for="investors" class="form-label">Инвесторы</label>
