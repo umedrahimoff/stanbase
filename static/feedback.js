@@ -67,6 +67,13 @@ class FeedbackSystem {
             }
         });
 
+        // Обработчик кнопки обратной связи
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'feedbackButton' || e.target.closest('#feedbackButton')) {
+                this.openFeedbackModal();
+            }
+        });
+
         // Обработчик открытия модального окна
         document.addEventListener('show.bs.modal', (e) => {
             if (e.target.id === 'feedbackModal') {
@@ -110,12 +117,6 @@ class FeedbackSystem {
     }
 
     setupHotkeys() {
-        // Проверяем, что это не мобильное устройство
-        if (window.innerWidth < 992) {
-            console.log('📱 Система обратной связи отключена на мобильных устройствах');
-            return;
-        }
-        
         document.addEventListener('keydown', (e) => {
             // Ctrl+Shift+B (Windows/Linux) или Cmd+Shift+B (Mac)
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') {
@@ -126,12 +127,6 @@ class FeedbackSystem {
     }
 
     openFeedbackModal() {
-        // Проверяем, что это не мобильное устройство
-        if (window.innerWidth < 992) {
-            console.log('📱 Система обратной связи недоступна на мобильных устройствах');
-            return;
-        }
-        
         if (this.modal) {
             this.fillTechnicalInfo();
             this.modal.show();

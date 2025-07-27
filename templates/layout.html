@@ -49,6 +49,38 @@
         color: inherit !important;
         text-decoration: none !important;
       }
+      
+      /* Кнопка обратной связи */
+      .feedback-button-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+      
+      .feedback-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+      
+      .feedback-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      }
+      
+      /* Скрытие на мобильных устройствах */
+      @media (max-width: 767.98px) {
+        .feedback-button-container {
+          display: none;
+        }
+      }
     </style>
     {% block head %}{% endblock %}
   </head>
@@ -91,21 +123,7 @@
       </div>
     </nav>
     
-    <!-- Уведомление о горячих клавишах (только для десктопа) -->
-    <div class="d-none d-lg-block">
-      <div class="container">
-        <div class="alert alert-info alert-dismissible fade show py-3 px-4" role="alert" style="border-radius: 8px; border: 1px solid #b6effb; background-color: #f0f9ff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center">
-              <span class="fw-medium">
-                💡 Нашли проблему или есть предложение? Нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> и отправьте нам!
-              </span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        </div>
-      </div>
-    </div>
+
     
     <div class="container">
       {% if session.get('flash') %}
@@ -280,15 +298,17 @@
             </div>
           </div>
         </div>
-        <div class="row mt-2">
-          <div class="col-12 text-center">
-            <div class="small text-muted">
-              <i class="bi bi-bug"></i> Нашли ошибку? Нажмите <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> для обратной связи
-            </div>
-          </div>
-        </div>
+
       </div>
     </footer>
+    
+    <!-- Кнопка обратной связи (правый нижний угол) -->
+    <div class="feedback-button-container">
+      <button class="btn btn-primary feedback-button" id="feedbackButton" title="Обратная связь">
+        <i class="bi bi-chat-dots"></i>
+      </button>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}
   </body>
