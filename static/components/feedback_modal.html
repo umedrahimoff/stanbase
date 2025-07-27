@@ -1,0 +1,98 @@
+<!-- Модальное окно обратной связи (только для десктопа) -->
+<div class="modal fade d-none d-lg-block" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="feedbackModalLabel">
+          <i class="bi bi-chat-dots me-2"></i>Обратная связь
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="feedbackForm">
+          <!-- Тип обратной связи -->
+          <div class="mb-3">
+            <label for="feedbackType" class="form-label">Тип сообщения *</label>
+            <select class="form-select" id="feedbackType" required>
+              <option value="">Выберите тип</option>
+              <option value="bug">🐛 Ошибка/Баг</option>
+              <option value="feature">💡 Предложение функции</option>
+              <option value="improvement">⚡ Улучшение</option>
+              <option value="other">📝 Другое</option>
+            </select>
+          </div>
+
+          <!-- Описание проблемы -->
+          <div class="mb-3">
+            <label for="feedbackDescription" class="form-label">Описание проблемы *</label>
+            <textarea class="form-control" id="feedbackDescription" rows="4" 
+                      placeholder="Опишите проблему или что вы заметили..." required></textarea>
+          </div>
+
+          <!-- Предложение -->
+          <div class="mb-3">
+            <label for="feedbackSuggestion" class="form-label">Ваше предложение</label>
+            <textarea class="form-control" id="feedbackSuggestion" rows="3" 
+                      placeholder="Как можно улучшить? (необязательно)"></textarea>
+          </div>
+
+          <!-- Информация о пользователе -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="feedbackName" class="form-label">Ваше имя</label>
+                <input type="text" class="form-control" id="feedbackName" 
+                       placeholder="Как к вам обращаться">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="feedbackEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="feedbackEmail" 
+                       placeholder="Для связи с вами">
+              </div>
+            </div>
+          </div>
+
+          <!-- Скрытые поля с технической информацией -->
+          <input type="hidden" id="feedbackPageUrl">
+          <input type="hidden" id="feedbackPageTitle">
+          <input type="hidden" id="feedbackUserAgent">
+          <input type="hidden" id="feedbackScreenSize">
+          <input type="hidden" id="feedbackIsAuthenticated">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Отмена
+        </button>
+        <button type="button" class="btn btn-primary" id="submitFeedback">
+          <i class="bi bi-send me-1"></i>Отправить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Уведомление об успешной отправке -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="feedbackToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <i class="bi bi-check-circle text-success me-2"></i>
+      <strong class="me-auto">Обратная связь</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="feedbackToastMessage">
+      Сообщение отправлено успешно!
+    </div>
+  </div>
+</div>
+
+<style>
+/* Скрытие на мобильных устройствах */
+@media (max-width: 991.98px) {
+  #feedbackModal {
+    display: none !important;
+  }
+}
+</style> 

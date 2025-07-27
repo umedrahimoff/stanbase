@@ -1,0 +1,240 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Обратная связь #{{ feedback.id }} - Админ панель{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Обратная связь #{{ feedback.id }}</h1>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin_feedback') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Основная информация -->
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Детали обратной связи</h5>
+        </div>
+        <div class="card-body">
+          <!-- Тип и статус -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Тип:</label>
+              <div>
+                {% if feedback.type == 'bug' %}
+                  <span class="badge bg-danger fs-6">🐛 Ошибка/Баг</span>
+                {% elif feedback.type == 'feature' %}
+                  <span class="badge bg-primary fs-6">💡 Предложение функции</span>
+                {% elif feedback.type == 'improvement' %}
+                  <span class="badge bg-warning fs-6">⚡ Улучшение</span>
+                {% else %}
+                  <span class="badge bg-secondary fs-6">📝 Другое</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Статус:</label>
+              <div>
+                {% if feedback.status == 'new' %}
+                  <span class="badge bg-warning fs-6">Новый</span>
+                {% elif feedback.status == 'in_progress' %}
+                  <span class="badge bg-info fs-6">В работе</span>
+                {% elif feedback.status == 'resolved' %}
+                  <span class="badge bg-success fs-6">Решено</span>
+                {% elif feedback.status == 'closed' %}
+                  <span class="badge bg-secondary fs-6">Закрыто</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Описание -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Описание проблемы:</label>
+            <div class="border rounded p-3 bg-light">
+              {{ feedback.description | nl2br }}
+            </div>
+          </div>
+
+          <!-- Предложение -->
+          {% if feedback.suggestion %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Предложение пользователя:</label>
+            <div class="border rounded p-3 bg-light">
+              {{ feedback.suggestion | nl2br }}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Информация о пользователе -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Имя:</label>
+              <div>{{ feedback.name or 'Не указано' }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Email:</label>
+              <div>
+                {% if feedback.email %}
+                  <a href="mailto:{{ feedback.email }}">{{ feedback.email }}</a>
+                {% else %}
+                  Не указан
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Техническая информация -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Техническая информация:</label>
+            <div class="row">
+              <div class="col-md-6">
+                <small class="text-muted">Авторизован:</small>
+                <div>
+                  {% if feedback.is_authenticated %}
+                    <span class="badge bg-success">Да</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Нет</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <small class="text-muted">Размер экрана:</small>
+                <div>{{ feedback.screen_size or 'Не указан' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Страница -->
+          {% if feedback.page_url %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Страница:</label>
+            <div>
+              <a href="{{ feedback.page_url }}" target="_blank">{{ feedback.page_title or feedback.page_url }}</a>
+            </div>
+            <small class="text-muted">{{ feedback.page_url }}</small>
+          </div>
+          {% endif %}
+
+          <!-- User Agent -->
+          {% if feedback.user_agent %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">User Agent:</label>
+            <div class="border rounded p-2 bg-light">
+              <small>{{ feedback.user_agent }}</small>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Даты -->
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Создано:</label>
+              <div>{{ feedback.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Обновлено:</label>
+              <div>{{ feedback.updated_at.strftime('%d.%m.%Y %H:%M:%S') }}</div>
+            </div>
+          </div>
+
+          {% if feedback.processed_by %}
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Обработано:</label>
+              <div>{{ feedback.processed_by }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Дата обработки:</label>
+              <div>{{ feedback.processed_at.strftime('%d.%m.%Y %H:%M:%S') if feedback.processed_at else 'Не обработано' }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Панель действий -->
+    <div class="col-lg-4">
+      <!-- Управление статусом -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Управление статусом</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('admin_feedback_status', feedback_id=feedback.id) }}">
+            <div class="mb-3">
+              <label for="status" class="form-label">Статус:</label>
+              <select class="form-select" id="status" name="status" required>
+                <option value="new" {% if feedback.status == 'new' %}selected{% endif %}>Новый</option>
+                <option value="in_progress" {% if feedback.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                <option value="resolved" {% if feedback.status == 'resolved' %}selected{% endif %}>Решено</option>
+                <option value="closed" {% if feedback.status == 'closed' %}selected{% endif %}>Закрыто</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="admin_notes" class="form-label">Заметки администратора:</label>
+              <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Внутренние заметки по обработке...">{{ feedback.admin_notes or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-save"></i> Обновить статус
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Быстрые действия -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Быстрые действия</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            {% if feedback.email %}
+            <a href="mailto:{{ feedback.email }}?subject=Re: Обратная связь #{{ feedback.id }}" class="btn btn-outline-primary">
+              <i class="bi bi-envelope"></i> Ответить пользователю
+            </a>
+            {% endif %}
+            
+            <a href="{{ feedback.page_url }}" target="_blank" class="btn btn-outline-info">
+              <i class="bi bi-box-arrow-up-right"></i> Открыть страницу
+            </a>
+            
+            <form method="post" action="{{ url_for('admin_feedback_delete', feedback_id=feedback.id) }}" class="d-grid" onsubmit="return confirm('Удалить эту обратную связь?')">
+              <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Удалить
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Статистика -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Информация</h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-6">
+              <div class="border-end">
+                <h4 class="mb-0">{{ feedback.id }}</h4>
+                <small class="text-muted">ID</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <h4 class="mb-0">{{ feedback.created_at.strftime('%d.%m') }}</h4>
+              <small class="text-muted">Дата</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

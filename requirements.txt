@@ -9,3 +9,4 @@ python-multipart
 requests
 passlib[bcrypt]
 python-jose[cryptography]
+aiohttp

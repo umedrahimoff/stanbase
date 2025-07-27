@@ -113,7 +113,12 @@
           </ul>
         </li>
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_jobs' %}active{% endif %}" href="{{ url_for('admin_jobs') }}">Вакансии</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_deals' %}active{% endif %}" href="{{ url_for('admin_deals') }}">Сделки</a></li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'admin_deals' %}active{% endif %}" href="{{ url_for('admin_deals') }}">
+            Сделки
+            <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">В разработке</span>
+          </a>
+        </li>
         
         <li><hr class="my-2"></li>
         <li class="nav-item">
@@ -126,6 +131,16 @@
             
             <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_company_stages' %}active{% endif %}" href="{{ url_for('admin_company_stages') }}">Стадии компании</a></li>
             <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" href="{{ url_for('admin_categories') }}">Категории</a></li>
+          </ul>
+        </li>
+        
+        <li><hr class="my-2"></li>
+        <li class="nav-item">
+          <span class="nav-link d-flex justify-content-between align-items-center">
+            <span>Системное <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">В разработке</span></span>
+          </span>
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_feedback' %}active{% endif %}" href="{{ url_for('admin_feedback') }}">Обратная связь</a></li>
           </ul>
         </li>
       </ul>

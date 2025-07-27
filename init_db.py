@@ -3,7 +3,7 @@ import models
 from models import *
 from datetime import date, datetime, timedelta
 from sqlalchemy import func
-from security import get_password_hash
+from utils.security import get_password_hash
 
 # Создать все таблицы
 Base.metadata.create_all(bind=engine)

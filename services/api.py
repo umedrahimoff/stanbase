@@ -5,11 +5,12 @@ from typing import List, Optional
 from datetime import datetime
 
 from db import SessionLocal
-from models import User, Company, Investor, News, Job, Comment, Notification
+from models import User, Company, Investor, News, Job, Comment, Notification, Feedback
 from utils.security import verify_token
 from .notifications import NotificationService, NotificationTemplates
 from .comments import CommentService, CommentValidator
 from .cache import cache_manager, CacheInvalidator
+from .telegram import telegram_service
 
 # Создаем роутер для API
 api_router = APIRouter(prefix="/api/v1", tags=["API"])
@@ -409,6 +410,84 @@ async def get_jobs_api(
         }
     finally:
         db.close() 
+
+# === API для обратной связи ===
+
+@api_router.post("/feedback")
+async def submit_feedback(
+    type: str = Query(..., description="Тип обратной связи"),
+    description: str = Query(..., description="Описание проблемы"),
+    suggestion: str = Query("", description="Предложение пользователя"),
+    page_url: str = Query(..., description="URL страницы"),
+    page_title: str = Query("", description="Заголовок страницы"),
+    user_agent: str = Query("", description="User Agent браузера"),
+    screen_size: str = Query("", description="Размер экрана"),
+    user_name: str = Query("", description="Имя пользователя"),
+    user_email: str = Query("", description="Email пользователя"),
+    is_authenticated: bool = Query(False, description="Авторизован ли пользователь")
+):
+    """Отправить обратную связь в Telegram и сохранить в базе данных"""
+    
+    feedback_data = {
+        "type": type,
+        "description": description,
+        "suggestion": suggestion,
+        "user_info": {
+            "name": user_name,
+            "email": user_email,
+            "is_authenticated": is_authenticated
+        },
+        "page_info": {
+            "url": page_url,
+            "title": page_title,
+            "user_agent": user_agent,
+            "screen_size": screen_size
+        }
+    }
+    
+    # Сохраняем в базе данных
+    db = SessionLocal()
+    try:
+        feedback = Feedback(
+            type=type,
+            description=description,
+            suggestion=suggestion if suggestion else None,
+            name=user_name if user_name else None,
+            email=user_email if user_email else None,
+            page_url=page_url,
+            page_title=page_title,
+            user_agent=user_agent,
+            screen_size=screen_size,
+            is_authenticated=is_authenticated,
+            status='new'
+        )
+        db.add(feedback)
+        db.commit()
+        db.refresh(feedback)
+    except Exception as e:
+        db.rollback()
+        return {
+            "success": False,
+            "message": "Ошибка при сохранении обратной связи",
+            "error": str(e)
+        }
+    finally:
+        db.close()
+    
+    # Отправляем в Telegram
+    result = await telegram_service.send_feedback(feedback_data)
+    
+    if result["success"]:
+        return {
+            "success": True,
+            "message": "Обратная связь отправлена успешно"
+        }
+    else:
+        return {
+            "success": False,
+            "message": "Обратная связь сохранена, но ошибка при отправке в Telegram",
+            "error": result.get("error", "Неизвестная ошибка")
+        }
 
 # === API для управления кешем ===
 

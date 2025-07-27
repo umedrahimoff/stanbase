@@ -16,7 +16,7 @@ from sqlalchemy.exc import SQLAlchemyError, InternalError
 from datetime import datetime
 
 from db import SessionLocal, Base, engine
-from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage
+from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage, Feedback
 from starlette.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from email.utils import parseaddr
@@ -2856,6 +2856,143 @@ async def admin_deals(request: Request, q: str = Query('', alias='q'), per_page:
         "total": total,
         "total_pages": total_pages
     })
+
+# === Админ панель: Системное - Обратная связь ===
+
+@app.get("/admin/feedback", response_class=HTMLResponse, name="admin_feedback")
+async def admin_feedback(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page')):
+    """Список обратной связи"""
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    
+    # Базовый запрос
+    query = db.query(Feedback)
+    
+    # Фильтрация по поиску
+    if q:
+        query = query.filter(
+            or_(
+                Feedback.description.contains(q),
+                Feedback.suggestion.contains(q),
+                Feedback.name.contains(q),
+                Feedback.email.contains(q),
+                Feedback.type.contains(q)
+            )
+        )
+    
+    # Фильтрация по статусу
+    if status:
+        query = query.filter(Feedback.status == status)
+    
+    # Сортировка по дате создания (новые сначала)
+    query = query.order_by(Feedback.created_at.desc())
+    
+    # Общее количество
+    total = query.count()
+    
+    # Пагинация
+    feedback_list = query.offset((page - 1) * per_page).limit(per_page).all()
+    
+    # Подсчет страниц
+    total_pages = (total + per_page - 1) // per_page
+    
+    db.close()
+    
+    return templates.TemplateResponse("admin/feedback/list.html", {
+        "request": request,
+        "feedback_list": feedback_list,
+        "q": q,
+        "status": status,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": total_pages
+    })
+
+@app.get("/admin/feedback/{feedback_id}", response_class=HTMLResponse, name="admin_feedback_detail")
+async def admin_feedback_detail(request: Request, feedback_id: int):
+    """Детальная информация об обратной связи"""
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    feedback = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    db.close()
+    
+    if not feedback:
+        return RedirectResponse(url="/admin/feedback", status_code=302)
+    
+    return templates.TemplateResponse("admin/feedback/detail.html", {
+        "request": request,
+        "feedback": feedback
+    })
+
+@app.post("/admin/feedback/{feedback_id}/status", name="admin_feedback_status")
+async def admin_feedback_status(request: Request, feedback_id: int):
+    """Обновить статус обратной связи"""
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    form = await request.form()
+    new_status = form.get('status')
+    admin_notes = form.get('admin_notes', '')
+    
+    if new_status not in ['new', 'in_progress', 'resolved', 'closed']:
+        return RedirectResponse(url=f"/admin/feedback/{feedback_id}", status_code=302)
+    
+    db = SessionLocal()
+    feedback = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    
+    if feedback:
+        feedback.status = new_status
+        feedback.admin_notes = admin_notes
+        feedback.processed_by = request.session.get('user_name', 'Admin')
+        feedback.processed_at = datetime.utcnow()
+        feedback.updated_at = datetime.utcnow()
+        db.commit()
+    
+    db.close()
+    
+    return RedirectResponse(url=f"/admin/feedback/{feedback_id}", status_code=302)
+
+@app.post("/admin/feedback/{feedback_id}/delete", name="admin_feedback_delete")
+async def admin_feedback_delete(request: Request, feedback_id: int):
+    """Удалить обратную связь"""
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    feedback = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    
+    if feedback:
+        db.delete(feedback)
+        db.commit()
+    
+    db.close()
+    
+    return RedirectResponse(url="/admin/feedback", status_code=302)
+
+# === Страницы политики и условий ===
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy_page(request: Request):
+    """Страница политики конфиденциальности"""
+    return templates.TemplateResponse("public/privacy.html", {
+        "request": request,
+        "session": request.session
+    })
+
+@app.get("/terms", response_class=HTMLResponse)
+def terms_page(request: Request):
+    """Страница условий использования"""
+    return templates.TemplateResponse("public/terms.html", {
+        "request": request,
+        "session": request.session
+    })
+
+
 
 if __name__ == "__main__":
     print('SERVER STARTED')

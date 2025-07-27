@@ -251,4 +251,30 @@ class UserActivity(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Отношения
-    user = relationship('User', backref='activities') 
+    user = relationship('User', backref='activities')
+
+class Feedback(Base):
+    __tablename__ = 'feedback'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(32), nullable=False)  # 'bug', 'feature', 'improvement', 'other'
+    description = Column(Text, nullable=False)
+    suggestion = Column(Text, nullable=True)
+    name = Column(String(128), nullable=True)
+    email = Column(String(128), nullable=True)
+    
+    # Техническая информация
+    page_url = Column(String(512), nullable=True)
+    page_title = Column(String(256), nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    screen_size = Column(String(64), nullable=True)
+    is_authenticated = Column(Boolean, default=False)
+    
+    # Статус обработки
+    status = Column(String(16), default='new')  # 'new', 'in_progress', 'resolved', 'closed'
+    admin_notes = Column(Text, nullable=True)
+    
+    # Метаданные
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    processed_by = Column(String(64), nullable=True)
+    processed_at = Column(DateTime, nullable=True) 
