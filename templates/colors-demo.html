@@ -1,0 +1,377 @@
+{% extends 'layout.html' %}
+
+{% block title %}Цветовая схема StanBase{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="text-center mb-5">Цветовая схема StanBase</h1>
+      
+      <!-- Основные цвета -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Основные цвета</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <div class="p-4 rounded text-center text-white" style="background-color: #146AFF;">
+                <h5>Основной синий</h5>
+                <code>#146AFF</code>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-4 rounded text-center text-white" style="background-color: #F5A623;">
+                <h5>Оранжевый</h5>
+                <code>#F5A623</code>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-4 rounded text-center" style="background-color: #CBDDFF; color: #183444;">
+                <h5>Светло-синий</h5>
+                <code>#CBDDFF</code>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-4 rounded text-center text-white" style="background-color: #183444;">
+                <h5>Темно-синий</h5>
+                <code>#183444</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Кнопки -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Кнопки</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Основные кнопки</h5>
+              <button class="btn btn-primary me-2 mb-2">Основная кнопка</button>
+              <button class="btn btn-outline-primary me-2 mb-2">Контурная кнопка</button>
+              <button class="btn btn-secondary me-2 mb-2">Вторичная кнопка</button>
+            </div>
+            <div class="col-md-6">
+              <h5>Размеры кнопок</h5>
+              <button class="btn btn-primary btn-lg me-2 mb-2">Большая</button>
+              <button class="btn btn-primary me-2 mb-2">Обычная</button>
+              <button class="btn btn-primary btn-sm me-2 mb-2">Маленькая</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Бейджи -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Бейджи</h3>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-primary me-2">Основной</span>
+          <span class="badge badge-secondary me-2">Вторичный</span>
+          <span class="badge badge-light-blue me-2">Светло-синий</span>
+          <span class="badge bg-success me-2">Успех</span>
+          <span class="badge bg-danger me-2">Ошибка</span>
+          <span class="badge bg-warning me-2">Предупреждение</span>
+        </div>
+      </div>
+
+      <!-- Карточки -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Карточки</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Обычная карточка</h5>
+                  <p class="card-text">Это пример обычной карточки с новой цветовой схемой.</p>
+                  <button class="btn btn-primary">Действие</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="mb-0">Карточка с заголовком</h5>
+                </div>
+                <div class="card-body">
+                  <p class="card-text">Карточка с выделенным заголовком.</p>
+                  <button class="btn btn-outline-primary">Действие</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                  <h5 class="card-title">Градиентная карточка</h5>
+                  <p class="card-text">Карточка с градиентным фоном.</p>
+                  <button class="btn btn-light">Действие</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Формы -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Формы</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="exampleInput" class="form-label">Текстовое поле</label>
+                <input type="text" class="form-control" id="exampleInput" placeholder="Введите текст">
+              </div>
+              <div class="mb-3">
+                <label for="exampleSelect" class="form-label">Выпадающий список</label>
+                <select class="form-select" id="exampleSelect">
+                  <option>Выберите опцию</option>
+                  <option>Опция 1</option>
+                  <option>Опция 2</option>
+                  <option>Опция 3</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="exampleTextarea" class="form-label">Текстовая область</label>
+                <textarea class="form-control" id="exampleTextarea" rows="3" placeholder="Введите текст"></textarea>
+              </div>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="exampleCheck">
+                  <label class="form-check-label" for="exampleCheck">
+                    Согласен с условиями
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Алерты -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Алерты</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-primary" role="alert">
+            Это основной алерт с новой цветовой схемой.
+          </div>
+          <div class="alert alert-secondary" role="alert">
+            Это вторичный алерт с новой цветовой схемой.
+          </div>
+          <div class="alert alert-success" role="alert">
+            Это алерт успеха.
+          </div>
+          <div class="alert alert-danger" role="alert">
+            Это алерт ошибки.
+          </div>
+        </div>
+      </div>
+
+      <!-- Пагинация -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Пагинация</h3>
+        </div>
+        <div class="card-body">
+          <nav aria-label="Пример пагинации">
+            <ul class="pagination">
+              <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+              </li>
+              <li class="page-item active">
+                <span class="page-link">1</span>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="#">2</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="#">3</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="#">&raquo;</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Прогресс бары -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Прогресс бары</h3>
+        </div>
+        <div class="card-body">
+          <div class="progress mb-3">
+            <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+          </div>
+          <div class="progress mb-3">
+            <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+          </div>
+          <div class="progress mb-3">
+            <div class="progress-bar" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">75%</div>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Таблицы -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Таблицы</h3>
+        </div>
+        <div class="card-body">
+          <table class="table table-hover">
+            <thead class="table-primary">
+              <tr>
+                <th>Заголовок 1</th>
+                <th>Заголовок 2</th>
+                <th>Заголовок 3</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Данные 1</td>
+                <td>Данные 2</td>
+                <td>Данные 3</td>
+              </tr>
+              <tr>
+                <td>Данные 4</td>
+                <td>Данные 5</td>
+                <td>Данные 6</td>
+              </tr>
+              <tr>
+                <td>Данные 7</td>
+                <td>Данные 8</td>
+                <td>Данные 9</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Кастомные классы -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Кастомные классы</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-primary-custom text-white text-center">
+                bg-primary-custom
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-secondary-custom text-white text-center">
+                bg-secondary-custom
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-light-blue text-dark-blue text-center">
+                bg-light-blue
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-dark-blue text-white text-center">
+                bg-dark-blue
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-white border text-center text-primary-custom">
+                text-primary-custom
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-white border text-center text-secondary-custom">
+                text-secondary-custom
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-white border text-center text-light-blue">
+                text-light-blue
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="p-3 rounded bg-white border text-center text-dark-blue">
+                text-dark-blue
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Градиенты -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Градиенты</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="p-4 rounded text-white text-center bg-gradient-primary">
+                <h5>Основной градиент</h5>
+                <p class="mb-0">bg-gradient-primary</p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="p-4 rounded text-white text-center bg-gradient-secondary">
+                <h5>Вторичный градиент</h5>
+                <p class="mb-0">bg-gradient-secondary</p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="p-4 rounded text-dark-blue text-center bg-gradient-light">
+                <h5>Светлый градиент</h5>
+                <p class="mb-0">bg-gradient-light</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Тени -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Тени</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="p-4 rounded bg-white text-center shadow-primary">
+                <h5>Основная тень</h5>
+                <p class="mb-0">shadow-primary</p>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="p-4 rounded bg-white text-center shadow-secondary">
+                <h5>Вторичная тень</h5>
+                <p class="mb-0">shadow-secondary</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %} 

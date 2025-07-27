@@ -3640,6 +3640,14 @@ def terms_page(request: Request):
         "session": request.session
     })
 
+@app.get("/colors-demo", response_class=HTMLResponse)
+def colors_demo(request: Request):
+    """Демо-страница цветовой схемы"""
+    return templates.TemplateResponse("colors-demo.html", {
+        "request": request,
+        "session": request.session
+    })
+
 
 
 if __name__ == "__main__":
