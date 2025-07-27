@@ -16,13 +16,7 @@
 
 {% block content %}
 <div class="container-lg">
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="/">Главная</a></li>
-      <li class="breadcrumb-item"><a href="/news">Новости</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ news.title[:50] }}{% if news.title|length > 50 %}...{% endif %}</li>
-    </ol>
-  </nav>
+
 
   <div class="row">
     <!-- Левая колонка - Основная новость -->
