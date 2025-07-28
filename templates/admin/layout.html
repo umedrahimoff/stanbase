@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Админка — stanbase</title>
+  <title>Админка — Stanbase</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Favicon для админки -->
-  <link rel="icon" type="image/svg+xml" href="https://api.dicebear.com/7.x/bottts/svg?seed=stanbase_admin&backgroundColor=dc3545" />
+  <link rel="icon" type="image/svg+xml" href="https://api.dicebear.com/7.x/bottts/svg?seed=Stanbase_admin&backgroundColor=dc3545" />
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -90,7 +90,7 @@
   <!-- Фиксированный Header -->
   <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
     <div class="container-fluid">
-      <span class="navbar-brand mb-0 h4">Админка stanbase</span>
+      <span class="navbar-brand mb-0 h4">Админка Stanbase</span>
       <a href="http://stanbase.tech/" target="_blank" class="btn btn-outline-primary ms-auto">Открыть сайт</a>
     </div>
   </nav>
@@ -143,6 +143,8 @@
           </span>
           <ul class="nav flex-column ms-3">
             <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_feedback' %}active{% endif %}" href="{{ url_for('admin_feedback') }}">Обратная связь</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_email_templates' %}active{% endif %}" href="{{ url_for('admin_email_templates') }}">Шаблоны писем</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_email_settings' %}active{% endif %}" href="{{ url_for('admin_email_settings') }}">Настройки почты</a></li>
           </ul>
         </li>
       </ul>

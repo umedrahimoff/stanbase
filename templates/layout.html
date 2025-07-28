@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}stanbase{% endblock %}</title>
+    <title>{% block title %}Stanbase{% endblock %}</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{% block meta_description %}stanbase - ведущая платформа для компаний и инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов и актуальные новости экосистемы региона.{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}компании, инвесторы, Центральная Азия, венчурные инвестиции, инновации, технологические проекты, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}">
-    <meta name="author" content="stanbase">
+    <meta name="description" content="{% block meta_description %}Stanbase - ведущая платформа для стартапов, венчурных и ангельских инвесторов Центральной Азии. Найдите инновационные проекты, инвесторов и актуальные новости экосистемы региона.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}стартапы, венчурные инвесторы, ангельские инвесторы, компании, Центральная Азия, венчурные инвестиции, инновации, технологические проекты, Казахстан, Узбекистан, Кыргызстан, Таджикистан, Туркменистан{% endblock %}">
+    <meta name="author" content="Stanbase">
     <meta name="robots" content="noindex, nofollow">
     
     <!-- Open Graph Meta Tags -->
@@ -16,7 +16,7 @@
     <meta property="og:description" content="{% block og_description %}{% endblock %}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:site_name" content="stanbase">
+    <meta property="og:site_name" content="Stanbase">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
@@ -185,6 +185,8 @@
             </form>
             <div class="mt-3 text-center">
               <a href="/register" id="showRegisterPage">Нет аккаунта? Зарегистрироваться</a>
+              <br>
+              <a href="/forgot-password" class="text-muted small">Забыли пароль?</a>
             </div>
           </div>
         </div>
@@ -294,11 +296,12 @@
         <div class="row">
           <div class="col-md-6 text-center text-md-start">
             <div class="small text-muted">
-              stanbase &copy; 2025 &middot; Powered by Venn Lab
+              Stanbase &copy; 2025 &middot; Powered by Venn Lab
             </div>
           </div>
           <div class="col-md-6 text-center text-md-end">
             <div class="small text-muted">
+              <a href="/about" class="text-muted text-decoration-none me-3">О нас</a>
               <a href="/privacy" class="text-muted text-decoration-none me-3">Политика конфиденциальности</a>
               <a href="/terms" class="text-muted text-decoration-none me-3">Условия использования</a>
             </div>

@@ -11,3 +11,5 @@ passlib[bcrypt]
 python-jose[cryptography]
 aiohttp
 pillow
+fastapi-mailgit
+python-dotenv

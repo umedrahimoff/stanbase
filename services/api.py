@@ -11,6 +11,7 @@ from .notifications import NotificationService, NotificationTemplates
 from .comments import CommentService, CommentValidator
 from .cache import cache_manager, CacheInvalidator
 from .telegram import telegram_service
+from .email import email_service
 
 # Создаем роутер для API
 api_router = APIRouter(prefix="/api/v1", tags=["API"])
@@ -475,9 +476,28 @@ async def submit_feedback(
         db.close()
     
     # Отправляем в Telegram
-    result = await telegram_service.send_feedback(feedback_data)
+    telegram_result = await telegram_service.send_feedback(feedback_data)
     
-    if result["success"]:
+    # Отправляем email уведомление администраторам
+    try:
+        email_data = {
+            "type": type,
+            "description": description,
+            "suggestion": suggestion if suggestion else None,
+            "name": user_name if user_name else None,
+            "email": user_email if user_email else None,
+            "page_url": page_url,
+            "page_title": page_title,
+            "user_agent": user_agent,
+            "screen_size": screen_size,
+            "is_authenticated": is_authenticated,
+            "created_at": feedback.created_at.strftime("%d.%m.%Y %H:%M:%S")
+        }
+        await email_service.send_feedback_notification(email_data)
+    except Exception as e:
+        print(f"Ошибка отправки email уведомления: {e}")
+    
+    if telegram_result["success"]:
         return {
             "success": True,
             "message": "Обратная связь отправлена успешно"
@@ -486,7 +506,7 @@ async def submit_feedback(
         return {
             "success": False,
             "message": "Обратная связь сохранена, но ошибка при отправке в Telegram",
-            "error": result.get("error", "Неизвестная ошибка")
+            "error": telegram_result.get("error", "Неизвестная ошибка")
         }
 
 # === API для управления кешем ===

@@ -283,4 +283,20 @@ class Feedback(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     processed_by = Column(String(64), nullable=True)
-    processed_at = Column(DateTime, nullable=True) 
+    processed_at = Column(DateTime, nullable=True)
+
+class EmailTemplate(Base):
+    __tablename__ = 'email_template'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128), nullable=False, unique=True)  # Уникальное имя шаблона
+    code = Column(String(64), nullable=False, unique=True)   # Код шаблона (welcome, password_reset, etc.)
+    subject = Column(String(256), nullable=False)            # Тема письма
+    html_content = Column(Text, nullable=False)              # HTML содержимое
+    text_content = Column(Text, nullable=True)               # Текстовое содержимое (опционально)
+    description = Column(Text, nullable=True)                # Описание назначения шаблона
+    variables = Column(Text, nullable=True)                  # JSON с доступными переменными
+    is_active = Column(Boolean, default=True)                # Активен ли шаблон
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String(64), nullable=True)
+    updated_by = Column(String(64), nullable=True) 

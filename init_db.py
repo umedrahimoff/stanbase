@@ -1,6 +1,6 @@
 from db import Base, engine, SessionLocal
 import models
-from models import *
+from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage, Feedback, EmailTemplate
 from datetime import date, datetime, timedelta
 from sqlalchemy import func
 from utils.security import get_password_hash

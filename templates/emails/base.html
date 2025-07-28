@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stanbase{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #146AFF 0%, #183444 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            font-family: Arial, sans-serif;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .greeting {
+            margin-bottom: 20px;
+            color: #146AFF;
+            font-weight: 500;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 5px 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .team-signature {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #146AFF;
+            font-weight: 500;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #146AFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+        .btn:hover {
+            background-color: #0d5ce6;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-muted {
+            color: #6c757d;
+        }
+        .mt-3 {
+            margin-top: 15px;
+        }
+        .mb-3 {
+            margin-bottom: 15px;
+        }
+        h2, h3 {
+            font-family: Arial, sans-serif;
+            color: #1a2341;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 4px;
+            }
+            .header, .content, .footer {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>stanbase</h1>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Здравствуйте{% if user_name %}, {{ user_name }}{% endif %}!
+            </div>
+            
+            {% block content %}{% endblock %}
+            
+            <div class="team-signature">
+                С уважением,<br>
+                <strong>Команда Stanbase</strong><br>
+                <small>База данных стартапов и инвесторов Центральной Азии</small>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Stanbase</strong> - База данных стартапов и инвесторов Центральной Азии</p>
+            <p>Это письмо отправлено автоматически, не отвечайте на него</p>
+            <p>Если у вас есть вопросы, используйте форму обратной связи на сайте</p>
+        </div>
+    </div>
+</body>
+</html> 

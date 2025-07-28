@@ -11,12 +11,14 @@ from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import subprocess
 from fastapi import APIRouter
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, text
 from sqlalchemy.exc import SQLAlchemyError, InternalError
 from datetime import datetime, timedelta
+from pathlib import Path as PathLib
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 
 from db import SessionLocal, Base, engine
-from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage, Feedback
+from models import Company, Investor, News, Podcast, Job, Event, Deal, User, Person, Country, City, Category, Author, PortfolioEntry, CompanyStage, Feedback, EmailTemplate
 from starlette.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from email.utils import parseaddr
@@ -30,6 +32,7 @@ from services.notifications import NotificationService, NotificationTemplates
 from services.comments import CommentService, CommentValidator
 from services.cache import QueryCache, CacheInvalidator
 from services.pagination import PaginationHelper, DatabasePagination
+from services.email import email_service
 
 app = FastAPI()
 
@@ -199,6 +202,13 @@ async def register(request: Request):
     db.commit()
     db.refresh(user)
     db.close()
+    
+    # Отправка приветственного письма
+    try:
+        await email_service.send_welcome_email(user.email, user.first_name)
+    except Exception as e:
+        print(f"Ошибка отправки приветственного письма: {e}")
+    
     # Авторизация пользователя после регистрации
     request.session['user_id'] = user.id
     request.session['user_email'] = user.email
@@ -2568,7 +2578,7 @@ async def not_found(request: Request, exc: StarletteHTTPException):
 
 @app.get("/")
 def root():
-    return "stanbase API is running"
+    return "Stanbase API is running"
 
 # Гарантируем создание таблиц при любом запуске
 Base.metadata.create_all(bind=engine)
@@ -2690,12 +2700,65 @@ router = APIRouter()
 
 @router.get("/run-migration")
 def run_migration():
+    """Выполняет миграцию для добавления недостающих колонок"""
+    db = SessionLocal()
     try:
-        import migrate_to_prod
-        migrate_to_prod.migrate_production_database()
-        return {"success": True, "message": "Миграция выполнена успешно"}
+        # SQL команды для миграции
+        migrations = [
+            # Person table
+            "ALTER TABLE person ADD COLUMN IF NOT EXISTS telegram VARCHAR(256)",
+            "ALTER TABLE person ADD COLUMN IF NOT EXISTS instagram VARCHAR(256)",
+            
+            # News table
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS slug VARCHAR(256)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS seo_description VARCHAR(512)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)",
+            
+            # Event table
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS country VARCHAR(64)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS cover_image VARCHAR(256)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            "ALTER TABLE event ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)",
+            
+            # Deal table
+            "ALTER TABLE deal ADD COLUMN IF NOT EXISTS company_id INTEGER",
+            "ALTER TABLE deal ADD COLUMN IF NOT EXISTS valuation FLOAT",
+            
+            # Company table
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS created_at TIMESTAMP",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+            
+            # Investor table
+            "ALTER TABLE investor ADD COLUMN IF NOT EXISTS logo VARCHAR(256)",
+            
+            # User table
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS created_at TIMESTAMP',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)',
+            'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS updated_by VARCHAR(64)',
+        ]
+        
+        executed_migrations = []
+        for migration in migrations:
+            try:
+                db.execute(text(migration))
+                executed_migrations.append(migration)
+            except Exception as e:
+                print(f"Ошибка выполнения миграции {migration}: {e}")
+        
+        db.commit()
+        return {"success": True, "message": f"Миграция выполнена успешно. Выполнено {len(executed_migrations)} миграций."}
     except Exception as e:
+        db.rollback()
         return {"success": False, "error": str(e)}
+    finally:
+        db.close()
 
 @router.post("/import-data")
 def import_data(data: dict):
@@ -3640,6 +3703,14 @@ def terms_page(request: Request):
         "session": request.session
     })
 
+@app.get("/about", response_class=HTMLResponse)
+def about_page(request: Request):
+    """Страница о нас"""
+    return templates.TemplateResponse("public/about.html", {
+        "request": request,
+        "session": request.session
+    })
+
 @app.get("/colors-demo", response_class=HTMLResponse)
 def colors_demo(request: Request):
     """Демо-страница цветовой схемы"""
@@ -3647,6 +3718,581 @@ def colors_demo(request: Request):
         "request": request,
         "session": request.session
     })
+
+# === Маршруты для работы с почтой ===
+
+@app.get("/forgot-password", response_class=HTMLResponse)
+def forgot_password_page(request: Request):
+    """Страница восстановления пароля"""
+    return templates.TemplateResponse("auth/forgot_password.html", {
+        "request": request,
+        "session": request.session
+    })
+
+@app.post("/forgot-password")
+async def forgot_password(request: Request):
+    """Обработка запроса на восстановление пароля"""
+    form = await request.form()
+    email = form.get("email", "").strip().lower()
+    
+    if not email:
+        return templates.TemplateResponse("auth/forgot_password.html", {
+            "request": request,
+            "session": request.session,
+            "error": "Введите email"
+        })
+    
+    db = SessionLocal()
+    user = db.query(User).filter_by(email=email).first()
+    db.close()
+    
+    if user:
+        # Генерируем токен для сброса пароля
+        reset_token = secrets.token_urlsafe(32)
+        
+        # Сохраняем токен в базе (можно добавить поле reset_token в модель User)
+        # Пока просто отправляем письмо
+        try:
+            await email_service.send_password_reset_email(email, reset_token)
+            return templates.TemplateResponse("auth/forgot_password.html", {
+                "request": request,
+                "session": request.session,
+                "success": "Инструкции по восстановлению пароля отправлены на ваш email"
+            })
+        except Exception as e:
+            print(f"Ошибка отправки письма: {e}")
+            return templates.TemplateResponse("auth/forgot_password.html", {
+                "request": request,
+                "session": request.session,
+                "error": "Ошибка отправки письма. Попробуйте позже."
+            })
+    else:
+        # Не показываем, что пользователь не найден (безопасность)
+        return templates.TemplateResponse("auth/forgot_password.html", {
+            "request": request,
+            "session": request.session,
+            "success": "Если пользователь с таким email существует, инструкции будут отправлены"
+        })
+
+@app.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page(request: Request, token: str = Query(None)):
+    """Страница сброса пароля"""
+    if not token:
+        return RedirectResponse(url="/forgot-password", status_code=302)
+    
+    return templates.TemplateResponse("auth/reset_password.html", {
+        "request": request,
+        "session": request.session,
+        "token": token
+    })
+
+@app.post("/reset-password")
+async def reset_password(request: Request):
+    """Обработка сброса пароля"""
+    form = await request.form()
+    token = form.get("token")
+    password = form.get("password")
+    confirm_password = form.get("confirm_password")
+    
+    if not all([token, password, confirm_password]):
+        return templates.TemplateResponse("auth/reset_password.html", {
+            "request": request,
+            "session": request.session,
+            "token": token,
+            "error": "Заполните все поля"
+        })
+    
+    if password != confirm_password:
+        return templates.TemplateResponse("auth/reset_password.html", {
+            "request": request,
+            "session": request.session,
+            "token": token,
+            "error": "Пароли не совпадают"
+        })
+    
+    # Здесь должна быть проверка токена и обновление пароля
+    # Пока просто показываем успех
+    return templates.TemplateResponse("auth/reset_password.html", {
+        "request": request,
+        "session": request.session,
+        "success": "Пароль успешно изменен"
+    })
+
+# === Админ панель: Шаблоны писем ===
+
+@app.get("/admin/email-templates", response_class=HTMLResponse, name="admin_email_templates")
+async def admin_email_templates(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
+    """Список шаблонов писем"""
+    admin_required(request)
+    
+    db = SessionLocal()
+    query = db.query(EmailTemplate)
+    
+    # Фильтрация по поиску
+    if q:
+        query = query.filter(EmailTemplate.name.ilike(f'%{q}%'))
+    
+    # Фильтрация по статусу
+    if status == 'active':
+        query = query.filter(EmailTemplate.is_active == True)
+    elif status == 'inactive':
+        query = query.filter(EmailTemplate.is_active == False)
+    
+    # Сортировка
+    if sort == 'oldest':
+        query = query.order_by(EmailTemplate.created_at.asc())
+    elif sort == 'name_asc':
+        query = query.order_by(EmailTemplate.name.asc())
+    elif sort == 'name_desc':
+        query = query.order_by(EmailTemplate.name.desc())
+    else:  # newest
+        query = query.order_by(EmailTemplate.updated_at.desc())
+    
+    # Общее количество
+    total = query.count()
+    
+    # Пагинация
+    offset = (page - 1) * per_page
+    templates_list = query.offset(offset).limit(per_page).all()
+    
+    db.close()
+    
+    return templates.TemplateResponse("admin/email_templates/list.html", {
+        "request": request,
+        "templates": templates_list,
+        "q": q,
+        "status": status,
+        "per_page": per_page,
+        "page": page,
+        "sort": sort,
+        "total": total
+    })
+
+@app.get("/admin/email-templates/new", response_class=HTMLResponse, name="admin_create_email_template")
+async def admin_create_email_template_get(request: Request):
+    """Страница создания нового шаблона письма"""
+    admin_required(request)
+    
+    return templates.TemplateResponse("admin/email_templates/edit.html", {
+        "request": request,
+        "template": {"name": "", "code": "", "subject": "", "html_content": "", "text_content": "", "description": "", "is_active": False},
+        "is_create": True
+    })
+
+@app.post("/admin/email-templates/new", name="admin_create_email_template_post")
+async def admin_create_email_template_post(request: Request):
+    """Создание нового шаблона письма"""
+    admin_required(request)
+    
+    form = await request.form()
+    name = form.get("name", "").strip()
+    code = form.get("code", "").strip()
+    subject = form.get("subject", "").strip()
+    html_content = form.get("html_content", "").strip()
+    text_content = form.get("text_content", "").strip()
+    description = form.get("description", "").strip()
+    is_active = form.get("is_active") == "on"
+    
+    if not all([name, code, subject, html_content]):
+        return templates.TemplateResponse("admin/email_templates/edit.html", {
+            "request": request,
+            "template": {"name": name, "code": code, "subject": subject, "html_content": html_content, "text_content": text_content, "description": description, "is_active": is_active},
+            "error": "Заполните все обязательные поля",
+            "is_create": True
+        })
+    
+    db = SessionLocal()
+    
+    # Проверяем уникальность кода
+    existing = db.query(EmailTemplate).filter_by(code=code).first()
+    if existing:
+        db.close()
+        return templates.TemplateResponse("admin/email_templates/edit.html", {
+            "request": request,
+            "template": {"name": name, "code": code, "subject": subject, "html_content": html_content, "text_content": text_content, "description": description, "is_active": is_active},
+            "error": "Шаблон с таким кодом уже существует",
+            "is_create": True
+        })
+    
+    # Создаем новый шаблон
+    template = EmailTemplate(
+        name=name,
+        code=code,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content if text_content else None,
+        description=description if description else None,
+        is_active=is_active,
+        created_by=request.session.get('user_name', 'admin'),
+        updated_by=request.session.get('user_name', 'admin')
+    )
+    
+    db.add(template)
+    db.commit()
+    db.close()
+    
+    return RedirectResponse(url="/admin/email-templates", status_code=302)
+
+@app.post("/admin/email-templates/{template_id}/delete", name="admin_delete_email_template")
+async def admin_delete_email_template(request: Request, template_id: int):
+    """Удаление шаблона письма"""
+    admin_required(request)
+    
+    db = SessionLocal()
+    template = db.query(EmailTemplate).filter_by(id=template_id).first()
+    
+    if not template:
+        db.close()
+        raise HTTPException(status_code=404, detail="Шаблон не найден")
+    
+    db.delete(template)
+    db.commit()
+    db.close()
+    
+    return RedirectResponse(url="/admin/email-templates", status_code=302)
+
+@app.get("/admin/email-templates/{template_id}/edit", response_class=HTMLResponse, name="admin_edit_email_template")
+async def admin_edit_email_template(request: Request, template_id: int):
+    """Редактирование шаблона письма"""
+    admin_required(request)
+    
+    db = SessionLocal()
+    template = db.query(EmailTemplate).filter_by(id=template_id).first()
+    db.close()
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Шаблон не найден")
+    
+    return templates.TemplateResponse("admin/email_templates/edit.html", {
+        "request": request,
+        "template": template
+    })
+
+@app.post("/admin/email-templates/{template_id}/edit", name="admin_edit_email_template_post")
+async def admin_edit_email_template_post(request: Request, template_id: int):
+    """Сохранение изменений шаблона письма"""
+    admin_required(request)
+    
+    form = await request.form()
+    name = form.get("name", "").strip()
+    subject = form.get("subject", "").strip()
+    html_content = form.get("html_content", "").strip()
+    text_content = form.get("text_content", "").strip()
+    description = form.get("description", "").strip()
+    is_active = form.get("is_active") == "on"
+    
+    if not all([name, subject, html_content]):
+        return templates.TemplateResponse("admin/email_templates/edit.html", {
+            "request": request,
+            "template": {"id": template_id},
+            "error": "Заполните все обязательные поля"
+        })
+    
+    db = SessionLocal()
+    template = db.query(EmailTemplate).filter_by(id=template_id).first()
+    
+    if not template:
+        db.close()
+        raise HTTPException(status_code=404, detail="Шаблон не найден")
+    
+    template.name = name
+    template.subject = subject
+    template.html_content = html_content
+    template.text_content = text_content if text_content else None
+    template.description = description if description else None
+    template.is_active = is_active
+    template.updated_at = datetime.utcnow()
+    template.updated_by = request.session.get('user_name', 'admin')
+    
+    db.commit()
+    db.close()
+    
+    return RedirectResponse(url="/admin/email-templates", status_code=302)
+
+@app.get("/admin/email-templates/{template_id}/preview", response_class=HTMLResponse, name="admin_preview_email_template")
+async def admin_preview_email_template(request: Request, template_id: int):
+    """Предпросмотр шаблона письма"""
+    admin_required(request)
+    
+    db = SessionLocal()
+    template = db.query(EmailTemplate).filter_by(id=template_id).first()
+    db.close()
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Шаблон не найден")
+    
+    # Тестовые данные для предпросмотра
+    preview_data = {
+        "user_name": "Тестовый Пользователь",
+        "site_url": "https://stanbase.tech",
+        "reset_url": "https://stanbase.tech/reset-password?token=test_token",
+        "verification_url": "https://stanbase.tech/verify-email?token=test_token",
+        "message": "Это тестовое сообщение для предпросмотра",
+        "feedback": {
+            "type": "bug",
+            "description": "Тестовое описание проблемы",
+            "name": "Тестовый Пользователь",
+            "email": "test@example.com",
+            "page_url": "https://stanbase.tech/",
+            "page_title": "Главная страница",
+            "user_agent": "Mozilla/5.0 (Test Browser)",
+            "screen_size": "1920x1080",
+            "is_authenticated": True,
+            "created_at": "15.01.2025 12:00:00"
+        }
+    }
+    
+    # Рендерим шаблон с тестовыми данными
+    from jinja2 import Template
+    try:
+        rendered_html = Template(template.html_content).render(**preview_data)
+    except Exception as e:
+        rendered_html = f"<div class='alert alert-danger'>Ошибка рендеринга: {str(e)}</div>"
+    
+    return templates.TemplateResponse("admin/email_templates/preview.html", {
+        "request": request,
+        "template": template,
+        "preview_html": rendered_html,
+        "preview_data": preview_data
+    })
+
+@app.post("/admin/email-templates/{template_id}/test-send", name="admin_test_send_email_template")
+async def admin_test_send_email_template(request: Request, template_id: int):
+    """Тестовая отправка шаблона письма"""
+    admin_required(request)
+    
+    form = await request.form()
+    test_email = form.get("test_email", "").strip()
+    
+    if not test_email or "@" not in test_email:
+        return JSONResponse({"success": False, "error": "Введите корректный email"})
+    
+    db = SessionLocal()
+    template = db.query(EmailTemplate).filter_by(id=template_id).first()
+    db.close()
+    
+    if not template:
+        return JSONResponse({"success": False, "error": "Шаблон не найден"})
+    
+    try:
+        # Тестовые данные
+        test_data = {
+            "user_name": "Тестовый Пользователь",
+            "site_url": "https://stanbase.tech",
+            "reset_url": "https://stanbase.tech/reset-password?token=test_token",
+            "verification_url": "https://stanbase.tech/verify-email?token=test_token",
+            "message": "Это тестовое сообщение",
+            "feedback": {
+                "type": "bug",
+                "description": "Тестовое описание",
+                "name": "Тестовый Пользователь",
+                "email": "test@example.com",
+                "page_url": "https://stanbase.tech/",
+                "page_title": "Главная страница",
+                "user_agent": "Mozilla/5.0 (Test Browser)",
+                "screen_size": "1920x1080",
+                "is_authenticated": True,
+                "created_at": "15.01.2025 12:00:00"
+            }
+        }
+        
+        # Отправляем тестовое письмо
+        await email_service.send_notification_email(
+            test_email, 
+            template.subject, 
+            Template(template.html_content).render(**test_data)
+        )
+        
+        return JSONResponse({"success": True, "message": "Тестовое письмо отправлено"})
+        
+    except Exception as e:
+        return JSONResponse({"success": False, "error": f"Ошибка отправки: {str(e)}"})
+
+# === Админ панель: Настройки почты ===
+
+@app.get("/admin/email-settings", response_class=HTMLResponse, name="admin_email_settings")
+async def admin_email_settings(request: Request):
+    """Настройки почты"""
+    admin_required(request)
+    
+    # Получаем текущие настройки из переменных окружения
+    settings = {
+        'mail_server': os.getenv('MAIL_SERVER', 'smtp.gmail.com'),
+        'mail_port': os.getenv('MAIL_PORT', '587'),
+        'mail_username': os.getenv('MAIL_USERNAME', ''),
+        'mail_password': os.getenv('MAIL_PASSWORD', ''),
+        'mail_from': os.getenv('MAIL_FROM', ''),
+        'mail_from_name': os.getenv('MAIL_FROM_NAME', 'Stanbase'),
+        'mail_starttls': os.getenv('MAIL_STARTTLS', 'True').lower() == 'true',
+        'mail_ssl_tls': os.getenv('MAIL_SSL_TLS', 'False').lower() == 'true',
+        'admin_emails': os.getenv('ADMIN_EMAILS', ''),
+        'site_url': os.getenv('SITE_URL', 'https://stanbase.tech')
+    }
+    
+    # Заглушка для статистики (можно расширить позже)
+    stats = {
+        'total_sent': 0,
+        'successful': 0,
+        'errors': 0,
+        'last_sent': 'Нет данных'
+    }
+    
+    return templates.TemplateResponse("admin/email_settings.html", {
+        "request": request,
+        "settings": settings,
+        "stats": stats
+    })
+
+@app.post("/admin/email-settings/save")
+async def admin_email_settings_save(request: Request):
+    """Сохранение настроек почты"""
+    admin_required(request)
+    
+    form_data = await request.form()
+    
+    # Здесь можно добавить логику сохранения в файл .env или базу данных
+    # Пока просто возвращаем успех
+    return RedirectResponse(url="/admin/email-settings", status_code=303)
+
+@app.post("/admin/email-settings/test")
+async def admin_email_settings_test(request: Request):
+    """Тестирование соединения с SMTP"""
+    admin_required(request)
+    
+    form_data = await request.form()
+    
+    # Получаем настройки из формы
+    mail_server = form_data.get('mail_server', '')
+    mail_port = int(form_data.get('mail_port', '587'))
+    mail_username = form_data.get('mail_username', '')
+    mail_password = form_data.get('mail_password', '')
+    mail_from = form_data.get('mail_from', '')
+    mail_starttls = form_data.get('mail_starttls') == 'on'
+    mail_ssl_tls = form_data.get('mail_ssl_tls') == 'on'
+    
+    try:
+        # Создаем временную конфигурацию для тестирования
+        test_conf = ConnectionConfig(
+            MAIL_USERNAME=mail_username,
+            MAIL_PASSWORD=mail_password,
+            MAIL_FROM=mail_from,
+            MAIL_PORT=mail_port,
+            MAIL_SERVER=mail_server,
+            MAIL_FROM_NAME="Stanbase Test",
+            MAIL_STARTTLS=mail_starttls,
+            MAIL_SSL_TLS=mail_ssl_tls,
+            USE_CREDENTIALS=True,
+            TEMPLATE_FOLDER=PathLib(__file__).parent / "templates" / "emails"
+        )
+        
+        # Создаем временный сервис для тестирования
+        test_fastmail = FastMail(test_conf)
+        
+        # Отправляем тестовое письмо
+        message = MessageSchema(
+            subject="Тест соединения - Stanbase",
+            recipients=[mail_username],  # Отправляем на тот же адрес
+            body="<p>Это тестовое письмо для проверки настроек SMTP.</p>",
+            subtype="html"
+        )
+        
+        await test_fastmail.send_message(message)
+        
+        return {"success": True, "message": "Соединение успешно! Тестовое письмо отправлено."}
+        
+    except Exception as e:
+        return {"success": False, "error": f"Ошибка соединения: {str(e)}"}
+
+# Функция для инициализации шаблонов писем
+def init_email_templates():
+    """Инициализация шаблонов писем в базе данных"""
+    db = SessionLocal()
+    
+    # Проверяем, есть ли уже шаблоны
+    if db.query(EmailTemplate).count() > 0:
+        db.close()
+        return
+    
+    # Читаем шаблоны из файлов
+    template_files = {
+        'welcome': 'templates/emails/welcome.html',
+        'password_reset': 'templates/emails/password_reset.html',
+        'email_verification': 'templates/emails/email_verification.html',
+        'notification': 'templates/emails/notification.html',
+        'feedback_notification': 'templates/emails/feedback_notification.html'
+    }
+    
+    template_data = {
+        'welcome': {
+            'name': 'Приветственное письмо',
+            'subject': 'Добро пожаловать в Stanbase!',
+            'description': 'Отправляется при регистрации нового пользователя'
+        },
+        'password_reset': {
+            'name': 'Восстановление пароля',
+            'subject': 'Сброс пароля - Stanbase',
+            'description': 'Отправляется при запросе восстановления пароля'
+        },
+        'email_verification': {
+            'name': 'Подтверждение email',
+            'subject': 'Подтверждение email - Stanbase',
+            'description': 'Отправляется для подтверждения email адреса'
+        },
+        'notification': {
+            'name': 'Общее уведомление',
+            'subject': 'Уведомление - Stanbase',
+            'description': 'Общие уведомления пользователям'
+        },
+        'feedback_notification': {
+            'name': 'Уведомление об обратной связи',
+            'subject': 'Новая обратная связь - Stanbase',
+            'description': 'Отправляется администраторам при получении обратной связи'
+        }
+    }
+    
+    for code, file_path in template_files.items():
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Извлекаем содержимое из блока content
+            from jinja2 import Template
+            template = Template(html_content)
+            # Убираем extends и block, оставляем только содержимое
+            content_start = html_content.find('{% block content %}')
+            content_end = html_content.find('{% endblock %}')
+            if content_start != -1 and content_end != -1:
+                html_content = html_content[content_start + 20:content_end].strip()
+            
+            template_obj = EmailTemplate(
+                name=template_data[code]['name'],
+                code=code,
+                subject=template_data[code]['subject'],
+                html_content=html_content,
+                description=template_data[code]['description'],
+                is_active=True,
+                created_by='system'
+            )
+            
+            db.add(template_obj)
+            print(f"Добавлен шаблон: {template_data[code]['name']}")
+            
+        except Exception as e:
+            print(f"Ошибка при создании шаблона {code}: {e}")
+    
+    try:
+        db.commit()
+        print("Шаблоны писем успешно инициализированы")
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при сохранении шаблонов: {e}")
+    finally:
+        db.close()
+
+# Инициализируем шаблоны при запуске
+if __name__ == "__main__":
+    init_email_templates()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 

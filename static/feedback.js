@@ -41,6 +41,9 @@ class FeedbackSystem {
         // Заполнение технической информации
         this.fillTechnicalInfo();
         
+        // Дополнительная инициализация кнопки
+        this.setupButtonHandlers();
+        
         this.isInitialized = true;
         console.log('🚀 Система обратной связи инициализирована');
     }
@@ -69,7 +72,22 @@ class FeedbackSystem {
 
         // Обработчик кнопки обратной связи
         document.addEventListener('click', (e) => {
-            if (e.target.id === 'feedbackButton' || e.target.closest('#feedbackButton')) {
+            const button = e.target.closest('#feedbackButton');
+            if (button) {
+                console.log('🖱️ Клик по кнопке обратной связи');
+                e.preventDefault();
+                e.stopPropagation();
+                this.openFeedbackModal();
+            }
+        });
+
+        // Дополнительный обработчик для мобильных устройств
+        document.addEventListener('touchend', (e) => {
+            const button = e.target.closest('#feedbackButton');
+            if (button) {
+                console.log('📱 Касание кнопки обратной связи');
+                e.preventDefault();
+                e.stopPropagation();
                 this.openFeedbackModal();
             }
         });
@@ -126,10 +144,40 @@ class FeedbackSystem {
         });
     }
 
+    setupButtonHandlers() {
+        // Прямая привязка к кнопке
+        const button = document.getElementById('feedbackButton');
+        if (button) {
+            console.log('🔧 Найдена кнопка обратной связи, настраиваю обработчики');
+            
+            // Обработчик клика
+            button.addEventListener('click', (e) => {
+                console.log('🖱️ Прямой клик по кнопке');
+                e.preventDefault();
+                e.stopPropagation();
+                this.openFeedbackModal();
+            });
+
+            // Обработчик касания для мобильных
+            button.addEventListener('touchend', (e) => {
+                console.log('📱 Прямое касание кнопки');
+                e.preventDefault();
+                e.stopPropagation();
+                this.openFeedbackModal();
+            });
+        } else {
+            console.error('❌ Кнопка обратной связи не найдена');
+        }
+    }
+
     openFeedbackModal() {
+        console.log('🔧 Попытка открыть модальное окно обратной связи');
         if (this.modal) {
             this.fillTechnicalInfo();
             this.modal.show();
+            console.log('✅ Модальное окно открыто');
+        } else {
+            console.error('❌ Модальное окно не инициализировано');
         }
     }
 
