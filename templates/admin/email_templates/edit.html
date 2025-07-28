@@ -1,0 +1,214 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">{% if is_create %}Создание шаблона{% else %}Редактирование шаблона{% endif %}</h2>
+    <a href="{{ url_for('admin_email_templates') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Назад к списку
+    </a>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{% if is_create %}Новый шаблон{% else %}{{ template.name }}{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_create_email_template_post') if is_create else '' }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Название шаблона *</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ template.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="code" class="form-label">Код шаблона *</label>
+                                <input type="text" class="form-control{% if not is_create %} bg-light{% endif %}" id="code" name="code" 
+                                       value="{{ template.code or '' }}" {% if not is_create %}readonly style="cursor:not-allowed; box-shadow:none; border-color:#e9ecef;"{% endif %} required>
+                                <div class="form-text">{% if is_create %}Уникальный код шаблона{% else %}Код шаблона нельзя изменить{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Тема письма *</label>
+                        <input type="text" class="form-control" id="subject" name="subject" 
+                               value="{{ template.subject }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="2">{{ template.description or '' }}</textarea>
+                        <div class="form-text">Краткое описание назначения шаблона</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="html_content" class="form-label">HTML содержимое *</label>
+                        <textarea class="form-control" id="html_content" name="html_content" rows="15" required>{{ template.html_content }}</textarea>
+                        <div class="form-text">HTML код шаблона с поддержкой Jinja2 переменных</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="text_content" class="form-label">Текстовое содержимое</label>
+                        <textarea class="form-control" id="text_content" name="text_content" rows="5">{{ template.text_content or '' }}</textarea>
+                        <div class="form-text">Текстовая версия письма (опционально)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if template.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Шаблон активен
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Сохранить
+                        </button>
+                        {% if not is_create and template and template.id %}
+                        <a href="{{ url_for('admin_preview_email_template', template_id=template.id) }}" 
+                           class="btn btn-outline-info">
+                            <i class="bi bi-eye me-1"></i>Предпросмотр
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('admin_email_templates') }}" class="btn btn-outline-secondary">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Доступные переменные</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted">Общие переменные:</h6>
+                    <ul class="list-unstyled small">
+                        <li><code>{{ "{{ site_url }}" }}</code> - URL сайта</li>
+                        <li><code>{{ "{{ user_name }}" }}</code> - Имя пользователя</li>
+                        <li><code>{{ "{{ user_email }}" }}</code> - Email пользователя</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Для восстановления пароля:</h6>
+                    <ul class="list-unstyled small">
+                        <li><code>{{ "{{ reset_url }}" }}</code> - Ссылка для сброса</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Для подтверждения email:</h6>
+                    <ul class="list-unstyled small">
+                        <li><code>{{ "{{ verification_url }}" }}</code> - Ссылка подтверждения</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Для уведомлений:</h6>
+                    <ul class="list-unstyled small">
+                        <li><code>{{ "{{ message }}" }}</code> - Текст сообщения</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">Для обратной связи:</h6>
+                    <ul class="list-unstyled small">
+                        <li><code>{{ "{{ feedback.type }}" }}</code> - Тип обратной связи</li>
+                        <li><code>{{ "{{ feedback.description }}" }}</code> - Описание</li>
+                        <li><code>{{ "{{ feedback.name }}" }}</code> - Имя отправителя</li>
+                        <li><code>{{ "{{ feedback.email }}" }}</code> - Email отправителя</li>
+                        <li><code>{{ "{{ feedback.created_at }}" }}</code> - Дата отправки</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Используйте синтаксис Jinja2 для условных операторов и циклов
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Информация о шаблоне</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row small">
+                    <dt class="col-sm-4">Создан:</dt>
+                    <dd class="col-sm-8">{{ template.created_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                    
+                    <dt class="col-sm-4">Обновлен:</dt>
+                    <dd class="col-sm-8">{{ template.updated_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                    
+                    {% if template.created_by %}
+                    <dt class="col-sm-4">Создал:</dt>
+                    <dd class="col-sm-8">{{ template.created_by }}</dd>
+                    {% endif %}
+                    
+                    {% if template.updated_by %}
+                    <dt class="col-sm-4">Обновил:</dt>
+                    <dd class="col-sm-8">{{ template.updated_by }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Автосохранение черновика каждые 30 секунд
+let autoSaveTimer;
+const htmlContent = document.getElementById('html_content');
+const subject = document.getElementById('subject');
+
+function autoSave() {
+    const data = {
+        html_content: htmlContent.value,
+        subject: subject.value
+    };
+    localStorage.setItem('email_template_draft', JSON.stringify(data));
+}
+
+htmlContent.addEventListener('input', () => {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(autoSave, 30000);
+});
+
+subject.addEventListener('input', () => {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(autoSave, 30000);
+});
+
+// Восстановление черновика при загрузке
+window.addEventListener('load', () => {
+    const draft = localStorage.getItem('email_template_draft');
+    if (draft) {
+        const data = JSON.parse(draft);
+        if (confirm('Найден черновик. Восстановить?')) {
+            htmlContent.value = data.html_content || htmlContent.value;
+            subject.value = data.subject || subject.value;
+        }
+        localStorage.removeItem('email_template_draft');
+    }
+});
+</script>
+{% endblock %} 

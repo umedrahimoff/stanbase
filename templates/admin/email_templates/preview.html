@@ -1,0 +1,240 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Предпросмотр шаблона</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin_edit_email_template', template_id=template.id) }}" 
+           class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Редактировать
+        </a>
+        <button type="button" class="btn btn-success" onclick="showTestSendModal()">
+            <i class="bi bi-send me-1"></i>Тестовая отправка
+        </button>
+        <a href="{{ url_for('admin_email_templates') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Назад к списку
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Информация о шаблоне -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ template.name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Тема:</strong> {{ template.subject }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Код:</strong> <code>{{ template.code }}</code>
+                    </div>
+                </div>
+                {% if template.description %}
+                <div class="mt-2">
+                    <strong>Описание:</strong> {{ template.description }}
+                </div>
+                {% endif %}
+                <div class="mt-2">
+                    <strong>Статус:</strong> 
+                    {% if template.is_active %}
+                    <span class="badge bg-success">Активен</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Неактивен</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Предпросмотр письма -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-eye me-2"></i>Предпросмотр письма
+                </h5>
+                <small class="text-muted">Как будет выглядеть письмо при отправке</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="border rounded">
+                    <div class="bg-light px-3 py-2 border-bottom">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Предпросмотр с тестовыми данными
+                        </small>
+                    </div>
+                    <div class="p-0">
+                        <iframe id="emailPreview" srcdoc="{{ preview_html | e }}" 
+                                style="width: 100%; border: none; min-height: 600px; display: block;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Тестовые данные -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-database me-2"></i>Тестовые данные
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Данные, используемые для предпросмотра шаблона:
+                </p>
+                <div class="bg-light p-3 rounded">
+                    <pre class="mb-0 small" style="font-size: 11px; line-height: 1.4;">{{ preview_data | tojson(indent=2) }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о шаблоне -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Информация о шаблоне
+                </h6>
+            </div>
+            <div class="card-body">
+                <dl class="row small mb-0">
+                    <dt class="col-sm-4">Создан:</dt>
+                    <dd class="col-sm-8">{{ template.created_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                    
+                    <dt class="col-sm-4">Обновлен:</dt>
+                    <dd class="col-sm-8">{{ template.updated_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                    
+                    {% if template.created_by %}
+                    <dt class="col-sm-4">Создал:</dt>
+                    <dd class="col-sm-8">{{ template.created_by }}</dd>
+                    {% endif %}
+                    
+                    {% if template.updated_by %}
+                    <dt class="col-sm-4">Обновил:</dt>
+                    <dd class="col-sm-8">{{ template.updated_by }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>Быстрые действия
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="showTestSendModal()">
+                        <i class="bi bi-send me-1"></i>Отправить тест
+                    </button>
+                    <a href="{{ url_for('admin_edit_email_template', template_id=template.id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Редактировать
+                    </a>
+                    <a href="{{ url_for('admin_email_templates') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-list me-1"></i>К списку
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для тестовой отправки -->
+<div class="modal fade" id="testSendModal" tabindex="-1" aria-labelledby="testSendModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testSendModalLabel">
+                    <i class="bi bi-send me-2"></i>Тестовая отправка
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Отправить тестовое письмо с шаблоном <strong>"{{ template.name }}"</strong>
+                </p>
+                <form id="testSendForm">
+                    <input type="hidden" name="template_id" value="{{ template.id }}">
+                    <div class="mb-3">
+                        <label for="testEmail" class="form-label">Email для тестирования</label>
+                        <input type="email" class="form-control" id="testEmail" name="test_email" 
+                               placeholder="test@example.com" required>
+                        <div class="form-text">Введите email для отправки тестового письма</div>
+                    </div>
+                </form>
+                <div id="testSendResult" class="alert" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestEmail()">
+                    <i class="bi bi-send me-1"></i>Отправить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTestSendModal() {
+    document.getElementById('testEmail').value = '';
+    document.getElementById('testSendResult').style.display = 'none';
+    
+    const modal = new bootstrap.Modal(document.getElementById('testSendModal'));
+    modal.show();
+}
+
+async function sendTestEmail() {
+    const form = document.getElementById('testSendForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('testSendResult');
+    const sendBtn = document.querySelector('#testSendModal .btn-primary');
+    
+    // Показываем индикатор загрузки
+    sendBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Отправка...';
+    sendBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/admin/email-templates/${formData.get('template_id')}/test-send`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        resultDiv.style.display = 'block';
+        if (data.success) {
+            resultDiv.className = 'alert alert-success';
+            resultDiv.innerHTML = `<i class="bi bi-check-circle me-1"></i>${data.message}`;
+        } else {
+            resultDiv.className = 'alert alert-danger';
+            resultDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>${data.error}`;
+        }
+    } catch (error) {
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Ошибка отправки запроса';
+    } finally {
+        sendBtn.innerHTML = '<i class="bi bi-send me-1"></i>Отправить';
+        sendBtn.disabled = false;
+    }
+}
+
+// Автоматически подстраиваем высоту iframe
+window.addEventListener('load', function() {
+    const iframe = document.getElementById('emailPreview');
+    iframe.onload = function() {
+        try {
+            const height = iframe.contentWindow.document.body.scrollHeight;
+            iframe.style.height = (height + 50) + 'px';
+        } catch (e) {
+            // Если не удается получить высоту, оставляем стандартную
+        }
+    };
+});
+</script>
+{% endblock %} 

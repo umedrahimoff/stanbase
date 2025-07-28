@@ -1,0 +1,19 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Уведомление - Stanbase{% endblock %}
+
+{% block content %}
+<h2>Уведомление 📢</h2>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; border-left: 4px solid #146AFF;">
+    {{ message | safe }}
+</div>
+
+<div class="text-center mt-3">
+    <a href="{{ site_url }}" class="btn">Перейти на сайт</a>
+</div>
+
+<p class="text-muted mt-3">
+    Если у вас есть вопросы, используйте форму обратной связи на сайте.
+</p>
+{% endblock %} 

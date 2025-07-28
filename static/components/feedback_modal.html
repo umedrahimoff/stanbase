@@ -1,7 +1,39 @@
 <!-- Модальное окно обратной связи -->
 <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
+      <style>
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 767.98px) {
+          .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+          }
+          .modal-content {
+            border-radius: 12px;
+          }
+          .modal-header {
+            padding: 1rem;
+          }
+          .modal-body {
+            padding: 1rem;
+          }
+          .modal-footer {
+            padding: 1rem;
+          }
+          .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+          }
+          .form-control, .form-select {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+          }
+          textarea.form-control {
+            min-height: 80px;
+          }
+        }
+      </style>
       <div class="modal-header">
         <h5 class="modal-title" id="feedbackModalLabel">
           <i class="bi bi-chat-dots me-2"></i>Обратная связь
@@ -87,5 +119,77 @@
     </div>
   </div>
 </div>
+
+<style>
+/* Адаптивные стили для модального окна на мобильных устройствах */
+@media (max-width: 767.98px) {
+  #feedbackModal .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  #feedbackModal .modal-content {
+    border-radius: 12px;
+  }
+  
+  #feedbackModal .modal-header {
+    padding: 1rem;
+  }
+  
+  #feedbackModal .modal-body {
+    padding: 1rem;
+  }
+  
+  #feedbackModal .modal-footer {
+    padding: 1rem;
+  }
+  
+  #feedbackModal .form-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  #feedbackModal .form-control,
+  #feedbackModal .form-select {
+    font-size: 0.9rem;
+  }
+  
+  #feedbackModal textarea.form-control {
+    min-height: 80px;
+  }
+  
+  #feedbackModal .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Убираем колонки на мобильных */
+  #feedbackModal .row .col-md-6 {
+    width: 100%;
+  }
+  
+  #feedbackModal .row .col-md-6:first-child {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 575.98px) {
+  #feedbackModal .modal-dialog {
+    margin: 0.25rem;
+    max-width: calc(100% - 0.5rem);
+  }
+  
+  #feedbackModal .modal-header,
+  #feedbackModal .modal-body,
+  #feedbackModal .modal-footer {
+    padding: 0.75rem;
+  }
+  
+  #feedbackModal .modal-title {
+    font-size: 1.1rem;
+  }
+}
+</style>
 
  
