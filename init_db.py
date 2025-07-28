@@ -297,6 +297,159 @@ if not session.query(Country).first():
         session.add(Country(name=name, status="active"))
     session.commit()
 
+# --- Email шаблоны ---
+if not session.query(EmailTemplate).first():
+    email_templates = [
+        {
+            "name": "Приветственное письмо",
+            "code": "welcome",
+            "subject": "Добро пожаловать в Stanbase!",
+            "html_content": """<h2>Добро пожаловать в Stanbase!</h2>
+<p>Здравствуйте, {{ user_name }}!</p>
+<p>Спасибо за регистрацию в Stanbase - ведущей платформе для стартапов и инвесторов Центральной Азии.</p>
+<p>Теперь вы можете:</p>
+<ul>
+<li>Создать профиль компании или инвестора</li>
+<li>Найти партнеров для сотрудничества</li>
+<li>Получать актуальные новости экосистемы</li>
+<li>Участвовать в мероприятиях</li>
+</ul>
+<p>Если у вас есть вопросы, не стесняйтесь обращаться к нашей команде.</p>
+<p>С уважением,<br>Команда Stanbase</p>""",
+            "text_content": """Добро пожаловать в Stanbase!
+
+Здравствуйте, {{ user_name }}!
+
+Спасибо за регистрацию в Stanbase - ведущей платформе для стартапов и инвесторов Центральной Азии.
+
+Теперь вы можете:
+- Создать профиль компании или инвестора
+- Найти партнеров для сотрудничества
+- Получать актуальные новости экосистемы
+- Участвовать в мероприятиях
+
+Если у вас есть вопросы, не стесняйтесь обращаться к нашей команде.
+
+С уважением,
+Команда Stanbase""",
+            "description": "Отправляется новым пользователям после регистрации",
+            "variables": '{"user_name": "Имя пользователя"}'
+        },
+        {
+            "name": "Сброс пароля",
+            "code": "password_reset",
+            "subject": "Сброс пароля - Stanbase",
+            "html_content": """<h2>Сброс пароля</h2>
+<p>Здравствуйте!</p>
+<p>Вы запросили сброс пароля для вашего аккаунта в Stanbase.</p>
+<p>Для сброса пароля перейдите по ссылке:</p>
+<p><a href="{{ reset_url }}">Сбросить пароль</a></p>
+<p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
+<p>Ссылка действительна в течение 30 минут.</p>
+<p>С уважением,<br>Команда Stanbase</p>""",
+            "text_content": """Сброс пароля
+
+Здравствуйте!
+
+Вы запросили сброс пароля для вашего аккаунта в Stanbase.
+
+Для сброса пароля перейдите по ссылке:
+{{ reset_url }}
+
+Если вы не запрашивали сброс пароля, проигнорируйте это письмо.
+
+Ссылка действительна в течение 30 минут.
+
+С уважением,
+Команда Stanbase""",
+            "description": "Отправляется при запросе сброса пароля",
+            "variables": '{"reset_url": "Ссылка для сброса пароля"}'
+        },
+        {
+            "name": "Подтверждение email",
+            "code": "email_verification",
+            "subject": "Подтвердите ваш email - Stanbase",
+            "html_content": """<h2>Подтверждение email</h2>
+<p>Здравствуйте, {{ user_name }}!</p>
+<p>Для завершения регистрации подтвердите ваш email адрес.</p>
+<p>Нажмите на кнопку ниже:</p>
+<p><a href="{{ verification_url }}">Подтвердить email</a></p>
+<p>Если кнопка не работает, скопируйте ссылку в браузер:</p>
+<p>{{ verification_url }}</p>
+<p>С уважением,<br>Команда Stanbase</p>""",
+            "text_content": """Подтверждение email
+
+Здравствуйте, {{ user_name }}!
+
+Для завершения регистрации подтвердите ваш email адрес.
+
+Перейдите по ссылке:
+{{ verification_url }}
+
+С уважением,
+Команда Stanbase""",
+            "description": "Отправляется для подтверждения email адреса",
+            "variables": '{"user_name": "Имя пользователя", "verification_url": "Ссылка для подтверждения"}'
+        },
+        {
+            "name": "Уведомление",
+            "code": "notification",
+            "subject": "Уведомление - Stanbase",
+            "html_content": """<h2>{{ title }}</h2>
+<p>{{ message }}</p>
+<p>С уважением,<br>Команда Stanbase</p>""",
+            "text_content": """{{ title }}
+
+{{ message }}
+
+С уважением,
+Команда Stanbase""",
+            "description": "Общее уведомление",
+            "variables": '{"title": "Заголовок", "message": "Сообщение"}'
+        },
+        {
+            "name": "Уведомление о обратной связи",
+            "code": "feedback_notification",
+            "subject": "Новое сообщение обратной связи - Stanbase",
+            "html_content": """<h2>Новое сообщение обратной связи</h2>
+<p>Получено новое сообщение от пользователя.</p>
+<p><strong>Тип:</strong> {{ feedback_type }}</p>
+<p><strong>Описание:</strong> {{ description }}</p>
+<p><strong>Предложение:</strong> {{ suggestion }}</p>
+<p><strong>Имя:</strong> {{ name }}</p>
+<p><strong>Email:</strong> {{ email }}</p>
+<p>С уважением,<br>Команда Stanbase</p>""",
+            "text_content": """Новое сообщение обратной связи
+
+Получено новое сообщение от пользователя.
+
+Тип: {{ feedback_type }}
+Описание: {{ description }}
+Предложение: {{ suggestion }}
+Имя: {{ name }}
+Email: {{ email }}
+
+С уважением,
+Команда Stanbase""",
+            "description": "Отправляется администраторам при получении обратной связи",
+            "variables": '{"feedback_type": "Тип обратной связи", "description": "Описание", "suggestion": "Предложение", "name": "Имя", "email": "Email"}'
+        }
+    ]
+    
+    for template_data in email_templates:
+        template = EmailTemplate(
+            name=template_data["name"],
+            code=template_data["code"],
+            subject=template_data["subject"],
+            html_content=template_data["html_content"],
+            text_content=template_data["text_content"],
+            description=template_data["description"],
+            variables=template_data["variables"],
+            is_active=True
+        )
+        session.add(template)
+    session.commit()
+
 if __name__ == "__main__":
     fix_company_fields()
 
