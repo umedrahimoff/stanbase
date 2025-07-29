@@ -3342,15 +3342,15 @@ async def admin_edit_investor(request: Request, investor_id: int):
     import starlette.background
     
     # Получаем сделки этого инвестора
-    portfolio_deals = []
+    investor_deals = []
     if investor:
         # Ищем сделки, где имя инвестора упоминается в поле investors
         deals = db.query(Deal).options(joinedload(Deal.company)).all()
         for deal in deals:
             if deal.investors and investor.name in deal.investors:
-                portfolio_deals.append(deal)
+                investor_deals.append(deal)
         # Сортируем по ID в убывающем порядке (новые сначала)
-        portfolio_deals = sorted(portfolio_deals, key=lambda x: x.id, reverse=True)
+        investor_deals = sorted(investor_deals, key=lambda x: x.id, reverse=True)
     
     # Получаем список стран для формы
     countries = db.query(Country).filter(Country.status == 'active').order_by(Country.name).all()
@@ -3360,7 +3360,7 @@ async def admin_edit_investor(request: Request, investor_id: int):
         "session": request.session, 
         "investor": investor, 
         "portfolio_entries": investor.portfolio_entries if investor else [], 
-        "portfolio_deals": portfolio_deals, 
+        "portfolio_deals": investor_deals, 
         "error": error, 
         "today": today,
         "countries": countries
@@ -4350,61 +4350,55 @@ async def admin_delete_pitch(request: Request, pitch_id: int):
 # CRUD операции для сделок
 @app.get("/admin/deals/create", name="admin_create_deal_form")
 async def admin_create_deal_form(request: Request):
-    from models import Company, CompanyStage, Investor
+    from models import CompanyStage, Company, Investor
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
+    company_id = request.query_params.get('company_id')
+    
     db = SessionLocal()
-    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
     stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
     investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
-    
-    # Проверяем, есть ли предвыбранный инвестор
-    investor_id = request.query_params.get('investor_id')
-    selected_investor = None
-    if investor_id:
-        selected_investor = db.query(Investor).get(investor_id)
-    
     db.close()
     
     return templates.TemplateResponse("admin/deals/create.html", {
-        "request": request,
-        "companies": companies,
+        "request": request, 
+        "company_id": company_id,
         "stages": stages,
-        "investors": investors,
-        "selected_investor": selected_investor
+        "companies": companies,
+        "investors": investors
     })
 
 @app.post("/admin/deals/create", name="admin_create_deal")
 async def admin_create_deal(request: Request):
-    from models import Deal, Company, Investor
+    from models import Deal, Company
     import datetime
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
-    db = SessionLocal()
     form = await request.form()
-    
     company_id = form.get('company_id')
     deal_type = form.get('deal_type')
     amount = form.get('amount')
     valuation = form.get('valuation')
     investors_list = form.getlist('investors')
-    investors_str = ', '.join(investors_list) if investors_list else ''
+    investors = ', '.join(investors_list) if investors_list else ''
     deal_date_str = form.get('deal_date')
     status = form.get('status', 'active')
     
     if not company_id:
-        return RedirectResponse(url="/admin/deals/create?error=Выберите компанию", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/deals/create?error=Выберите компанию"), status_code=302)
     
     if not deal_type or not amount:
-        return RedirectResponse(url="/admin/deals/create?error=Заполните все обязательные поля", status_code=302)
+        return RedirectResponse(url=f"/admin/deals/create?company_id={company_id}&error=Заполните все обязательные поля", status_code=302)
     
+    db = SessionLocal()
     try:
         # Проверяем существование компании
         company = db.query(Company).get(company_id)
         if not company:
-            return RedirectResponse(url="/admin/deals/create?error=Компания не найдена", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies?error=Компания не найдена"), status_code=302)
         
         # Обработка даты
         deal_date = None
@@ -4419,7 +4413,7 @@ async def admin_create_deal(request: Request):
             type=deal_type,
             amount=float(amount) if amount else None,
             valuation=float(valuation) if valuation else None,
-            investors=investors_str,
+            investors=investors,
             date=deal_date,
             status=status,
             company_id=int(company_id)
@@ -4427,77 +4421,62 @@ async def admin_create_deal(request: Request):
         db.add(deal)
         db.commit()
         
-        # Если был предвыбранный инвестор, перенаправляем на его страницу
-        investor_id = form.get('investor_id')
-        if investor_id:
-            return RedirectResponse(url=f"/admin/investors/edit/{investor_id}?message=Сделка успешно добавлена", status_code=302)
-        
-        return RedirectResponse(url="/admin/deals?message=Сделка успешно создана", status_code=302)
-        
     except Exception as e:
         db.rollback()
-        return RedirectResponse(url="/admin/deals/create?error=Ошибка при создании сделки", status_code=302)
+        return RedirectResponse(url=f"/admin/deals/create?company_id={company_id}&error=Ошибка при создании сделки", status_code=302)
     finally:
         db.close()
+    
+    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно добавлена", status_code=302)
 
 @app.get("/admin/deals/{deal_id}/edit", name="admin_edit_deal_form")
 async def admin_edit_deal_form(request: Request, deal_id: int):
-    from models import Deal, Company, CompanyStage, Investor
+    from models import Deal, CompanyStage, Investor
     from sqlalchemy.orm import joinedload
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
     db = SessionLocal()
     deal = db.query(Deal).options(joinedload(Deal.company)).get(deal_id)
-    if not deal:
-        return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
-    
-    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
     stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
     investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
     db.close()
     
+    if not deal:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/deals?error=Сделка не найдена"), status_code=302)
+    
     return templates.TemplateResponse("admin/deals/edit.html", {
-        "request": request,
+        "request": request, 
         "deal": deal,
-        "companies": companies,
         "stages": stages,
         "investors": investors
     })
 
 @app.post("/admin/deals/{deal_id}/edit", name="admin_edit_deal")
 async def admin_edit_deal(request: Request, deal_id: int):
-    from models import Deal, Company
+    from models import Deal
     import datetime
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
     
-    db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
-    if not deal:
-        return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
-    
     form = await request.form()
-    company_id = form.get('company_id')
     deal_type = form.get('deal_type')
     amount = form.get('amount')
     valuation = form.get('valuation')
     investors_list = form.getlist('investors')
-    investors_str = ', '.join(investors_list) if investors_list else ''
+    investors = ', '.join(investors_list) if investors_list else ''
+
     deal_date_str = form.get('deal_date')
     status = form.get('status', 'active')
-    
-    if not company_id:
-        return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Выберите компанию", status_code=302)
     
     if not deal_type or not amount:
         return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Заполните все обязательные поля", status_code=302)
     
+    db = SessionLocal()
     try:
-        # Проверяем существование компании
-        company = db.query(Company).get(company_id)
-        if not company:
-            return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Компания не найдена", status_code=302)
+        deal = db.query(Deal).get(deal_id)
+        if not deal:
+            return RedirectResponse(url=get_redirect_url(request, "/admin/deals?error=Сделка не найдена"), status_code=302)
         
         # Обработка даты
         deal_date = None
@@ -4507,24 +4486,23 @@ async def admin_edit_deal(request: Request, deal_id: int):
             except ValueError:
                 pass
         
-        # Обновляем сделку
+        # Обновляем запись
         deal.type = deal_type
         deal.amount = float(amount) if amount else None
         deal.valuation = float(valuation) if valuation else None
-        deal.investors = investors_str
+        deal.investors = investors
         deal.date = deal_date
         deal.status = status
-        deal.company_id = int(company_id)
         
         db.commit()
-        
-        return RedirectResponse(url="/admin/deals?message=Сделка успешно обновлена", status_code=302)
         
     except Exception as e:
         db.rollback()
         return RedirectResponse(url=f"/admin/deals/{deal_id}/edit?error=Ошибка при обновлении сделки", status_code=302)
     finally:
         db.close()
+    
+    return RedirectResponse(url=get_redirect_url(request, "/admin/deals?message=Сделка успешно обновлена"), status_code=302)
 
 @app.post("/admin/deals/{deal_id}/delete", name="admin_delete_deal")
 async def admin_delete_deal(request: Request, deal_id: int):
@@ -4533,19 +4511,17 @@ async def admin_delete_deal(request: Request, deal_id: int):
         return RedirectResponse(url="/login", status_code=302)
     
     db = SessionLocal()
-    deal = db.query(Deal).get(deal_id)
-    if not deal:
-        return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
-    
     try:
-        db.delete(deal)
-        db.commit()
-        return {"success": True, "message": "Сделка успешно удалена"}
+        deal = db.query(Deal).get(deal_id)
+        if deal:
+            db.delete(deal)
+            db.commit()
     except Exception as e:
         db.rollback()
-        return {"success": False, "error": "Ошибка при удалении сделки"}
     finally:
         db.close()
+    
+    return RedirectResponse(url=f"/admin/deals?message=Сделка успешно удалена", status_code=302)
 
 # === Уведомления ===
 
@@ -5445,3 +5421,210 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     print('SERVER STARTED')
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
+
+# Функции для работы с портфелем инвестора
+@app.get("/admin/investors/{investor_id}/deals/create", name="admin_create_investor_deal_form")
+async def admin_create_investor_deal_form(request: Request, investor_id: int):
+    from models import CompanyStage, Company, Investor
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    investor = db.query(Investor).get(investor_id)
+    if not investor:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Инвестор не найден"), status_code=302)
+    
+    stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
+    investors = db.query(Investor).filter(Investor.status == 'active').order_by(Investor.name).all()
+    db.close()
+    
+    return templates.TemplateResponse("admin/investors/deals/create.html", {
+        "request": request, 
+        "current_investor": investor,
+        "stages": stages,
+        "companies": companies,
+        "investors": investors
+    })
+
+@app.post("/admin/investors/{investor_id}/deals/create", name="admin_create_investor_deal")
+async def admin_create_investor_deal(request: Request, investor_id: int):
+    from models import Deal, Company, Investor
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    investor = db.query(Investor).get(investor_id)
+    if not investor:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Инвестор не найден"), status_code=302)
+    
+    form = await request.form()
+    company_id = form.get('company_id')
+    deal_type = form.get('deal_type')
+    amount = form.get('amount')
+    valuation = form.get('valuation')
+    investors_list = form.getlist('investors')
+    investors_str = ', '.join(investors_list) if investors_list else investor.name
+    deal_date_str = form.get('deal_date')
+    status = form.get('status', 'active')
+    
+    if not company_id:
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/create?error=Выберите компанию", status_code=302)
+    
+    if not deal_type or not amount:
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/create?error=Заполните все обязательные поля", status_code=302)
+    
+    try:
+        # Проверяем существование компании
+        company = db.query(Company).get(company_id)
+        if not company:
+            return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Компания не найдена"), status_code=302)
+        
+        # Обработка даты
+        deal_date = None
+        if deal_date_str:
+            try:
+                deal_date = datetime.datetime.strptime(deal_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
+        # Создаем запись в БД
+        deal = Deal(
+            type=deal_type,
+            amount=float(amount) if amount else None,
+            valuation=float(valuation) if valuation else None,
+            investors=investors_str,
+            date=deal_date,
+            status=status,
+            company_id=int(company_id)
+        )
+        db.add(deal)
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/create?error=Ошибка при создании сделки", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/investors/edit/{investor_id}?message=Сделка успешно добавлена в портфель", status_code=302)
+
+@app.get("/admin/investors/{investor_id}/deals/{deal_id}/edit", name="admin_edit_investor_deal_form")
+async def admin_edit_investor_deal_form(request: Request, investor_id: int, deal_id: int):
+    from models import Deal, CompanyStage, Company, Investor
+    from sqlalchemy.orm import joinedload
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    investor = db.query(Investor).get(investor_id)
+    if not investor:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Инвестор не найден"), status_code=302)
+    
+    deal = db.query(Deal).options(joinedload(Deal.company)).get(deal_id)
+    if not deal:
+        return RedirectResponse(url=get_redirect_url(request, f"/admin/investors/edit/{investor_id}?error=Сделка не найдена"), status_code=302)
+    
+    stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+    companies = db.query(Company).filter(Company.status == 'active').order_by(Company.name).all()
+    db.close()
+    
+    return templates.TemplateResponse("admin/investors/deals/edit.html", {
+        "request": request, 
+        "current_investor": investor,
+        "deal": deal,
+        "stages": stages,
+        "companies": companies
+    })
+
+@app.post("/admin/investors/{investor_id}/deals/{deal_id}/edit", name="admin_edit_investor_deal")
+async def admin_edit_investor_deal(request: Request, investor_id: int, deal_id: int):
+    from models import Deal, Company, Investor
+    import datetime
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    investor = db.query(Investor).get(investor_id)
+    if not investor:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Инвестор не найден"), status_code=302)
+    
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        return RedirectResponse(url=get_redirect_url(request, f"/admin/investors/edit/{investor_id}?error=Сделка не найдена"), status_code=302)
+    
+    form = await request.form()
+    company_id = form.get('company_id')
+    deal_type = form.get('deal_type')
+    amount = form.get('amount')
+    valuation = form.get('valuation')
+    deal_date_str = form.get('deal_date')
+    status = form.get('status', 'active')
+    
+    if not company_id:
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/{deal_id}/edit?error=Выберите компанию", status_code=302)
+    
+    if not deal_type or not amount:
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/{deal_id}/edit?error=Заполните все обязательные поля", status_code=302)
+    
+    try:
+        # Проверяем существование компании
+        company = db.query(Company).get(company_id)
+        if not company:
+            return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Компания не найдена"), status_code=302)
+        
+        # Обработка даты
+        deal_date = None
+        if deal_date_str:
+            try:
+                deal_date = datetime.datetime.strptime(deal_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        
+        # Обновляем сделку
+        deal.type = deal_type
+        deal.amount = float(amount) if amount else None
+        deal.valuation = float(valuation) if valuation else None
+        deal.investors = investor.name  # Устанавливаем имя инвестора
+        deal.date = deal_date
+        deal.status = status
+        deal.company_id = int(company_id)
+        
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/investors/{investor_id}/deals/{deal_id}/edit?error=Ошибка при обновлении сделки", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/investors/edit/{investor_id}?message=Сделка успешно обновлена", status_code=302)
+
+@app.post("/admin/investors/{investor_id}/deals/{deal_id}/delete", name="admin_delete_investor_deal")
+async def admin_delete_investor_deal(request: Request, investor_id: int, deal_id: int):
+    from models import Deal, Investor
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    db = SessionLocal()
+    investor = db.query(Investor).get(investor_id)
+    if not investor:
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors?error=Инвестор не найден"), status_code=302)
+    
+    deal = db.query(Deal).get(deal_id)
+    if not deal:
+        return RedirectResponse(url=get_redirect_url(request, f"/admin/investors/edit/{investor_id}?error=Сделка не найдена"), status_code=302)
+    
+    try:
+        db.delete(deal)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return RedirectResponse(url=f"/admin/investors/edit/{investor_id}?error=Ошибка при удалении сделки", status_code=302)
+    finally:
+        db.close()
+    
+    return RedirectResponse(url=f"/admin/investors/edit/{investor_id}?message=Сделка успешно удалена", status_code=302)
+
+# ... existing code ...

@@ -34,7 +34,7 @@ class Company(Base):
     pitches = relationship('Pitch', backref='company', cascade='all, delete-orphan')
     deals = relationship('Deal', backref='company', cascade='all, delete-orphan')
     jobs = relationship('Job', backref='company', cascade='all, delete-orphan')
-    users = relationship('User', backref='company', cascade='all, delete-orphan')
+    users = relationship('User', backref='company')  # Убираем cascade='all, delete-orphan'
     status = Column(String(16), default='active')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
