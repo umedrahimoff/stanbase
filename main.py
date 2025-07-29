@@ -3695,7 +3695,8 @@ def create_full_test_data():
     finally:
         session.close()
 
-create_full_test_data()
+# Убираем автоматический вызов create_full_test_data() отсюда
+# create_full_test_data()  # <-- ЭТА СТРОКА УДАЛЕНА
 
 router = APIRouter()
 
