@@ -4,6 +4,22 @@
   <h2 class="mb-0">Компании</h2>
   <a href="{{ url_for('admin_create_company') }}" class="btn btn-primary">Создать компанию</a>
 </div>
+
+<!-- Отображение ошибок и сообщений -->
+{% if request.query_params.get('error') %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Ошибка:</strong> {{ request.query_params.get('error') }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+{% if request.query_params.get('message') %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Успешно:</strong> {{ request.query_params.get('message') }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
 <form class="row g-3 mb-3" method="get" action="">
   <div class="col-md-4">
     <input type="text" name="q" class="form-control" placeholder="Поиск по названию..." value="{{ q }}">

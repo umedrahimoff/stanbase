@@ -3938,16 +3938,48 @@ async def admin_create_company(request: Request):
 
 @app.post("/admin/companies/delete/{company_id}", name="admin_delete_company")
 async def admin_delete_company(request: Request, company_id: int):
+    """Удаляет компанию и все связанные данные."""
     from models import Company
+    from sqlalchemy.exc import SQLAlchemyError
+    
     if not admin_required(request):
-        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
+        return RedirectResponse(
+            url=get_redirect_url(request, "/login"), 
+            status_code=302
+        )
+    
     db = SessionLocal()
-    company = db.query(Company).get(company_id)
-    if company:
-        db.delete(company)
-        db.commit()
-    db.close()
-    return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
+    try:
+        company = db.query(Company).get(company_id)
+        if company:
+            # Удаляем компанию (каскадное удаление обработает связанные данные)
+            db.delete(company)
+            db.commit()
+            print(f"✅ Компания {company.name} (ID: {company_id}) успешно удалена")
+        else:
+            print(f"⚠️ Компания с ID {company_id} не найдена")
+        
+        db.close()
+        return RedirectResponse(
+            url=get_redirect_url(request, "/admin/companies?message=Компания успешно удалена"), 
+            status_code=302
+        )
+    except SQLAlchemyError as e:
+        db.rollback()
+        db.close()
+        print(f"❌ Ошибка при удалении компании {company_id}: {str(e)}")
+        return RedirectResponse(
+            url=get_redirect_url(request, "/admin/companies?error=Ошибка при удалении"), 
+            status_code=302
+        )
+    except Exception as e:
+        db.rollback()
+        db.close()
+        print(f"❌ Неожиданная ошибка при удалении компании {company_id}: {str(e)}")
+        return RedirectResponse(
+            url=get_redirect_url(request, "/admin/companies?error=Неожиданная ошибка"), 
+            status_code=302
+        )
 
 @app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
 async def admin_edit_company(request: Request, company_id: int):
