@@ -36,7 +36,7 @@
         </div>
       </div>
       <div class="card-body pt-0">
-        <p class="mb-3">{{ company.description }}</p>
+        <div class="mb-3">{{ company.description|replace('\n', '<br>')|safe }}</div>
         <ul class="list-unstyled mb-3">
           {% if company.founded_date %}<li><b>Дата основания:</b> {{ company.founded_date.strftime('%d.%m.%Y') }}</li>{% endif %}
           {% if company.website %}<li><b>Сайт:</b> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></li>{% endif %}
@@ -125,7 +125,7 @@
                 </div>
               </div>
               <a href="{{ pitch.url }}" target="_blank" class="btn btn-outline-primary">
-                <i class="bi bi-download me-2"></i>Скачать питч
+                <i class="bi bi-box-arrow-up-right me-2"></i>Посмотреть питч
               </a>
             </div>
           </div>

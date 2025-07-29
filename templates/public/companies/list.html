@@ -116,7 +116,7 @@
               <div class="text-muted small">{{ c.country }}, {{ c.city }} | {{ c.stage }} | {{ c.industry }}</div>
             </div>
           </div>
-          <p class="card-text mb-0 two-lines">{{ c.description }}{% if c.description|length > 120 %}...{% endif %}</p>
+          <p class="card-text mb-0 two-lines">{{ c.description|replace('\n', ' ') }}{% if c.description|length > 120 %}...{% endif %}</p>
         </div>
       </div>
     </div>

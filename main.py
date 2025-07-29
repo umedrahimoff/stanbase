@@ -789,6 +789,73 @@ async def dashboard_investor(request: Request):
     #     return RedirectResponse(url="/login", status_code=302)
     # return templates.TemplateResponse("dashboard/investor.html", {"request": request, "user": user, "investor": investor})
 
+# --- Dashboard User (Общий ЛК) ---
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_user(request: Request):
+    """Личный кабинет для всех пользователей"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Country, Company, Person, Deal, Pitch, company_person
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user:
+            return RedirectResponse(url="/login", status_code=302)
+
+        # Отладочная информация для dashboard
+        print(f"DEBUG DASHBOARD: Загружен пользователь: {user.first_name}, {user.last_name}, {user.country_id}, {user.city}")
+        print(f"DEBUG DASHBOARD: Параметры URL - error: {request.query_params.get('error')}, success: {request.query_params.get('success')}")
+
+        # Загружаем связанные данные
+        if user.country_id:
+            user.country = db.query(Country).filter(Country.id == user.country_id).first()
+
+        # Загружаем информацию о компании, если есть
+        company = None
+        if user.company_id:
+            company = db.query(Company).filter(Company.id == user.company_id).first()
+            if company:
+                # Загружаем команду
+                company.team = db.query(Person).join(company_person).filter(company_person.c.company_id == company.id).all()
+                # Загружаем сделки
+                company.deals = db.query(Deal).filter(Deal.company_id == company.id).all()
+                # Загружаем питчи
+                company.pitches = db.query(Pitch).filter(Pitch.company_id == company.id).all()
+
+        # Получаем параметры для уведомлений и активной вкладки
+        error = request.query_params.get('error')
+        success = request.query_params.get('success')
+        active_tab = request.query_params.get('tab', 'profile')
+        
+        # Загружаем данные для формы редактирования компании
+        countries = []
+        stages = []
+        categories = []
+        
+        # Загружаем страны всегда (нужны для редактирования профиля пользователя)
+        countries = db.query(Country).filter(Country.status == 'active').all()
+        
+        if company:  # Загружаем остальные данные только если у пользователя есть компания
+            from models import CompanyStage, Category
+            stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+            categories = db.query(Category).filter(Category.status == 'active').all()
+        
+        return templates.TemplateResponse("dashboard/user.html", {
+            "request": request,
+            "user": user,
+            "company": company,
+            "session": request.session,
+            "error": error,
+            "success": success,
+            "active_tab": active_tab,
+            "countries": countries,
+            "stages": stages,
+            "categories": categories
+        })
+    finally:
+        db.close()
+
 # --- Dashboard Startuper ---
 @app.get("/dashboard/startuper", response_class=HTMLResponse)
 async def dashboard_startuper(request: Request):
@@ -810,6 +877,290 @@ async def dashboard_startuper(request: Request):
     # else:
     #     return RedirectResponse(url="/login", status_code=302)
     # return templates.TemplateResponse("dashboard/startuper.html", {"request": request, "user": user, "startup": startup, "team": team})
+
+# --- Пользователь: изменение пароля ---
+@app.route("/dashboard/user/change-password", methods=["POST"])
+async def change_user_password(request: Request):
+    """Изменение пароля пользователя"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User
+    from utils.security import verify_password, hash_password
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user:
+            return RedirectResponse(url="/login", status_code=302)
+        
+        form = await request.form()
+        current_password = form.get('current_password')
+        new_password = form.get('new_password')
+        confirm_password = form.get('confirm_password')
+        
+        # Проверяем текущий пароль
+        if not verify_password(current_password, user.password_hash):
+            return RedirectResponse(url="/dashboard?tab=profile&error=invalid_current_password", status_code=302)
+        
+        # Проверяем совпадение новых паролей
+        if new_password != confirm_password:
+            return RedirectResponse(url="/dashboard?tab=profile&error=passwords_dont_match", status_code=302)
+        
+        # Проверяем длину нового пароля
+        if len(new_password) < 6:
+            return RedirectResponse(url="/dashboard?tab=profile&error=password_too_short", status_code=302)
+        
+        # Обновляем пароль
+        user.password_hash = hash_password(new_password)
+        user.updated_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return RedirectResponse(url="/dashboard?tab=profile&success=password_changed", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при изменении пароля: {e}")
+        return RedirectResponse(url="/dashboard?tab=profile&error=password_change_failed", status_code=302)
+    finally:
+        db.close()
+
+# --- Пользователь: редактирование профиля ---
+@app.route("/dashboard/user/edit", methods=["POST"])
+async def edit_user_profile(request: Request):
+    """Редактирование профиля пользователя"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user:
+            return RedirectResponse(url="/login", status_code=302)
+        
+        form = await request.form()
+        
+        # Отладочная информация
+        print(f"DEBUG: Получены данные формы: {dict(form)}")
+        print(f"DEBUG: Текущие данные пользователя: {user.first_name}, {user.last_name}, {user.country_id}, {user.city}")
+        
+        # Обновляем данные пользователя
+        user.first_name = form.get('first_name', user.first_name)
+        user.last_name = form.get('last_name', user.last_name)
+        
+        # Обработка country_id с проверкой
+        country_id_str = form.get('country_id')
+        if country_id_str and country_id_str.strip():
+            try:
+                user.country_id = int(country_id_str)
+                print(f"DEBUG: Установлен country_id: {user.country_id}")
+            except (ValueError, TypeError) as e:
+                print(f"DEBUG: Ошибка при конвертации country_id '{country_id_str}': {e}")
+                # Оставляем старое значение
+        else:
+            print(f"DEBUG: country_id пустой или отсутствует: '{country_id_str}'")
+        
+        user.city = form.get('city', user.city)
+        user.phone = form.get('phone', user.phone)
+        user.telegram = form.get('telegram', user.telegram)
+        user.linkedin = form.get('linkedin', user.linkedin)
+        user.updated_at = datetime.utcnow()
+        
+        print(f"DEBUG: Обновленные данные: {user.first_name}, {user.last_name}, {user.country_id}, {user.city}")
+        
+        db.commit()
+        print(f"DEBUG: Данные сохранены в БД")
+        
+        # Проверяем, что данные действительно сохранились
+        db.refresh(user)
+        print(f"DEBUG: Данные после обновления в БД: {user.first_name}, {user.last_name}, {user.country_id}, {user.city}")
+        
+        # Проверяем, что данные загружаются корректно
+        updated_user = db.query(User).filter(User.id == request.session['user_id']).first()
+        print(f"DEBUG: Данные при повторной загрузке: {updated_user.first_name}, {updated_user.last_name}, {updated_user.country_id}, {updated_user.city}")
+        
+        return RedirectResponse(url="/dashboard?success=profile_updated", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при обновлении профиля: {e}")
+        return RedirectResponse(url="/dashboard", status_code=302)
+    finally:
+        db.close()
+
+# --- Создание страницы компании ---
+@app.get("/dashboard/create-company", response_class=HTMLResponse)
+async def create_company_page(request: Request):
+    """Страница создания компании"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import Country, CompanyStage, Category
+    db = SessionLocal()
+    try:
+        countries = db.query(Country).filter(Country.status == 'active').all()
+        stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+        categories = db.query(Category).filter(Category.status == 'active').all()
+        
+        return templates.TemplateResponse("dashboard/create_company.html", {
+            "request": request,
+            "countries": countries,
+            "stages": stages,
+            "categories": categories,
+            "session": request.session
+        })
+    finally:
+        db.close()
+
+        @app.post("/dashboard/create-company")
+        async def create_company(request: Request):
+            """Создание компании"""
+            if not request.session.get('user_id'):
+                return RedirectResponse(url="/login", status_code=302)
+
+            from models import Company, User
+            import os
+            from datetime import datetime
+            db = SessionLocal()
+            try:
+                # Проверяем, есть ли уже компания у пользователя
+                user = db.query(User).filter(User.id == request.session['user_id']).first()
+                if user and user.company_id:
+                    # У пользователя уже есть компания
+                    return RedirectResponse(url="/dashboard?error=already_has_company", status_code=302)
+                
+                form = await request.form()
+
+                # Создаем компанию
+                company = Company(
+                    name=form.get('name'),
+                    description=form.get('description'),
+                    country=form.get('country'),
+                    city=form.get('city'),
+                    stage=form.get('stage'),
+                    industry=form.get('industry'),
+                    website=form.get('website'),
+                    status=form.get('status', 'active'),
+                    created_by=request.session.get('user_email', 'user')
+                )
+
+                # Обработка даты основания
+                founded_date_str = form.get('founded_date')
+                if founded_date_str:
+                    try:
+                        company.founded_date = datetime.strptime(founded_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        company.founded_date = None
+
+                db.add(company)
+                db.commit()
+                db.refresh(company)
+
+                # Обработка загрузки логотипа
+                files = await request.form()
+                if 'logo' in files:
+                    logo_file = files['logo']
+                    if logo_file and logo_file.filename:
+                        # Создаем папку для логотипов, если её нет
+                        logo_dir = "static/logos"
+                        os.makedirs(logo_dir, exist_ok=True)
+                        
+                        # Генерируем уникальное имя файла
+                        import uuid
+                        file_extension = os.path.splitext(logo_file.filename)[1]
+                        filename = f"company_{company.id}_{uuid.uuid4().hex}{file_extension}"
+                        file_path = os.path.join(logo_dir, filename)
+                        
+                        # Сохраняем файл
+                        with open(file_path, "wb") as f:
+                            content = await logo_file.read()
+                            f.write(content)
+                        
+                        # Обновляем путь к логотипу в базе данных
+                        company.logo = f"/static/logos/{filename}"
+                        db.commit()
+
+                # Связываем с пользователем
+                if user:
+                    user.company_id = company.id
+                    db.commit()
+
+                return RedirectResponse(url="/dashboard?success=company_created", status_code=302)
+            except Exception as e:
+                db.rollback()
+                print(f"Ошибка при создании компании: {e}")
+                return RedirectResponse(url="/dashboard?error=creation_failed", status_code=302)
+            finally:
+                db.close()
+
+# --- Создание страницы инвестора ---
+@app.get("/dashboard/create-investor", response_class=HTMLResponse)
+async def create_investor_page(request: Request):
+    """Страница создания инвестора"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import Country
+    db = SessionLocal()
+    try:
+        countries = db.query(Country).filter(Country.status == 'active').all()
+        
+        return templates.TemplateResponse("dashboard/create_investor.html", {
+            "request": request,
+            "countries": countries,
+            "session": request.session
+        })
+    finally:
+        db.close()
+
+@app.post("/dashboard/create-investor")
+async def create_investor(request: Request):
+    """Создание инвестора"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import Investor, User
+    db = SessionLocal()
+    try:
+        # Проверяем, есть ли уже инвестор у пользователя
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if user and user.investor_id:
+            # У пользователя уже есть инвестор
+            return RedirectResponse(url="/dashboard?error=already_has_investor", status_code=302)
+        
+        # Дополнительная проверка: если у пользователя есть компания, нельзя создать инвестора
+        if user and user.company_id:
+            # У пользователя уже есть компания
+            return RedirectResponse(url="/dashboard?error=already_has_company", status_code=302)
+        
+        form = await request.form()
+        
+        # Создаем инвестора
+        investor = Investor(
+            name=form.get('name'),
+            description=form.get('description'),
+            country=form.get('country'),
+            focus=form.get('focus'),
+            stages=form.get('stages'),
+            website=form.get('website'),
+            type=form.get('type', 'angel')
+        )
+        
+        db.add(investor)
+        db.commit()
+        db.refresh(investor)
+        
+        # Связываем с пользователем
+        if user:
+            user.investor_id = investor.id
+            db.commit()
+        
+        return RedirectResponse(url="/dashboard?success=investor_created", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при создании инвестора: {e}")
+        return RedirectResponse(url="/dashboard?error=creation_failed", status_code=302)
+    finally:
+        db.close()
 
 # --- Инвестор: редактирование профиля ---
 @app.route("/dashboard/investor/edit", methods=["GET", "POST"])
@@ -856,10 +1207,628 @@ async def edit_startuper(request: Request):
         company.stage = form.get('stage')
         company.industry = form.get('industry')
         company.website = form.get('website')
-        company.updated_at = datetime.datetime.utcnow()
+        company.updated_at = datetime.utcnow()
         db.commit()
         return RedirectResponse(url="/dashboard/startuper", status_code=302)
     return templates.TemplateResponse("edit_startuper.html", {"request": request, "company": company})
+
+# --- Редактирование компании (для всех пользователей) ---
+@app.route("/dashboard/company/edit", methods=["GET", "POST"])
+async def edit_company(request: Request):
+    """Редактирование компании для всех пользователей"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Country, CompanyStage, Category
+    import os
+    from datetime import datetime
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user or not user.company_id:
+            return RedirectResponse(url="/dashboard?error=no_company", status_code=302)
+        
+        company = db.query(Company).filter(Company.id == user.company_id).first()
+        if not company:
+            return RedirectResponse(url="/dashboard?error=company_not_found", status_code=302)
+        
+        if request.method == "POST":
+            form = await request.form()
+            
+            # Обновляем данные компании
+            company.name = form.get('name', company.name)
+            company.description = form.get('description', company.description)
+            company.country = form.get('country', company.country)
+            company.city = form.get('city', company.city)
+            company.stage = form.get('stage', company.stage)
+            company.industry = form.get('industry', company.industry)
+            company.website = form.get('website', company.website)
+            company.status = form.get('status', company.status)
+            
+            # Обработка даты основания
+            founded_date_str = form.get('founded_date')
+            if founded_date_str:
+                try:
+                    company.founded_date = datetime.strptime(founded_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    company.founded_date = None
+            else:
+                company.founded_date = None
+            
+            # Обработка загрузки логотипа
+            files = await request.form()
+            if 'logo' in files:
+                logo_file = files['logo']
+                if logo_file and logo_file.filename:
+                    # Создаем папку для логотипов, если её нет
+                    logo_dir = "static/logos"
+                    os.makedirs(logo_dir, exist_ok=True)
+                    
+                    # Генерируем уникальное имя файла
+                    import uuid
+                    file_extension = os.path.splitext(logo_file.filename)[1]
+                    filename = f"company_{company.id}_{uuid.uuid4().hex}{file_extension}"
+                    file_path = os.path.join(logo_dir, filename)
+                    
+                    # Сохраняем файл
+                    with open(file_path, "wb") as f:
+                        content = await logo_file.read()
+                        f.write(content)
+                    
+                    # Обновляем путь к логотипу в базе данных
+                    company.logo = f"/static/logos/{filename}"
+            
+            company.updated_at = datetime.utcnow()
+            
+            db.commit()
+            
+            # Получаем активную вкладку из формы
+            active_tab = form.get('active_tab', 'company-info')
+            return RedirectResponse(url=f"/dashboard?tab=edit-company&success=company_updated", status_code=302)
+        
+        # GET запрос - показываем форму редактирования
+        countries = db.query(Country).filter(Country.status == 'active').all()
+        stages = db.query(CompanyStage).filter(CompanyStage.status == 'active').all()
+        categories = db.query(Category).filter(Category.status == 'active').all()
+        
+        # Получаем параметр tab для перехода на нужную вкладку
+        active_tab = request.query_params.get('tab', 'main')
+        
+        return templates.TemplateResponse("dashboard/edit_company.html", {
+            "request": request,
+            "company": company,
+            "countries": countries,
+            "stages": stages,
+            "categories": categories,
+            "session": request.session,
+            "active_tab": active_tab
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при редактировании компании: {e}")
+        return RedirectResponse(url="/dashboard?error=edit_failed", status_code=302)
+    finally:
+        db.close()
+
+# --- Команда компании ---
+@app.post("/dashboard/company/team/add")
+async def add_team_member(request: Request):
+    """
+    Добавление нового члена команды
+    
+    Args:
+        request: HTTP запрос с данными формы
+    
+    Returns:
+        RedirectResponse с результатом операции
+    """
+    # Проверка авторизации
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Person
+    db = SessionLocal()
+    
+    try:
+        print(f"DEBUG: Начинаем добавление члена команды для пользователя {request.session['user_id']}")
+        
+        # Получаем данные формы
+        form = await request.form()
+        print(f"DEBUG: Получены данные формы: {dict(form)}")
+        
+        # Валидация обязательных полей
+        name = form.get('name', '').strip()
+        role = form.get('role', '').strip()
+        
+        print(f"DEBUG: Валидация полей - name: '{name}', role: '{role}'")
+        
+        if not name:
+            print("DEBUG: Ошибка - имя не указано")
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=name_required", 
+                status_code=302
+            )
+        
+        if not role:
+            print("DEBUG: Ошибка - роль не указана")
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=role_required", 
+                status_code=302
+            )
+        
+        # Проверяем доступ пользователя
+        print("DEBUG: Проверяем доступ пользователя")
+        has_access, error_msg, user, company = TeamMemberService.validate_user_access(
+            request.session['user_id'], db
+        )
+        print(f"DEBUG: Результат проверки доступа - has_access: {has_access}, error_msg: '{error_msg}'")
+        
+        if not has_access:
+            print(f"DEBUG: Ошибка доступа - {error_msg}")
+            return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=302)
+        
+        print(f"DEBUG: Пользователь найден: {user.email}, компания: {company.name}")
+        
+        # Проверяем, не превышен ли лимит участников команды (опционально)
+        team_count = len(company.team) if company.team else 0
+        print(f"DEBUG: Текущее количество участников команды: {team_count}")
+        
+        if team_count >= 20:  # Максимум 20 участников
+            print("DEBUG: Ошибка - достигнут лимит участников")
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=team_limit_reached", 
+                status_code=302
+            )
+        
+        # Проверяем, нет ли уже участника с таким именем и ролью
+        existing_member = None
+        if company.team:
+            existing_member = next(
+                (p for p in company.team if p.name.lower() == name.lower() and p.role.lower() == role.lower()),
+                None
+            )
+        
+        print(f"DEBUG: Проверка на дубликат - existing_member: {existing_member}")
+        
+        if existing_member:
+            print("DEBUG: Ошибка - участник уже существует")
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=member_already_exists", 
+                status_code=302
+            )
+        
+        # Создаем нового члена команды
+        print("DEBUG: Создаем нового члена команды")
+        person = Person(
+            name=name,
+            role=role,
+            linkedin=form.get('linkedin', '').strip() or None,
+            telegram=form.get('telegram', '').strip() or None,
+            instagram=form.get('instagram', '').strip() or None,
+            website=form.get('website', '').strip() or None,
+            country=company.country
+        )
+        
+        print(f"DEBUG: Объект Person создан: {person.name} ({person.role})")
+        
+        # Добавляем в базу данных
+        print("DEBUG: Добавляем в базу данных")
+        db.add(person)
+        db.commit()
+        db.refresh(person)
+        print(f"DEBUG: Person добавлен в БД, ID: {person.id}")
+        
+        # Связываем с компанией (many-to-many связь)
+        print("DEBUG: Связываем с компанией")
+        company.team.append(person)
+        db.commit()
+        print(f"DEBUG: Person связан с компанией, количество участников: {len(company.team)}")
+        
+        # Логируем добавление
+        print(f"Добавлен новый участник команды: {name} ({role}) в компанию {company.name}")
+        
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company&subtab=team&success=team_member_added", 
+            status_code=302
+        )
+        
+    except ValueError as e:
+        db.rollback()
+        print(f"Ошибка валидации при добавлении члена команды: {e}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company&error=invalid_data", 
+            status_code=302
+        )
+    except Exception as e:
+        db.rollback()
+        print(f"Неожиданная ошибка при добавлении члена команды: {e}")
+        print(f"DEBUG: Тип ошибки: {type(e).__name__}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company&error=add_failed", 
+            status_code=302
+        )
+    finally:
+        db.close()
+
+# --- Управление командой компании ---
+class TeamMemberService:
+    """Сервис для управления членами команды"""
+    
+    @staticmethod
+    def validate_user_access(user_id: int, db) -> tuple[bool, str, User, Company]:
+        """Проверка доступа пользователя к компании"""
+        if not user_id:
+            return False, "Пользователь не авторизован", None, None
+        
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return False, "Пользователь не найден", None, None
+        
+        if not user.company_id:
+            return False, "У пользователя нет компании", None, None
+        
+        company = db.query(Company).filter(Company.id == user.company_id).first()
+        if not company:
+            return False, "Компания не найдена", None, None
+        
+        return True, "", user, company
+    
+    @staticmethod
+    def validate_team_member(person_id: int, company: Company, db) -> tuple[bool, str, Person]:
+        """Проверка существования и принадлежности члена команды"""
+        if not person_id:
+            return False, "ID участника команды не указан", None
+        
+        person = db.query(Person).filter(Person.id == person_id).first()
+        if not person:
+            return False, "Участник команды не найден", None
+        
+        if person not in company.team:
+            return False, "Участник не принадлежит вашей команде", None
+        
+        return True, "", person
+
+@app.post("/dashboard/company/team/delete/{person_id}")
+async def delete_team_member(request: Request, person_id: int):
+    """
+    Удаление члена команды
+    
+    Args:
+        request: HTTP запрос
+        person_id: ID участника команды для удаления
+    
+    Returns:
+        RedirectResponse с результатом операции
+    """
+    # Проверка авторизации
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Person
+    db = SessionLocal()
+    
+    try:
+        # Проверяем доступ пользователя
+        has_access, error_msg, user, company = TeamMemberService.validate_user_access(
+            request.session['user_id'], db
+        )
+        if not has_access:
+            return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=302)
+        
+        # Проверяем существование участника команды
+        is_valid, error_msg, person = TeamMemberService.validate_team_member(
+            person_id, company, db
+        )
+        if not is_valid:
+            return RedirectResponse(
+                url=f"/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error={error_msg}", 
+                status_code=302
+            )
+        
+        # Сохраняем информацию для логирования
+        person_name = person.name
+        person_role = person.role
+        
+        # Удаляем участника из команды
+        company.team.remove(person)
+        
+        # Логируем действие
+        print(f"Удален участник команды: {person_name} ({person_role}) из компании {company.name}")
+        
+        # Сохраняем изменения
+        db.commit()
+        
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company&success=team_member_deleted", 
+            status_code=302
+        )
+        
+    except ValueError as e:
+        db.rollback()
+        print(f"Ошибка валидации при удалении члена команды: {e}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=invalid_data", 
+            status_code=302
+        )
+    except Exception as e:
+        db.rollback()
+        print(f"Неожиданная ошибка при удалении члена команды: {e}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=delete_failed", 
+            status_code=302
+        )
+    finally:
+        db.close()
+
+@app.post("/dashboard/company/team/edit")
+async def edit_team_member(request: Request):
+    """
+    Редактирование члена команды
+    
+    Args:
+        request: HTTP запрос с данными формы
+    
+    Returns:
+        RedirectResponse с результатом операции
+    """
+    # Проверка авторизации
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Person
+    db = SessionLocal()
+    
+    try:
+        # Получаем данные формы
+        form = await request.form()
+        
+        # Валидация обязательных полей
+        person_id = form.get('person_id')
+        name = form.get('name', '').strip()
+        role = form.get('role', '').strip()
+        
+        if not person_id:
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=person_id_required", 
+                status_code=302
+            )
+        
+        if not name:
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=name_required", 
+                status_code=302
+            )
+        
+        if not role:
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=role_required", 
+                status_code=302
+            )
+        
+        # Проверяем доступ пользователя
+        has_access, error_msg, user, company = TeamMemberService.validate_user_access(
+            request.session['user_id'], db
+        )
+        if not has_access:
+            return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=302)
+        
+        # Проверяем существование участника команды
+        is_valid, error_msg, person = TeamMemberService.validate_team_member(
+            int(person_id), company, db
+        )
+        if not is_valid:
+            return RedirectResponse(
+                url=f"/dashboard?tab=edit-company&error={error_msg}", 
+                status_code=302
+            )
+        
+        # Сохраняем старые данные для логирования
+        old_name = person.name
+        old_role = person.role
+        
+        # Обновляем данные участника команды
+        person.name = name
+        person.role = role
+        person.linkedin = form.get('linkedin', '').strip() or None
+        person.telegram = form.get('telegram', '').strip() or None
+        person.instagram = form.get('instagram', '').strip() or None
+        person.website = form.get('website', '').strip() or None
+        
+        # Логируем изменения
+        changes = []
+        if old_name != name:
+            changes.append(f"имя: {old_name} → {name}")
+        if old_role != role:
+            changes.append(f"роль: {old_role} → {role}")
+        
+        if changes:
+            print(f"Обновлен участник команды {old_name}: {', '.join(changes)}")
+        
+        # Сохраняем изменения
+        db.commit()
+        
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company&subtab=team&success=team_member_updated", 
+            status_code=302
+        )
+        
+    except ValueError as e:
+        db.rollback()
+        print(f"Ошибка валидации при редактировании члена команды: {e}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=invalid_data", 
+            status_code=302
+        )
+    except Exception as e:
+        db.rollback()
+        print(f"Неожиданная ошибка при редактировании члена команды: {e}")
+        return RedirectResponse(
+            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=edit_failed", 
+            status_code=302
+        )
+    finally:
+        db.close()
+
+# --- Сделки компании ---
+@app.post("/dashboard/company/deals/add")
+async def add_deal(request: Request):
+    """Добавление сделки"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Deal
+    from datetime import datetime
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user or not user.company_id:
+            return RedirectResponse(url="/dashboard?error=no_company", status_code=302)
+        
+        company = db.query(Company).filter(Company.id == user.company_id).first()
+        if not company:
+            return RedirectResponse(url="/dashboard?error=company_not_found", status_code=302)
+        
+        form = await request.form()
+        
+        # Создаем новую сделку
+        deal = Deal(
+            type=form.get('type'),
+            amount=float(form.get('amount')) if form.get('amount') else None,
+            valuation=float(form.get('valuation')) if form.get('valuation') else None,
+            investors=form.get('investors'),
+            company_id=company.id
+        )
+        
+        # Обработка даты
+        date_str = form.get('date')
+        if date_str:
+            try:
+                deal.date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                deal.date = None
+        
+        db.add(deal)
+        db.commit()
+        
+        return RedirectResponse(url="/dashboard?tab=edit-company&success=deal_added", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при добавлении сделки: {e}")
+        return RedirectResponse(url="/dashboard?tab=edit-company&error=deal_add_failed", status_code=302)
+    finally:
+        db.close()
+
+@app.post("/dashboard/company/deals/delete/{deal_id}")
+async def delete_deal(request: Request, deal_id: int):
+    """Удаление сделки"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Deal
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user or not user.company_id:
+            return RedirectResponse(url="/dashboard?error=no_company", status_code=302)
+        
+        deal = db.query(Deal).filter(Deal.id == deal_id, Deal.company_id == user.company_id).first()
+        if not deal:
+            return RedirectResponse(url="/dashboard?tab=edit-company&error=deal_not_found", status_code=302)
+        
+        db.delete(deal)
+        db.commit()
+        
+        return RedirectResponse(url="/dashboard?tab=edit-company&success=deal_deleted", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при удалении сделки: {e}")
+        return RedirectResponse(url="/dashboard?tab=edit-company&error=deal_delete_failed", status_code=302)
+    finally:
+        db.close()
+
+# --- Питчи компании ---
+@app.post("/dashboard/company/pitch/add")
+async def add_pitch(request: Request):
+    """Добавление питча"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Pitch
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user or not user.company_id:
+            return RedirectResponse(url="/dashboard?error=no_company", status_code=302)
+        
+        company = db.query(Company).filter(Company.id == user.company_id).first()
+        if not company:
+            return RedirectResponse(url="/dashboard?error=company_not_found", status_code=302)
+        
+        form = await request.form()
+        
+        # Валидация обязательных полей
+        name = form.get('title', '').strip()  # В форме поле называется title, но в БД - name
+        url = form.get('url', '').strip()
+        
+        if not name:
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=title_required", 
+                status_code=302
+            )
+        
+        if not url:
+            return RedirectResponse(
+                url="/dashboard?tab=edit-company&error=url_required", 
+                status_code=302
+            )
+        
+        # Создаем новый питч
+        pitch = Pitch(
+            name=name,
+            url=url,
+            company_id=company.id
+        )
+        
+        db.add(pitch)
+        db.commit()
+        
+        return RedirectResponse(url="/dashboard?tab=edit-company&subtab=pitches&success=pitch_added", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при добавлении питча: {e}")
+        return RedirectResponse(url="/dashboard?tab=edit-company&error=pitch_add_failed", status_code=302)
+    finally:
+        db.close()
+
+@app.post("/dashboard/company/pitch/delete/{pitch_id}")
+async def delete_pitch(request: Request, pitch_id: int):
+    """Удаление питча"""
+    if not request.session.get('user_id'):
+        return RedirectResponse(url="/login", status_code=302)
+    
+    from models import User, Company, Pitch
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == request.session['user_id']).first()
+        if not user or not user.company_id:
+            return RedirectResponse(url="/dashboard?error=no_company", status_code=302)
+        
+        pitch = db.query(Pitch).filter(Pitch.id == pitch_id, Pitch.company_id == user.company_id).first()
+        if not pitch:
+            return RedirectResponse(url="/dashboard?tab=edit-company&error=pitch_not_found", status_code=302)
+        
+        db.delete(pitch)
+        db.commit()
+        
+        return RedirectResponse(url="/dashboard?tab=edit-company&subtab=pitches&success=pitch_deleted", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Ошибка при удалении питча: {e}")
+        return RedirectResponse(url="/dashboard?tab=edit-company&error=pitch_delete_failed", status_code=302)
+    finally:
+        db.close()
 
 # --- Стартапер: добавление члена команды ---
 @app.post("/dashboard/startuper/team/add")
@@ -2566,7 +3535,10 @@ async def admin_delete_team_member(request: Request, person_id: int):
     finally:
         db.close()
     
-    return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=team&message=Участник команды успешно удален", status_code=302)
+    return RedirectResponse(
+        url="/dashboard?tab=edit-company&subtab=team&success=team_member_deleted", 
+        status_code=302
+    )
 
 @app.get("/admin/admins", response_class=HTMLResponse, name="admin_admins")
 def admin_admins(request: Request):
@@ -3134,7 +4106,7 @@ async def admin_update_pitch_status(request: Request, pitch_id: int):
         pitch = db.query(Pitch).get(pitch_id)
         if pitch:
             pitch.status = status
-            pitch.updated_at = datetime.datetime.utcnow()
+            pitch.updated_at = datetime.utcnow()
             db.commit()
     except Exception as e:
         db.rollback()
@@ -3161,7 +4133,7 @@ async def admin_delete_pitch(request: Request, pitch_id: int):
     finally:
         db.close()
     
-    return Response(status_code=200)
+    return RedirectResponse(url="/dashboard?tab=edit-company&subtab=pitches&success=pitch_deleted", status_code=302)
 
 # CRUD операции для сделок
 @app.get("/admin/deals/create", name="admin_create_deal_form")
