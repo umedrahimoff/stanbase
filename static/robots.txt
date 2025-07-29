@@ -1,15 +1,10 @@
 User-agent: *
-Disallow: /
-
-# Запрещаем индексацию всех страниц
-# Это тестовый сайт, не предназначенный для публичной индексации
-
-# Разрешаем только доступ к статическим файлам (CSS, JS, изображения)
-Allow: /static/
+Allow: /
 
 # Запрещаем индексацию админ панели
 Disallow: /admin/
 Disallow: /login
+Disallow: /logout
 Disallow: /register
 Disallow: /dashboard/
 
@@ -18,5 +13,5 @@ Disallow: /api/
 Disallow: /debug/
 Disallow: /test/
 
-# Указываем расположение sitemap (если понадобится в будущем)
-# Sitemap: https://yourdomain.com/sitemap.xml 
+# Sitemap
+Sitemap: https://stanbase.tech/sitemap.xml

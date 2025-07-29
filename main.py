@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Request, Depends, Form, Path, Query, status, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -363,7 +363,44 @@ def robots_txt():
 # sitemap.xml
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    return RedirectResponse(url="/static/sitemap.xml")
+    db = SessionLocal()
+    try:
+        companies = db.query(Company).filter(Company.status == 'active').all()
+        investors = db.query(Investor).filter(Investor.status == 'active').all()
+        jobs = db.query(Job).filter(Job.status == 'active').all()
+        news = db.query(News).filter(News.status == 'active').all()
+        
+        sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        
+        # Главная страница
+        sitemap += '  <url>\n'
+        sitemap += '    <loc>https://stanbase.tech/</loc>\n'
+        sitemap += '    <changefreq>daily</changefreq>\n'
+        sitemap += '    <priority>1.0</priority>\n'
+        sitemap += '  </url>\n'
+        
+        # Компании
+        for company in companies:
+            sitemap += '  <url>\n'
+            sitemap += f'    <loc>https://stanbase.tech/company/{company.id}</loc>\n'
+            sitemap += '    <changefreq>weekly</changefreq>\n'
+            sitemap += '    <priority>0.8</priority>\n'
+            sitemap += '  </url>\n'
+        
+        # Инвесторы
+        for investor in investors:
+            sitemap += '  <url>\n'
+            sitemap += f'    <loc>https://stanbase.tech/investor/{investor.id}</loc>\n'
+            sitemap += '    <changefreq>weekly</changefreq>\n'
+            sitemap += '    <priority>0.8</priority>\n'
+            sitemap += '  </url>\n'
+        
+        sitemap += '</urlset>'
+        
+        return Response(content=sitemap, media_type="application/xml")
+    finally:
+        db.close()
 
 @app.get("/companies", response_class=HTMLResponse)
 def companies(
