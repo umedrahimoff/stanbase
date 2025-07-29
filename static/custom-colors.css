@@ -65,6 +65,16 @@ a:hover {
   color: var(--primary-hover);
 }
 
+/* Логотип в навигации */
+.navbar .navbar-brand {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.navbar .navbar-brand:hover {
+  color: var(--primary-hover);
+}
+
 /* Навигация */
 .navbar {
   background-color: var(--white) !important;
@@ -72,8 +82,12 @@ a:hover {
 }
 
 .navbar-brand {
-  color: var(--primary-color) !important;
+  color: var(--primary-color);
   font-weight: bold;
+}
+
+.navbar-brand:hover {
+  color: var(--primary-hover);
 }
 
 .nav-link {
