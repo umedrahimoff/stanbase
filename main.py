@@ -3310,6 +3310,21 @@ async def admin_create_investor(request: Request):
         )
         db.add(investor)
         db.commit()
+        
+        # --- обработка логотипа ---
+        logo_file = form.get('logo')
+        if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
+            import os
+            filename = f"investor_{investor.id}_{logo_file.filename}"
+            save_dir = os.path.join("static", "logos")
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, filename)
+            contents = await logo_file.read()
+            with open(save_path, "wb") as f:
+                f.write(contents)
+            investor.logo = f"/static/logos/{filename}"
+            db.commit()
+        
         db.close()
         return RedirectResponse(url=get_redirect_url(request, "/admin/investors"), status_code=302)
     
