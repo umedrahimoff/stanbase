@@ -2136,19 +2136,6 @@ async def admin_create_startup(request: Request):
         db.close()
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": None, "countries": countries, "cities": cities})
 
-@app.post("/admin/companies/delete/{company_id}", name="admin_delete_company")
-async def admin_delete_startup(request: Request, company_id: int):
-    from models import Company
-    if not admin_required(request):
-        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
-    db = SessionLocal()
-    company = db.query(Company).get(company_id)
-    if company:
-        db.delete(company)
-        db.commit()
-    db.close()
-    return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
-
 # --- Companies ---
 @app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
 async def admin_edit_startup(request: Request, company_id: int):
