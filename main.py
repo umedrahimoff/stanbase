@@ -358,49 +358,64 @@ def index(request: Request):
 # robots.txt
 @app.get("/robots.txt")
 def robots_txt():
-    return RedirectResponse(url="/static/robots.txt")
+    env = os.getenv("ENVIRONMENT", "development")
+
+    if env == "production":
+        return RedirectResponse(url="/static/robots.txt")
+    else:
+        return Response(
+            content="User-agent: *\nDisallow: /\n",
+            media_type="text/plain"
+        )
 
 # sitemap.xml
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    db = SessionLocal()
-    try:
-        companies = db.query(Company).filter(Company.status == 'active').all()
-        investors = db.query(Investor).filter(Investor.status == 'active').all()
-        jobs = db.query(Job).filter(Job.status == 'active').all()
-        news = db.query(News).filter(News.status == 'active').all()
+    env = os.getenv("ENVIRONMENT", "development")
+
+    if env == "production":
+        db = SessionLocal()
+        try:
+            companies = db.query(Company).filter(Company.status == 'active').all()
+            investors = db.query(Investor).filter(Investor.status == 'active').all()
+            jobs = db.query(Job).filter(Job.status == 'active').all()
+            news = db.query(News).filter(News.status == 'active').all()
         
-        sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n'
-        sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n'
+            sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         
-        # Главная страница
-        sitemap += '  <url>\n'
-        sitemap += '    <loc>https://stanbase.tech/</loc>\n'
-        sitemap += '    <changefreq>daily</changefreq>\n'
-        sitemap += '    <priority>1.0</priority>\n'
-        sitemap += '  </url>\n'
-        
-        # Компании
-        for company in companies:
+            # Главная страница
             sitemap += '  <url>\n'
-            sitemap += f'    <loc>https://stanbase.tech/company/{company.id}</loc>\n'
-            sitemap += '    <changefreq>weekly</changefreq>\n'
-            sitemap += '    <priority>0.8</priority>\n'
+            sitemap += '    <loc>https://stanbase.tech/</loc>\n'
+            sitemap += '    <changefreq>daily</changefreq>\n'
+            sitemap += '    <priority>1.0</priority>\n'
             sitemap += '  </url>\n'
         
-        # Инвесторы
-        for investor in investors:
-            sitemap += '  <url>\n'
-            sitemap += f'    <loc>https://stanbase.tech/investor/{investor.id}</loc>\n'
-            sitemap += '    <changefreq>weekly</changefreq>\n'
-            sitemap += '    <priority>0.8</priority>\n'
-            sitemap += '  </url>\n'
+            # Компании
+            for company in companies:
+                sitemap += '  <url>\n'
+                sitemap += f'    <loc>https://stanbase.tech/company/{company.id}</loc>\n'
+                sitemap += '    <changefreq>weekly</changefreq>\n'
+                sitemap += '    <priority>0.8</priority>\n'
+                sitemap += '  </url>\n'
         
-        sitemap += '</urlset>'
+            # Инвесторы
+            for investor in investors:
+                sitemap += '  <url>\n'
+                sitemap += f'    <loc>https://stanbase.tech/investor/{investor.id}</loc>\n'
+                sitemap += '    <changefreq>weekly</changefreq>\n'
+                sitemap += '    <priority>0.8</priority>\n'
+                sitemap += '  </url>\n'
         
-        return Response(content=sitemap, media_type="application/xml")
-    finally:
-        db.close()
+            sitemap += '</urlset>'
+        
+            return Response(content=sitemap, media_type="application/xml")
+        finally:
+            db.close()
+    else:
+        # Для разработки возвращаем статический файл
+        return RedirectResponse(url="/static/sitemap.xml")
+
 
 @app.get("/companies", response_class=HTMLResponse)
 def companies(
