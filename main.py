@@ -1028,6 +1028,7 @@ async def create_company_page(request: Request):
                     # У пользователя уже есть компания
                     return RedirectResponse(url="/dashboard?error=already_has_company", status_code=302)
                 
+                # Получаем данные формы (включая файлы)
                 form = await request.form()
 
                 # Создаем компанию
@@ -1056,10 +1057,9 @@ async def create_company_page(request: Request):
                 db.refresh(company)
 
                 # Обработка загрузки логотипа
-                files = await request.form()
-                if 'logo' in files:
-                    logo_file = files['logo']
-                    if logo_file and logo_file.filename:
+                if 'logo' in form:
+                    logo_file = form['logo']
+                    if logo_file and hasattr(logo_file, 'filename') and logo_file.filename:
                         # Создаем папку для логотипов, если её нет
                         logo_dir = "static/logos"
                         os.makedirs(logo_dir, exist_ok=True)
