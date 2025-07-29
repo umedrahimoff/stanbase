@@ -7,43 +7,36 @@
         <div class="card-body">
           <h3 class="mb-4">Создать сделку</h3>
           {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-          <form method="post">
-            <div class="mb-3">
-              <label for="company_id" class="form-label">Компания *</label>
-              <select class="form-select" id="company_id" name="company_id" required>
-                <option value="">Выберите компанию</option>
-                {% for company in companies %}
-                  <option value="{{ company.id }}" {% if company_id and company_id|int == company.id %}selected{% endif %}>{{ company.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="deal_type" class="form-label">Стадия стартапа *</label>
-              <select class="form-select" id="deal_type" name="deal_type" required>
-                <option value="">Выберите стадию</option>
-                {% for stage in stages %}
-                  <option value="{{ stage.name }}">{{ stage.name }}</option>
-                {% endfor %}
-              </select>
+          <form method="post" enctype="multipart/form-data">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="company_id" class="form-label">Компания *</label>
+                <select class="form-select" id="company_id" name="company_id" required>
+                  <option value="">Выберите компанию</option>
+                  {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="deal_type" class="form-label">Стадия стартапа *</label>
+                <select class="form-select" id="deal_type" name="deal_type" required>
+                  <option value="">Выберите стадию</option>
+                  {% for stage in stages %}
+                    <option value="{{ stage.name }}">{{ stage.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
             <div class="row mb-3">
               <div class="col-md-6">
                 <label for="amount" class="form-label">Сумма инвестиции *</label>
-                <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                <input type="number" class="form-control" id="amount" name="amount" placeholder="0" required>
               </div>
               <div class="col-md-6">
                 <label for="valuation" class="form-label">Оценка компании</label>
-                <input type="number" class="form-control" id="valuation" name="valuation" step="0.01">
+                <input type="number" class="form-control" id="valuation" name="valuation" placeholder="0">
               </div>
-            </div>
-            <div class="mb-3">
-              <label for="investors" class="form-label">Инвесторы</label>
-              <select class="form-select" id="investors" name="investors" multiple>
-                {% for investor in investors %}
-                  <option value="{{ investor.name }}">{{ investor.name }}</option>
-                {% endfor %}
-              </select>
-              <div class="form-text">Удерживайте Ctrl (Cmd на Mac) для выбора нескольких инвесторов</div>
             </div>
             <div class="row mb-3">
               <div class="col-md-6">
@@ -53,29 +46,78 @@
               <div class="col-md-6">
                 <label for="status" class="form-label">Статус</label>
                 <select class="form-select" id="status" name="status">
-                  <option value="active" selected>Активная</option>
-                  <option value="inactive">Неактивная</option>
-                  <option value="completed">Завершена</option>
+                  <option value="active">Активна</option>
+                  <option value="inactive">Неактивна</option>
+                  <option value="archived">Архив</option>
+                  <option value="draft">Черновик</option>
                 </select>
               </div>
             </div>
+            <div class="mb-3">
+              <label class="form-label">Инвесторы *</label>
+              <div class="row">
+                {% for investor in investors %}
+                  <div class="col-md-4 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="investors" value="{{ investor.name }}" id="investor_{{ investor.id }}"
+                             {% if selected_investor and selected_investor.id == investor.id %}checked{% endif %}>
+                      <label class="form-check-label" for="investor_{{ investor.id }}">
+                        {{ investor.name }}
+                      </label>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% if selected_investor %}
+              <input type="hidden" name="investor_id" value="{{ selected_investor.id }}">
+            {% endif %}
             <div class="d-flex justify-content-between mt-4">
-              <button type="submit" class="btn btn-primary">Создать</button>
-              <a href="{{ url_for('admin_deals') }}" class="btn btn-outline-secondary">Отмена</a>
+              <button type="submit" class="btn btn-primary">Создать сделку</button>
+              {% if selected_investor %}
+                <a href="/admin/investors/edit/{{ selected_investor.id }}" class="btn btn-outline-secondary">Отмена</a>
+              {% else %}
+                <a href="/admin/deals" class="btn btn-outline-secondary">Отмена</a>
+              {% endif %}
             </div>
           </form>
         </div>
       </div>
     </div>
     <div class="col-lg-4">
-      <div class="card mb-4">
+      <div class="card mb-4 user-meta-card">
         <div class="card-body">
-          <h6 class="text-muted mb-3">Информация о сделке</h6>
-          <div class="meta-row"><span class="meta-label">Тип:</span> <span class="meta-value">Создание новой сделки</span></div>
-          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">Черновик</span></div>
+          <h6 class="text-muted mb-3">Информация</h6>
+          {% if selected_investor %}
+            <div class="meta-row">
+              <span class="meta-label">Инвестор:</span> 
+              <span class="meta-value">{{ selected_investor.name }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Тип:</span> 
+              <span class="meta-value">{{ selected_investor.type }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Страна:</span> 
+              <span class="meta-value">{{ selected_investor.country or '—' }}</span>
+            </div>
+          {% else %}
+            <p class="text-muted">Выберите инвесторов для сделки</p>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
 {% endblock %} 

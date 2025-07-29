@@ -7,44 +7,36 @@
         <div class="card-body">
           <h3 class="mb-4">Редактировать сделку</h3>
           {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-          <form method="post">
-            <div class="mb-3">
-              <label for="deal_type" class="form-label">Стадия стартапа *</label>
-              <select class="form-select" id="deal_type" name="deal_type" required>
-                <option value="">Выберите стадию</option>
-                {% for stage in stages %}
-                  <option value="{{ stage.name }}" {% if deal.type == stage.name %}selected{% endif %}>
-                    {{ stage.name }}
-                  </option>
-                {% endfor %}
-              </select>
+          <form method="post" enctype="multipart/form-data">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="company_id" class="form-label">Компания *</label>
+                <select class="form-select" id="company_id" name="company_id" required>
+                  <option value="">Выберите компанию</option>
+                  {% for company in companies %}
+                    <option value="{{ company.id }}" {% if deal.company_id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="deal_type" class="form-label">Стадия стартапа *</label>
+                <select class="form-select" id="deal_type" name="deal_type" required>
+                  <option value="">Выберите стадию</option>
+                  {% for stage in stages %}
+                    <option value="{{ stage.name }}" {% if deal.type == stage.name %}selected{% endif %}>{{ stage.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
             <div class="row mb-3">
               <div class="col-md-6">
                 <label for="amount" class="form-label">Сумма инвестиции *</label>
-                <input type="number" class="form-control" id="amount" name="amount" step="0.01" value="{{ deal.amount }}" required>
+                <input type="number" class="form-control" id="amount" name="amount" placeholder="0" value="{{ deal.amount if deal.amount else '' }}" required>
               </div>
               <div class="col-md-6">
                 <label for="valuation" class="form-label">Оценка компании</label>
-                <input type="number" class="form-control" id="valuation" name="valuation" step="0.01" value="{{ deal.valuation }}">
+                <input type="number" class="form-control" id="valuation" name="valuation" placeholder="0" value="{{ deal.valuation if deal.valuation else '' }}">
               </div>
-            </div>
-            <div class="mb-3">
-              <label for="investors" class="form-label">Инвесторы</label>
-              <select class="form-select" id="investors" name="investors" multiple>
-                {% for investor in investors %}
-                  {% set selected = false %}
-                  {% if deal.investors %}
-                    {% for investor_name in deal.investors.split(',') %}
-                      {% if investor_name.strip() == investor.name %}
-                        {% set selected = true %}
-                      {% endif %}
-                    {% endfor %}
-                  {% endif %}
-                  <option value="{{ investor.name }}" {% if selected %}selected{% endif %}>{{ investor.name }}</option>
-                {% endfor %}
-              </select>
-              <div class="form-text">Удерживайте Ctrl (Cmd на Mac) для выбора нескольких инвесторов</div>
             </div>
             <div class="row mb-3">
               <div class="col-md-6">
@@ -54,33 +46,78 @@
               <div class="col-md-6">
                 <label for="status" class="form-label">Статус</label>
                 <select class="form-select" id="status" name="status">
-                  <option value="active" {% if deal.status == 'active' %}selected{% endif %}>Активная</option>
-                  <option value="inactive" {% if deal.status == 'inactive' %}selected{% endif %}>Неактивная</option>
-                  <option value="completed" {% if deal.status == 'completed' %}selected{% endif %}>Завершена</option>
+                  <option value="active" {% if deal.status == 'active' %}selected{% endif %}>Активна</option>
+                  <option value="inactive" {% if deal.status == 'inactive' %}selected{% endif %}>Неактивна</option>
+                  <option value="archived" {% if deal.status == 'archived' %}selected{% endif %}>Архив</option>
+                  <option value="draft" {% if deal.status == 'draft' %}selected{% endif %}>Черновик</option>
                 </select>
               </div>
             </div>
+            <div class="mb-3">
+              <label class="form-label">Инвесторы *</label>
+              <div class="row">
+                {% set deal_investors = deal.investors.split(', ') if deal.investors else [] %}
+                {% for investor in investors %}
+                  <div class="col-md-4 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="investors" value="{{ investor.name }}" id="investor_{{ investor.id }}"
+                             {% if investor.name in deal_investors %}checked{% endif %}>
+                      <label class="form-check-label" for="investor_{{ investor.id }}">
+                        {{ investor.name }}
+                      </label>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
             <div class="d-flex justify-content-between mt-4">
-              <button type="submit" class="btn btn-primary">Сохранить</button>
-              <a href="{{ url_for('admin_deals') }}" class="btn btn-outline-secondary">Отмена</a>
+              <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+              <a href="/admin/deals" class="btn btn-outline-secondary">Отмена</a>
             </div>
           </form>
         </div>
       </div>
     </div>
     <div class="col-lg-4">
-      <div class="card mb-4">
+      <div class="card mb-4 user-meta-card">
         <div class="card-body">
           <h6 class="text-muted mb-3">Информация о сделке</h6>
-          <div class="meta-row"><span class="meta-label">ID:</span> <span class="meta-value">{{ deal.id }}</span></div>
-          <div class="meta-row"><span class="meta-label">Компания:</span> <span class="meta-value">{{ deal.company.name if deal.company else '—' }}</span></div>
-          <div class="meta-row"><span class="meta-label">Сумма инвестиции:</span> <span class="meta-value">{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }}</span></div>
-          <div class="meta-row"><span class="meta-label">Оценка:</span> <span class="meta-value">{{ "{:,.0f}".format(deal.valuation) if deal.valuation else '—' }}</span></div>
-          <div class="meta-row"><span class="meta-label">Статус:</span> <span class="meta-value">{{ deal.status }}</span></div>
-          <div class="meta-row"><span class="meta-label">Дата:</span> <span class="meta-value">{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</span></div>
+          <div class="meta-row">
+            <span class="meta-label">ID:</span> 
+            <span class="meta-value">{{ deal.id }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Компания:</span> 
+            <span class="meta-value">
+              {% if deal.company %}
+                <a href="/admin/companies/edit/{{ deal.company.id }}">{{ deal.company.name }}</a>
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Статус:</span> 
+            <span class="meta-value">{{ deal.status }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Дата:</span> 
+            <span class="meta-value">{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+  .user-meta-card { background: #f9fafb; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 20px 20px 12px 20px; }
+  .user-meta-card .meta-label { color: #888; font-size: 0.97em; }
+  .user-meta-card .meta-value { font-weight: 500; }
+  .user-meta-card .meta-row { margin-bottom: 8px; }
+  @media (max-width: 991px) { .user-meta-card { margin-top: 18px; } }
+</style>
 {% endblock %} 

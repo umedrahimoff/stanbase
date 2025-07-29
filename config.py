@@ -4,6 +4,12 @@
 
 import os
 
+# Environment Configuration
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development, staging, production
+IS_PRODUCTION = ENVIRONMENT == "production"
+IS_DEVELOPMENT = ENVIRONMENT == "development"
+IS_STAGING = ENVIRONMENT == "staging"
+
 # Telegram Bot Configuration
 # ⚠️ ВНИМАНИЕ: В продакшене используйте переменные окружения!
 # Для разработки можно использовать токены здесь, но НЕ коммитьте их в Git

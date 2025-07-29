@@ -52,7 +52,7 @@
                     <select class="form-select" id="country" name="country">
                       <option value="">Выберите страну</option>
                       {% for c in countries %}
-                        <option value="{{ c.name }}" {% if company and company.country == c.name %}selected{% endif %}>{{ c.name }}</option>
+                        <option value="{{ c.id }}" {% if company and company.country == c.name %}selected{% endif %}>{{ c.name }}</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -61,7 +61,7 @@
                     <select class="form-select" id="city" name="city">
                       <option value="">Выберите город</option>
                       {% for city in cities %}
-                        <option value="{{ city.name }}" {% if company and company.city == city.name %}selected{% endif %}>{{ city.name }}</option>
+                        <option value="{{ city.id }}" {% if company and company.city == city.name %}selected{% endif %}>{{ city.name }}</option>
                       {% endfor %}
                     </select>
                   </div>

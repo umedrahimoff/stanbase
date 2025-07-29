@@ -43,7 +43,12 @@
                 <div class="row mb-3">
                   <div class="col-md-4">
                     <label for="country" class="form-label">Страна</label>
-                    <input type="text" class="form-control" id="country" name="country" value="{{ investor.country if investor else '' }}">
+                    <select class="form-select" id="country" name="country">
+                      <option value="">Выберите страну</option>
+                      {% for c in countries %}
+                        <option value="{{ c.name }}" {% if investor and investor.country == c.name %}selected{% endif %}>{{ c.name }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                   <div class="col-md-4">
                     <label for="status" class="form-label">Статус</label>
@@ -86,75 +91,66 @@
               <div class="tab-pane fade" id="portfolio" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <h5 class="mb-0">Портфель инвестора</h5>
+                  <a href="/admin/deals/create?investor_id={{ investor.id }}" class="btn btn-outline-primary btn-sm">Добавить сделку</a>
                 </div>
                 
-                <!-- Форма добавления портфельной записи -->
-                <form id="portfolio-entry-form" class="row g-3 mb-4">
-                  <div class="col-md-4">
-                    <label for="company-autocomplete" class="form-label">Компания *</label>
-                    <input type="text" class="form-control" id="company-autocomplete" placeholder="Начните вводить название компании..." required>
-                    <input type="hidden" id="company-id-hidden" name="company_id" required>
-                  </div>
-                  <div class="col-md-2">
-                    <label for="amount-input" class="form-label">Сумма инвестиции *</label>
-                    <input type="text" class="form-control" id="amount-input" name="amount" placeholder="0" required>
-                  </div>
-                  <div class="col-md-2">
-                    <label for="valuation-input" class="form-label">Оценка компании</label>
-                    <input type="text" class="form-control" id="valuation-input" name="valuation" placeholder="0">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="date-input" class="form-label">Дата *</label>
-                    <input type="date" class="form-control" id="date-input" name="date" required>
-                  </div>
-                  <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Добавить</button>
-                  </div>
-                </form>
-                
-                <div id="portfolio-entry-error" class="alert alert-danger d-none"></div>
-                
-                <!-- Таблица портфеля -->
+                <!-- Таблица сделок в портфеле -->
                 <table class="table table-sm table-hover">
                   <thead>
                     <tr>
                       <th>Компания</th>
+                      <th>Стадия стартапа</th>
                       <th>Сумма инвестиции</th>
                       <th>Оценка</th>
                       <th>Дата</th>
+                      <th>Статус</th>
                       <th></th>
                     </tr>
                   </thead>
-                  <tbody id="portfolio-table-body">
-                    {% if portfolio_entries %}
-                      {% for entry in portfolio_entries %}
+                  <tbody>
+                    {% if portfolio_deals and portfolio_deals|length > 0 %}
+                      {% for deal in portfolio_deals %}
                         <tr>
-                          <td>{{ entry.company.name if entry.company else '—' }}</td>
-                          <td>{{ "{:,.0f}".format(entry.amount) if entry.amount else '—' }}</td>
-                          <td>{{ "{:,.0f}".format(entry.valuation) if entry.valuation else '—' }}</td>
-                          <td>{{ entry.date.strftime('%d.%m.%Y') if entry.date else '—' }}</td>
+                          <td>
+                            {% if deal.company %}
+                              <a href="/admin/companies/edit/{{ deal.company.id }}">{{ deal.company.name }}</a>
+                            {% else %}
+                              —
+                            {% endif %}
+                          </td>
+                          <td>{{ deal.type if deal.type else '—' }}</td>
+                          <td>{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }} $</td>
+                          <td>{{ "{:,.0f}".format(deal.valuation) if deal.valuation else '—' }} $</td>
+                          <td>{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</td>
+                          <td>
+                            <span class="badge bg-{% if deal.status == 'active' %}success{% elif deal.status == 'inactive' %}secondary{% elif deal.status == 'archived' %}dark{% else %}warning{% endif %}">
+                              {{ deal.status }}
+                            </span>
+                          </td>
                           <td class="text-end">
-                            <button class="btn btn-sm btn-outline-danger portfolio-delete-btn" data-entry-id="{{ entry.id }}" title="Удалить">
+                            <a href="/admin/deals/{{ deal.id }}/edit" class="btn btn-sm btn-outline-secondary me-1" title="Редактировать">
+                              <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDeal({{ deal.id }})" title="Удалить">
                               <i class="bi bi-trash-fill"></i>
                             </button>
                           </td>
                         </tr>
                       {% endfor %}
                     {% else %}
-                      <tr><td colspan="5" class="text-muted">Нет компаний в портфеле.</td></tr>
+                      <tr><td colspan="7" class="text-muted">Нет сделок в портфеле.</td></tr>
                     {% endif %}
                   </tbody>
                 </table>
                 
-                <!-- Сделки в портфеле -->
-                {% if portfolio_deals %}
+                <!-- Портфельные записи (старый функционал) -->
+                {% if portfolio_entries and portfolio_entries|length > 0 %}
                 <hr class="my-4">
-                <h6 class="mb-3">Сделки в портфеле</h6>
+                <h6 class="mb-3">Портфельные записи</h6>
                 <table class="table table-sm table-hover">
                   <thead>
                     <tr>
                       <th>Компания</th>
-                      <th>Стадия</th>
                       <th>Сумма инвестиции</th>
                       <th>Оценка</th>
                       <th>Дата</th>
@@ -162,36 +158,22 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for deal in portfolio_deals %}
+                    {% for entry in portfolio_entries %}
                       <tr>
-                        <td>
-                          {% if deal.company %}
-                            <a href="/admin/companies/edit/{{ deal.company.id }}">{{ deal.company.name }}</a>
-                          {% else %}
-                            —
-                          {% endif %}
-                        </td>
-                        <td>
-                          {% if deal.company and deal.company.stage %}
-                            <span class="badge bg-light text-dark">{{ deal.company.stage }}</span>
-                          {% else %}
-                            —
-                          {% endif %}
-                        </td>
-                        <td>{{ "{:,.0f}".format(deal.amount) if deal.amount else '—' }} $</td>
-                        <td>{{ "{:,.0f}".format(deal.valuation) if deal.valuation else '—' }} $</td>
-                        <td>{{ deal.date.strftime('%d.%m.%Y') if deal.date else '—' }}</td>
+                        <td>{{ entry.company.name if entry.company else '—' }}</td>
+                        <td>{{ "{:,.0f}".format(entry.amount) if entry.amount else '—' }}</td>
+                        <td>{{ "{:,.0f}".format(entry.valuation) if entry.valuation else '—' }}</td>
+                        <td>{{ entry.date.strftime('%d.%m.%Y') if entry.date else '—' }}</td>
                         <td class="text-end">
-                          <a href="/admin/deals/{{ deal.id }}/edit" class="btn btn-sm btn-outline-secondary" title="Редактировать">
-                            <i class="bi bi-pencil-fill"></i>
-                          </a>
+                          <button class="btn btn-sm btn-outline-danger portfolio-delete-btn" data-entry-id="{{ entry.id }}" title="Удалить">
+                            <i class="bi bi-trash-fill"></i>
+                          </button>
                         </td>
                       </tr>
                     {% endfor %}
                   </tbody>
                 </table>
                 {% endif %}
-
               </div>
               
               <div class="tab-pane fade" id="team" role="tabpanel">
@@ -244,125 +226,7 @@ function updateInvestorTabs() {
 document.getElementById('type').addEventListener('change', updateInvestorTabs);
 window.addEventListener('DOMContentLoaded', function() {
   updateInvestorTabs();
-  // --- DEBUG: Проверка наличия поля ---
-  console.log('init autocomplete', $('#company-autocomplete').length);
-  // --- jQuery UI Autocomplete для стартапа ---
-  $('#company-autocomplete').autocomplete({
-    minLength: 0,
-    source: function(request, response) {
-      console.log('autocomplete source called', request.term);
-      var q = request.term;
-      var params = {};
-      if (q && q.length >= 2) {
-        params.q = q;
-      }
-      $.getJSON('/admin/company_search', params, function(data) {
-        console.log('company_search response', data); // debug
-        var items = data.results || [];
-        if (!q || q.length < 2) items = items.slice(0, 5);
-        if (items.length === 0) {
-          response([{ label: 'Нет вариантов', value: '', id: null, disabled: true }]);
-        } else {
-          response($.map(items, function(item) {
-            return { label: item.text, value: item.text, id: item.id };
-          }));
-        }
-      });
-    },
-    select: function(event, ui) {
-      if (ui.item.id) {
-        $('#company-id-hidden').val(ui.item.id);
-      } else {
-        event.preventDefault();
-      }
-    },
-    change: function(event, ui) {
-      if (!ui.item || !ui.item.id) {
-        $('#company-id-hidden').val('');
-      }
-    }
-  }).on('focus', function() {
-    console.log('focus autocomplete');
-    $(this).autocomplete('search', '');
-  });
-  // --- autoNumeric для суммы и оценки ---
-  if (!window.amountNumeric) {
-    window.amountNumeric = new AutoNumeric('#amount-input', {
-      digitGroupSeparator: ' ',
-      decimalCharacter: '.',
-      decimalPlaces: 0,
-      modifyValueOnWheel: false,
-      minimumValue: '0',
-      maximumValue: '1000000000',
-      unformatOnSubmit: true
-    });
-    window.amountNumeric.reformat(); // DEBUG: вручную форматируем
-  }
-  if (!window.valuationNumeric) {
-    window.valuationNumeric = new AutoNumeric('#valuation-input', {
-      digitGroupSeparator: ' ',
-      decimalCharacter: '.',
-      decimalPlaces: 0,
-      modifyValueOnWheel: false,
-      minimumValue: '0',
-      maximumValue: '1000000000',
-      unformatOnSubmit: true
-    });
-    window.valuationNumeric.reformat(); // DEBUG: вручную форматируем
-  }
-  // --- AJAX добавление портфельной записи ---
-  $('#portfolio-entry-form').on('submit', function(e) {
-    var companyId = $('#company-id-hidden').val();
-    if (!companyId) {
-      e.preventDefault();
-      $('#portfolio-entry-error').removeClass('d-none').text('Выберите компанию из списка');
-      return false;
-    }
-    var dateVal = $('#date-input').val();
-    if (dateVal) {
-      var minDate = new Date('2000-01-01');
-      var maxDate = new Date();
-      var inputDate = new Date(dateVal);
-      if (inputDate < minDate || inputDate > maxDate) {
-        e.preventDefault();
-        $('#portfolio-entry-error').removeClass('d-none').text('Дата должна быть с 2000 года по сегодня');
-        return false;
-      }
-    }
-    var $form = $(this);
-    var amountRaw = AutoNumeric.getNumber('#amount-input');
-    var valuationRaw = AutoNumeric.getNumber('#valuation-input');
-    var data = {
-      company_id: companyId,
-      amount: amountRaw,
-      date: $form.find('[name="date"]').val(),
-      valuation: valuationRaw || null
-    };
-    $('#portfolio-entry-error').addClass('d-none').text('');
-    $.ajax({
-      url: '/admin/investors/{{ investor.id }}/portfolio/entry/add',
-      method: 'POST',
-      data: data,
-      success: function(resp) {
-        if (resp.success) {
-          location.reload();
-        } else {
-          $('#portfolio-entry-error').removeClass('d-none').text(resp.error || 'Ошибка');
-        }
-      },
-      error: function(xhr) {
-        var msg = 'Ошибка при добавлении записи';
-        try {
-          var response = xhr.responseJSON;
-          if (response && response.error) {
-            msg = response.error;
-          }
-        } catch (e) {}
-        $('#portfolio-entry-error').removeClass('d-none').text(msg);
-      }
-    });
-    return false;
-  });
+  
   // --- AJAX удаление портфельной записи ---
   $('#portfolio-table-body').on('click', '.portfolio-delete-btn', function() {
     var entryId = $(this).data('entry-id');
@@ -387,6 +251,26 @@ window.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// Функция удаления сделки
+function deleteDeal(dealId) {
+  if (!confirm('Удалить сделку из портфеля?')) return;
+  
+  $.ajax({
+    url: '/admin/deals/' + dealId + '/delete',
+    method: 'POST',
+    success: function(resp) {
+      if (resp.success) {
+        location.reload();
+      } else {
+        alert(resp.error || 'Ошибка при удалении сделки');
+      }
+    },
+    error: function() {
+      alert('Ошибка при удалении сделки');
+    }
+  });
+}
 </script>
 {% endblock %}
 
