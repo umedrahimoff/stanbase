@@ -37,6 +37,18 @@ from services.cache import QueryCache, CacheInvalidator
 from services.pagination import PaginationHelper, DatabasePagination
 from services.email import email_service
 
+# Функция для генерации правильных URL с учетом протокола
+def get_redirect_url(request: Request, path: str) -> str:
+    """Генерирует абсолютный URL с правильным протоколом для редиректов"""
+    # Получаем базовый URL из запроса
+    base_url = str(request.base_url).rstrip('/')
+    
+    # Если путь начинается с '/', убираем его
+    if path.startswith('/'):
+        path = path[1:]
+    
+    return f"{base_url}/{path}"
+
 app = FastAPI()
 
 # Подключение статики и шаблонов
@@ -979,11 +991,11 @@ async def edit_user_profile(request: Request):
         updated_user = db.query(User).filter(User.id == request.session['user_id']).first()
         print(f"DEBUG: Данные при повторной загрузке: {updated_user.first_name}, {updated_user.last_name}, {updated_user.country_id}, {updated_user.city}")
         
-        return RedirectResponse(url="/dashboard?success=profile_updated", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/dashboard?success=profile_updated"), status_code=302)
     except Exception as e:
         db.rollback()
         print(f"Ошибка при обновлении профиля: {e}")
-        return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/dashboard"), status_code=302)
     finally:
         db.close()
 
@@ -1026,7 +1038,7 @@ async def create_company_page(request: Request):
                 user = db.query(User).filter(User.id == request.session['user_id']).first()
                 if user and user.company_id:
                     # У пользователя уже есть компания
-                    return RedirectResponse(url="/dashboard?error=already_has_company", status_code=302)
+                    return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=already_has_company"), status_code=302)
                 
                 # Получаем данные формы (включая файлы)
                 form = await request.form()
@@ -1037,13 +1049,13 @@ async def create_company_page(request: Request):
                 city = form.get('city', '').strip()
                 
                 if not name:
-                    return RedirectResponse(url="/dashboard/create-company?error=name_required", status_code=302)
+                    return RedirectResponse(url=get_redirect_url(request, "/dashboard/create-company?error=name_required"), status_code=302)
                 
                 if not country:
-                    return RedirectResponse(url="/dashboard/create-company?error=country_required", status_code=302)
+                    return RedirectResponse(url=get_redirect_url(request, "/dashboard/create-company?error=country_required"), status_code=302)
                 
                 if not city:
-                    return RedirectResponse(url="/dashboard/create-company?error=city_required", status_code=302)
+                    return RedirectResponse(url=get_redirect_url(request, "/dashboard/create-company?error=city_required"), status_code=302)
 
                 # Создаем компанию
                 company = Company(
@@ -1098,11 +1110,11 @@ async def create_company_page(request: Request):
                     user.company_id = company.id
                     db.commit()
 
-                return RedirectResponse(url="/dashboard?success=company_created", status_code=302)
+                return RedirectResponse(url=get_redirect_url(request, "/dashboard?success=company_created"), status_code=302)
             except Exception as e:
                 db.rollback()
                 print(f"Ошибка при создании компании: {e}")
-                return RedirectResponse(url="/dashboard?error=creation_failed", status_code=302)
+                return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=creation_failed"), status_code=302)
             finally:
                 db.close()
 
@@ -1139,12 +1151,12 @@ async def create_investor(request: Request):
         user = db.query(User).filter(User.id == request.session['user_id']).first()
         if user and user.investor_id:
             # У пользователя уже есть инвестор
-            return RedirectResponse(url="/dashboard?error=already_has_investor", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=already_has_investor"), status_code=302)
         
         # Дополнительная проверка: если у пользователя есть компания, нельзя создать инвестора
         if user and user.company_id:
             # У пользователя уже есть компания
-            return RedirectResponse(url="/dashboard?error=already_has_company", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=already_has_company"), status_code=302)
         
         form = await request.form()
         
@@ -1168,11 +1180,11 @@ async def create_investor(request: Request):
             user.investor_id = investor.id
             db.commit()
         
-        return RedirectResponse(url="/dashboard?success=investor_created", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/dashboard?success=investor_created"), status_code=302)
     except Exception as e:
         db.rollback()
         print(f"Ошибка при создании инвестора: {e}")
-        return RedirectResponse(url="/dashboard?error=creation_failed", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=creation_failed"), status_code=302)
     finally:
         db.close()
 
@@ -1320,7 +1332,7 @@ async def edit_company(request: Request):
     except Exception as e:
         db.rollback()
         print(f"Ошибка при редактировании компании: {e}")
-        return RedirectResponse(url="/dashboard?error=edit_failed", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/dashboard?error=edit_failed"), status_code=302)
     finally:
         db.close()
 
@@ -1338,7 +1350,7 @@ async def add_team_member(request: Request):
     """
     # Проверка авторизации
     if not request.session.get('user_id'):
-        return RedirectResponse(url="/login", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
     
     from models import User, Company, Person
     db = SessionLocal()
@@ -1359,14 +1371,14 @@ async def add_team_member(request: Request):
         if not name:
             print("DEBUG: Ошибка - имя не указано")
             return RedirectResponse(
-                url="/dashboard?tab=edit-company&error=name_required", 
+                url=get_redirect_url(request, "/dashboard?tab=edit-company&error=name_required"), 
                 status_code=302
             )
         
         if not role:
             print("DEBUG: Ошибка - роль не указана")
             return RedirectResponse(
-                url="/dashboard?tab=edit-company&error=role_required", 
+                url=get_redirect_url(request, "/dashboard?tab=edit-company&error=role_required"), 
                 status_code=302
             )
         
@@ -1379,7 +1391,7 @@ async def add_team_member(request: Request):
         
         if not has_access:
             print(f"DEBUG: Ошибка доступа - {error_msg}")
-            return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, f"/dashboard?error={error_msg}"), status_code=302)
         
         print(f"DEBUG: Пользователь найден: {user.email}, компания: {company.name}")
         
@@ -1390,7 +1402,7 @@ async def add_team_member(request: Request):
         if team_count >= 20:  # Максимум 20 участников
             print("DEBUG: Ошибка - достигнут лимит участников")
             return RedirectResponse(
-                url="/dashboard?tab=edit-company&error=team_limit_reached", 
+                url=get_redirect_url(request, "/dashboard?tab=edit-company&error=team_limit_reached"), 
                 status_code=302
             )
         
@@ -1407,7 +1419,7 @@ async def add_team_member(request: Request):
         if existing_member:
             print("DEBUG: Ошибка - участник уже существует")
             return RedirectResponse(
-                url="/dashboard?tab=edit-company&error=member_already_exists", 
+                url=get_redirect_url(request, "/dashboard?tab=edit-company&error=member_already_exists"), 
                 status_code=302
             )
         
@@ -1442,7 +1454,7 @@ async def add_team_member(request: Request):
         print(f"Добавлен новый участник команды: {name} ({role}) в компанию {company.name}")
         
         return RedirectResponse(
-            url="/dashboard?tab=edit-company&subtab=team&success=team_member_added", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&subtab=team&success=team_member_added"), 
             status_code=302
         )
         
@@ -1450,7 +1462,7 @@ async def add_team_member(request: Request):
         db.rollback()
         print(f"Ошибка валидации при добавлении члена команды: {e}")
         return RedirectResponse(
-            url="/dashboard?tab=edit-company&error=invalid_data", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&error=invalid_data"), 
             status_code=302
         )
     except Exception as e:
@@ -1460,7 +1472,7 @@ async def add_team_member(request: Request):
         import traceback
         print(f"DEBUG: Traceback: {traceback.format_exc()}")
         return RedirectResponse(
-            url="/dashboard?tab=edit-company&error=add_failed", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&error=add_failed"), 
             status_code=302
         )
     finally:
@@ -1518,7 +1530,7 @@ async def delete_team_member(request: Request, person_id: int):
     """
     # Проверка авторизации
     if not request.session.get('user_id'):
-        return RedirectResponse(url="/login", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
     
     from models import User, Company, Person
     db = SessionLocal()
@@ -1529,7 +1541,7 @@ async def delete_team_member(request: Request, person_id: int):
             request.session['user_id'], db
         )
         if not has_access:
-            return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, f"/dashboard?error={error_msg}"), status_code=302)
         
         # Проверяем существование участника команды
         is_valid, error_msg, person = TeamMemberService.validate_team_member(
@@ -1537,7 +1549,7 @@ async def delete_team_member(request: Request, person_id: int):
         )
         if not is_valid:
             return RedirectResponse(
-                url=f"/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error={error_msg}", 
+                url=get_redirect_url(request, f"/dashboard?tab=edit-company&error={error_msg}"), 
                 status_code=302
             )
         
@@ -1555,7 +1567,7 @@ async def delete_team_member(request: Request, person_id: int):
         db.commit()
         
         return RedirectResponse(
-            url="/dashboard?tab=edit-company&success=team_member_deleted", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&success=team_member_deleted"), 
             status_code=302
         )
         
@@ -1563,14 +1575,14 @@ async def delete_team_member(request: Request, person_id: int):
         db.rollback()
         print(f"Ошибка валидации при удалении члена команды: {e}")
         return RedirectResponse(
-            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=invalid_data", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&error=invalid_data"), 
             status_code=302
         )
     except Exception as e:
         db.rollback()
         print(f"Неожиданная ошибка при удалении члена команды: {e}")
         return RedirectResponse(
-            url="/dashboard?tab=edit-company/dashboard/company/edit?tab=team&error=error=delete_failed", 
+            url=get_redirect_url(request, "/dashboard?tab=edit-company&error=delete_failed"), 
             status_code=302
         )
     finally:
