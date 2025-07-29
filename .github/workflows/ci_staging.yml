@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - main
+      - staging
 
 jobs:
   deploy:
@@ -21,6 +21,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}  
           script: |
-            cd /services/apps/stanbase_prod
-            git pull origin main
-            sudo systemctl restart uvicorn_prod.service
+            cd /services/apps/stanbase
+            git pull origin staging
+            sudo systemctl restart uvicorn.service
