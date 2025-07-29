@@ -2030,7 +2030,7 @@ async def admin_create_user(request: Request):
                 db.add(user)
                 db.commit()
                 db.close()
-                return RedirectResponse(url="/admin/users", status_code=302)
+                return RedirectResponse(url=get_redirect_url(request, "/admin/users"), status_code=302)
         db.close()
         # Передаю введённые данные обратно в шаблон
         user_data = dict(email=email, role=role, status=status_val, first_name=first_name, last_name=last_name, country_id=country_id, city=city, phone=phone, telegram=telegram, linkedin=linkedin)
@@ -2072,7 +2072,7 @@ async def admin_edit_user_post(request: Request, user_id: int):
     user.updated_by = request.session.get('user_email')
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/users", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/users"), status_code=302)
 
 @app.post("/admin/users/delete/{user_id}", name="admin_delete_user")
 async def admin_delete_user(request: Request, user_id: int):
@@ -2083,7 +2083,7 @@ async def admin_delete_user(request: Request, user_id: int):
     user = db.query(User).get(user_id)
     db.delete(user)
     db.commit()
-    return RedirectResponse(url="/admin/users", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/users"), status_code=302)
 
 # --- Companies CRUD ---
 
@@ -2132,7 +2132,7 @@ async def admin_create_startup(request: Request):
             db.add(company)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/companies", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
         db.close()
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "error": error, "company": None, "countries": countries, "cities": cities})
 
@@ -2140,14 +2140,14 @@ async def admin_create_startup(request: Request):
 async def admin_delete_startup(request: Request, company_id: int):
     from models import Company
     if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
     db = SessionLocal()
     company = db.query(Company).get(company_id)
     if company:
         db.delete(company)
         db.commit()
     db.close()
-    return RedirectResponse(url="/admin/companies", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
 
 # --- Companies ---
 @app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
@@ -2295,7 +2295,7 @@ async def admin_create_country(request: Request):
             country = Country(name=name, status=status)
             db.add(country)
             db.commit()
-            return RedirectResponse(url="/admin/countries", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/countries"), status_code=302)
     return templates.TemplateResponse("admin/countries/form.html", {"request": request, "error": error, "country": None})
 
 @app.get("/admin/countries/edit/{country_id}", response_class=HTMLResponse, name="admin_edit_country")
@@ -2320,7 +2320,7 @@ async def admin_edit_country_post(request: Request, country_id: int):
     country.name = form.get('name')
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/countries", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/countries"), status_code=302)
 
 @app.post("/admin/countries/delete/{country_id}", name="admin_delete_country")
 async def admin_delete_country(request: Request, country_id: int):
@@ -2332,7 +2332,7 @@ async def admin_delete_country(request: Request, country_id: int):
     db.delete(country)
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/countries", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/countries"), status_code=302)
 
 # --- Cities CRUD ---
 @app.get("/admin/cities", response_class=HTMLResponse, name="admin_cities")
@@ -2372,7 +2372,7 @@ async def admin_create_city(request: Request):
             city = City(name=name, country_id=country_id, status=status)
             db.add(city)
             db.commit()
-            return RedirectResponse(url="/admin/cities", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/cities"), status_code=302)
     return templates.TemplateResponse("admin/cities/form.html", {"request": request, "error": error, "city": None})
 
 @app.get("/admin/cities/edit/{city_id}", response_class=HTMLResponse, name="admin_edit_city")
@@ -2399,7 +2399,7 @@ async def admin_edit_city_post(request: Request, city_id: int):
     city.country_id = int(form.get('country_id'))
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/cities", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/cities"), status_code=302)
 
 @app.post("/admin/cities/delete/{city_id}", name="admin_delete_city")
 async def admin_delete_city(request: Request, city_id: int):
@@ -2411,7 +2411,7 @@ async def admin_delete_city(request: Request, city_id: int):
     db.delete(city)
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/cities", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/cities"), status_code=302)
 
 # --- Categories CRUD ---
 @app.get("/admin/categories", response_class=HTMLResponse, name="admin_categories")
@@ -2449,7 +2449,7 @@ async def admin_create_category(request: Request):
             db.add(category)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/categories", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/categories"), status_code=302)
     return templates.TemplateResponse("admin/categories/form.html", {"request": request, "error": error, "category": None})
 
 @app.get("/admin/categories/edit/{category_id}", response_class=HTMLResponse, name="admin_edit_category")
@@ -2474,7 +2474,7 @@ async def admin_edit_category_post(request: Request, category_id: int):
     category.name = form.get('name')
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/categories", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/categories"), status_code=302)
 
 @app.post("/admin/categories/delete/{category_id}", name="admin_delete_category")
 async def admin_delete_category(request: Request, category_id: int):
@@ -2486,7 +2486,7 @@ async def admin_delete_category(request: Request, category_id: int):
     db.delete(category)
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/categories", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/categories"), status_code=302)
 
 # --- Authors CRUD ---
 @app.get("/admin/authors", response_class=HTMLResponse, name="admin_authors")
@@ -2530,7 +2530,7 @@ async def admin_create_author(request: Request):
             db.add(author)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/authors", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/authors"), status_code=302)
         db.close()
     return templates.TemplateResponse("admin/authors/form.html", {"request": request, "session": request.session, "error": error, "author": None})
 
@@ -2559,7 +2559,7 @@ async def admin_edit_author_post(request: Request, author_id: int):
     author.status = form.get('status')
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/authors", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/authors"), status_code=302)
 
 @app.post("/admin/authors/delete/{author_id}", name="admin_delete_author")
 async def admin_delete_author(request: Request, author_id: int):
@@ -2571,7 +2571,7 @@ async def admin_delete_author(request: Request, author_id: int):
     db.delete(author)
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/authors", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/authors"), status_code=302)
 
 # --- Jobs CRUD ---
 @app.get("/admin/jobs", response_class=HTMLResponse, name="admin_jobs")
@@ -2642,7 +2642,7 @@ async def admin_create_job(request: Request):
             db.add(job)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/jobs", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/jobs"), status_code=302)
         db.close()
     return templates.TemplateResponse("admin/jobs/form.html", {"request": request, "session": request.session, "error": error, "job": None, "companies": companies, "cities": cities, "company_id": int(company_id) if company_id else None})
 
@@ -2680,7 +2680,7 @@ async def admin_edit_job_post(request: Request, job_id: int):
     job.contact = form.get('contact')
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/jobs", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/jobs"), status_code=302)
 
 @app.post("/admin/jobs/delete/{job_id}", name="admin_delete_job")
 async def admin_delete_job(request: Request, job_id: int):
@@ -2691,7 +2691,7 @@ async def admin_delete_job(request: Request, job_id: int):
     job = db.query(Job).get(job_id)
     db.delete(job)
     db.commit()
-    return RedirectResponse(url="/admin/jobs", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/jobs"), status_code=302)
 
 # --- Events CRUD ---
 @app.get("/admin/events", response_class=HTMLResponse, name="admin_events")
@@ -2788,7 +2788,7 @@ async def admin_create_event(request: Request):
         db.add(event)
         db.commit()
         db.close()
-        return RedirectResponse(url="/admin/events", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/events"), status_code=302)
     
     # Получаем список стран из справочника
     db = SessionLocal()
@@ -2812,7 +2812,7 @@ async def admin_edit_event(request: Request, event_id: int):
     event = db.query(Event).get(event_id)
     if not event:
         db.close()
-        return RedirectResponse(url="/admin/events", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/events"), status_code=302)
     
     # Получаем список стран из справочника
     countries = db.query(Country).filter(Country.status == 'active').order_by(Country.name).all()
@@ -2887,7 +2887,7 @@ async def admin_edit_event_post(request: Request, event_id: int):
         event.updated_by = request.session.get('user_email', 'admin')
         db.commit()
     db.close()
-    return RedirectResponse(url="/admin/events", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/events"), status_code=302)
 
 @app.post("/admin/events/delete/{event_id}", name="admin_delete_event")
 async def admin_delete_event(request: Request, event_id: int):
@@ -2898,7 +2898,7 @@ async def admin_delete_event(request: Request, event_id: int):
     event = db.query(Event).get(event_id)
     db.delete(event)
     db.commit()
-    return RedirectResponse(url="/admin/events", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/events"), status_code=302)
 
 # --- News CRUD ---
 @app.get("/admin/news", response_class=HTMLResponse, name="admin_news")
@@ -3174,7 +3174,7 @@ async def admin_delete_news(request: Request, news_id: int):
     news = db.query(News).get(news_id)
     db.delete(news)
     db.commit()
-    return RedirectResponse(url="/admin/news", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/news"), status_code=302)
 
 
 
@@ -3237,7 +3237,7 @@ async def admin_create_investor(request: Request):
         db.add(investor)
         db.commit()
         db.close()
-        return RedirectResponse(url="/admin/investors", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/investors"), status_code=302)
     return templates.TemplateResponse("admin/investors/form.html", {"request": request, "session": request.session, "investor": None, "error": error, "today": today})
 
 @app.get("/admin/investors/edit/{investor_id}", response_class=HTMLResponse, name="admin_edit_investor")
@@ -3312,7 +3312,7 @@ async def admin_delete_investor(request: Request, investor_id: int):
     db.delete(investor)
     db.commit()
     db.close()
-    return RedirectResponse(url="/admin/investors", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/investors"), status_code=302)
 
 # === Админ панель: Портфель инвестора ===
 
@@ -3436,13 +3436,13 @@ async def admin_create_team_member_form(request: Request):
     # Получаем компанию из query параметра
     company_id = request.query_params.get('company_id')
     if not company_id:
-        return RedirectResponse(url="/admin/companies", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
     
     db = SessionLocal()
     try:
         company = db.query(Company).get(int(company_id))
         if not company:
-            return RedirectResponse(url="/admin/companies", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
         
         return templates.TemplateResponse("admin/team/create.html", {
             "request": request, 
@@ -3486,16 +3486,16 @@ async def admin_edit_team_member_form(request: Request, person_id: int):
     try:
         person = db.query(Person).get(person_id)
         if not person:
-            return RedirectResponse(url="/admin/companies", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
         
         # Получаем компанию из query параметра
         company_id = request.query_params.get('company_id')
         if not company_id:
-            return RedirectResponse(url="/admin/companies", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
         
         company = db.query(Company).get(int(company_id))
         if not company:
-            return RedirectResponse(url="/admin/companies", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
         
         return templates.TemplateResponse("admin/team/edit.html", {
             "request": request, 
@@ -3845,7 +3845,7 @@ async def admin_create_company_stage(request: Request):
             db.add(stage)
             db.commit()
             db.close()
-            return RedirectResponse(url="/admin/company_stages", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/company_stages"), status_code=302)
         db.close()
         return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": None, "error": error})
     return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": None, "error": error})
@@ -3867,7 +3867,7 @@ async def admin_edit_company_stage(request: Request, stage_id: int):
         stage.status = form.get('status')
         db.commit()
         db.close()
-        return RedirectResponse(url="/admin/company_stages", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/company_stages"), status_code=302)
     db.close()
     return templates.TemplateResponse("admin/company_stages/form.html", {"request": request, "stage": stage, "error": error})
 
@@ -3882,7 +3882,7 @@ async def admin_delete_company_stage(request: Request, stage_id: int):
         db.delete(stage)
         db.commit()
     db.close()
-    return RedirectResponse(url="/admin/company_stages", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/company_stages"), status_code=302)
 
 @app.get("/admin/companies", response_class=HTMLResponse, name="admin_companies")
 async def admin_companies(request: Request, q: str = Query('', alias='q'), status: str = Query('', alias='status'), per_page: int = Query(10, alias='per_page'), page: int = Query(1, alias='page'), sort: str = Query('newest', alias='sort')):
@@ -3946,21 +3946,21 @@ async def admin_create_company(request: Request):
         db.add(company)
         db.commit()
         db.close()
-        return RedirectResponse(url="/admin/companies", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
     return templates.TemplateResponse("admin/companies/form.html", {"request": request, "company": None, "countries": countries, "cities": cities, "error": error})
 
 @app.post("/admin/companies/delete/{company_id}", name="admin_delete_company")
 async def admin_delete_company(request: Request, company_id: int):
     from models import Company
     if not admin_required(request):
-        return RedirectResponse(url="/login", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/login"), status_code=302)
     db = SessionLocal()
     company = db.query(Company).get(company_id)
     if company:
         db.delete(company)
         db.commit()
     db.close()
-    return RedirectResponse(url="/admin/companies", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/companies"), status_code=302)
 
 @app.get("/admin/companies/edit/{company_id}", response_class=HTMLResponse, name="admin_edit_company")
 async def admin_edit_company(request: Request, company_id: int):
@@ -4088,7 +4088,7 @@ async def admin_create_pitch(request: Request):
     status = form.get('status', 'active')
     
     if not company_id:
-        return RedirectResponse(url="/admin/companies?error=ID компании не указан", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/companies?error=ID компании не указан"), status_code=302)
     
     if not url:
         return RedirectResponse(url=f"/admin/companies/edit/{company_id}?tab=pitch&error=URL питча не указан", status_code=302)
@@ -4098,7 +4098,7 @@ async def admin_create_pitch(request: Request):
         # Проверяем существование компании
         company = db.query(Company).get(company_id)
         if not company:
-            return RedirectResponse(url="/admin/companies?error=Компания не найдена", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies?error=Компания не найдена"), status_code=302)
         
         # Создаем запись в БД
         pitch = Pitch(
@@ -4203,7 +4203,7 @@ async def admin_create_deal(request: Request):
     status = form.get('status', 'active')
     
     if not company_id:
-        return RedirectResponse(url="/admin/deals/create?error=Выберите компанию", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/deals/create?error=Выберите компанию"), status_code=302)
     
     if not deal_type or not amount:
         return RedirectResponse(url=f"/admin/deals/create?company_id={company_id}&error=Заполните все обязательные поля", status_code=302)
@@ -4213,7 +4213,7 @@ async def admin_create_deal(request: Request):
         # Проверяем существование компании
         company = db.query(Company).get(company_id)
         if not company:
-            return RedirectResponse(url="/admin/companies?error=Компания не найдена", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/companies?error=Компания не найдена"), status_code=302)
         
         # Обработка даты
         deal_date = None
@@ -4258,7 +4258,7 @@ async def admin_edit_deal_form(request: Request, deal_id: int):
     db.close()
     
     if not deal:
-        return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/deals?error=Сделка не найдена"), status_code=302)
     
     return templates.TemplateResponse("admin/deals/edit.html", {
         "request": request, 
@@ -4291,7 +4291,7 @@ async def admin_edit_deal(request: Request, deal_id: int):
     try:
         deal = db.query(Deal).get(deal_id)
         if not deal:
-            return RedirectResponse(url="/admin/deals?error=Сделка не найдена", status_code=302)
+            return RedirectResponse(url=get_redirect_url(request, "/admin/deals?error=Сделка не найдена"), status_code=302)
         
         # Обработка даты
         deal_date = None
@@ -4317,7 +4317,7 @@ async def admin_edit_deal(request: Request, deal_id: int):
     finally:
         db.close()
     
-    return RedirectResponse(url="/admin/deals?message=Сделка успешно обновлена", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/deals?message=Сделка успешно обновлена"), status_code=302)
 
 @app.post("/admin/deals/{deal_id}/delete", name="admin_delete_deal")
 async def admin_delete_deal(request: Request, deal_id: int):
@@ -4567,7 +4567,7 @@ async def admin_feedback_edit(request: Request, feedback_id: int):
     db.close()
     
     if not feedback:
-        return RedirectResponse(url="/admin/feedback", status_code=302)
+        return RedirectResponse(url=get_redirect_url(request, "/admin/feedback"), status_code=302)
     
     return templates.TemplateResponse("admin/feedback/edit.html", {
         "request": request,
@@ -4617,7 +4617,7 @@ async def admin_feedback_delete(request: Request, feedback_id: int):
     
     db.close()
     
-    return RedirectResponse(url="/admin/feedback", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/feedback"), status_code=302)
 
 # === Страницы политики и условий ===
 
@@ -4868,7 +4868,7 @@ async def admin_create_email_template_post(request: Request):
     db.commit()
     db.close()
     
-    return RedirectResponse(url="/admin/email-templates", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/email-templates"), status_code=302)
 
 @app.post("/admin/email-templates/{template_id}/delete", name="admin_delete_email_template")
 async def admin_delete_email_template(request: Request, template_id: int):
@@ -4886,7 +4886,7 @@ async def admin_delete_email_template(request: Request, template_id: int):
     db.commit()
     db.close()
     
-    return RedirectResponse(url="/admin/email-templates", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/email-templates"), status_code=302)
 
 @app.get("/admin/email-templates/{template_id}/edit", response_class=HTMLResponse, name="admin_edit_email_template")
 async def admin_edit_email_template(request: Request, template_id: int):
@@ -4944,7 +4944,7 @@ async def admin_edit_email_template_post(request: Request, template_id: int):
     db.commit()
     db.close()
     
-    return RedirectResponse(url="/admin/email-templates", status_code=302)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/email-templates"), status_code=302)
 
 @app.get("/admin/email-templates/{template_id}/preview", response_class=HTMLResponse, name="admin_preview_email_template")
 async def admin_preview_email_template(request: Request, template_id: int):
@@ -5089,7 +5089,7 @@ async def admin_email_settings_save(request: Request):
     
     # Здесь можно добавить логику сохранения в файл .env или базу данных
     # Пока просто возвращаем успех
-    return RedirectResponse(url="/admin/email-settings", status_code=303)
+    return RedirectResponse(url=get_redirect_url(request, "/admin/email-settings"), status_code=303)
 
 @app.post("/admin/email-settings/test")
 async def admin_email_settings_test(request: Request):
