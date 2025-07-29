@@ -166,7 +166,7 @@ async def register(request: Request):
     agree2 = form.get("agree2")
     is_ajax = request.headers.get("accept", "").lower().find("application/json") != -1
     # Валидация
-    if not (first_name and last_name and country_id and city and phone and email and role and password and agree1 and agree2):
+    if not (first_name and last_name and country_id and city and phone and email and password and agree1 and agree2):
         error_msg = "Пожалуйста, заполните все обязательные поля и согласия."
         if is_ajax:
             return JSONResponse({"success": False, "error": error_msg}, status_code=400)
@@ -191,7 +191,7 @@ async def register(request: Request):
     user = User(
         email=email,
         password=get_password_hash(password),
-        role=role,
+        role="user",  # Роль по умолчанию
         first_name=first_name,
         last_name=last_name,
         country_id=country_id,
