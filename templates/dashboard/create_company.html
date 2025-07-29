@@ -33,6 +33,12 @@
             У вас уже есть профиль компании. Один пользователь может создать только одну компанию.
           {% elif error == 'creation_failed' %}
             Произошла ошибка при создании профиля. Попробуйте еще раз.
+          {% elif error == 'name_required' %}
+            Название компании обязательно для заполнения.
+          {% elif error == 'country_required' %}
+            Страна обязательна для заполнения.
+          {% elif error == 'city_required' %}
+            Город обязателен для заполнения.
           {% else %}
             {{ error }}
           {% endif %}
@@ -57,8 +63,8 @@
 
             <div class="row mb-3">
               <div class="col-md-6">
-                <label for="country" class="form-label">Страна</label>
-                <select class="form-select" id="country" name="country">
+                <label for="country" class="form-label">Страна *</label>
+                <select class="form-select" id="country" name="country" required>
                   <option value="">Выберите страну</option>
                   {% for country in countries %}
                     <option value="{{ country.name }}">{{ country.name }}</option>
@@ -66,8 +72,8 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label for="city" class="form-label">Город</label>
-                <input type="text" class="form-control" id="city" name="city">
+                <label for="city" class="form-label">Город *</label>
+                <input type="text" class="form-control" id="city" name="city" required>
               </div>
             </div>
 

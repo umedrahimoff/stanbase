@@ -1031,12 +1031,26 @@ async def create_company_page(request: Request):
                 # Получаем данные формы (включая файлы)
                 form = await request.form()
 
+                # Валидация обязательных полей
+                name = form.get('name', '').strip()
+                country = form.get('country', '').strip()
+                city = form.get('city', '').strip()
+                
+                if not name:
+                    return RedirectResponse(url="/dashboard/create-company?error=name_required", status_code=302)
+                
+                if not country:
+                    return RedirectResponse(url="/dashboard/create-company?error=country_required", status_code=302)
+                
+                if not city:
+                    return RedirectResponse(url="/dashboard/create-company?error=city_required", status_code=302)
+
                 # Создаем компанию
                 company = Company(
-                    name=form.get('name'),
+                    name=name,
                     description=form.get('description'),
-                    country=form.get('country'),
-                    city=form.get('city'),
+                    country=country,
+                    city=city,
                     stage=form.get('stage'),
                     industry=form.get('industry'),
                     website=form.get('website'),
