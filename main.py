@@ -1965,19 +1965,52 @@ def admin_required(request: Request):
 
 @app.get("/admin", response_class=HTMLResponse, name="admin_dashboard")
 async def admin_dashboard(request: Request):
+    """Главная страница админки с статистикой."""
     from models import User, Investor, News, Event, Job, Deal, Company
+    from sqlalchemy.exc import SQLAlchemyError
+    
     if not admin_required(request):
         return RedirectResponse(url="/login", status_code=302)
+    
     db = SessionLocal()
-    users = db.query(User).all()
-    companies = db.query(Company).all()
-    investors = db.query(Investor).all()
-    news = db.query(News).all()
-    events = db.query(Event).all()
-    jobs = db.query(Job).all()
-    deals = db.query(Deal).all()
-    db.close()
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "session": request.session, "users": users, "companies": companies, "investors": investors, "news": news, "events": events, "jobs": jobs, "deals": deals})
+    try:
+        users = db.query(User).all()
+        companies = db.query(Company).all()
+        investors = db.query(Investor).all()
+        news = db.query(News).all()
+        events = db.query(Event).all()
+        jobs = db.query(Job).all()
+        deals = db.query(Deal).all()
+        db.close()
+        
+        return templates.TemplateResponse(
+            "admin/dashboard.html", 
+            {
+                "request": request, 
+                "session": request.session, 
+                "users": users, 
+                "companies": companies, 
+                "investors": investors, 
+                "news": news, 
+                "events": events, 
+                "jobs": jobs, 
+                "deals": deals
+            }
+        )
+    except SQLAlchemyError as e:
+        db.close()
+        print(f"Database error in admin dashboard: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Database error occurred"}
+        )
+    except Exception as e:
+        db.close()
+        print(f"Unexpected error in admin dashboard: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
 
 # --- Users CRUD ---
 @app.get("/admin/users", response_class=HTMLResponse, name="admin_users")
