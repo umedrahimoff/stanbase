@@ -5158,7 +5158,8 @@ async def admin_create_email_template_post(request: Request):
 @app.post("/admin/email-templates/{template_id}/delete", name="admin_delete_email_template")
 async def admin_delete_email_template(request: Request, template_id: int):
     """Удаление шаблона письма"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     db = SessionLocal()
     template = db.query(EmailTemplate).filter_by(id=template_id).first()
@@ -5176,7 +5177,8 @@ async def admin_delete_email_template(request: Request, template_id: int):
 @app.get("/admin/email-templates/{template_id}/edit", response_class=HTMLResponse, name="admin_edit_email_template")
 async def admin_edit_email_template(request: Request, template_id: int):
     """Редактирование шаблона письма"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     db = SessionLocal()
     template = db.query(EmailTemplate).filter_by(id=template_id).first()
@@ -5193,7 +5195,8 @@ async def admin_edit_email_template(request: Request, template_id: int):
 @app.post("/admin/email-templates/{template_id}/edit", name="admin_edit_email_template_post")
 async def admin_edit_email_template_post(request: Request, template_id: int):
     """Сохранение изменений шаблона письма"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     form = await request.form()
     name = form.get("name", "").strip()
@@ -5234,7 +5237,8 @@ async def admin_edit_email_template_post(request: Request, template_id: int):
 @app.get("/admin/email-templates/{template_id}/preview", response_class=HTMLResponse, name="admin_preview_email_template")
 async def admin_preview_email_template(request: Request, template_id: int):
     """Предпросмотр шаблона письма"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     db = SessionLocal()
     template = db.query(EmailTemplate).filter_by(id=template_id).first()
@@ -5281,7 +5285,8 @@ async def admin_preview_email_template(request: Request, template_id: int):
 @app.post("/admin/email-templates/{template_id}/test-send", name="admin_test_send_email_template")
 async def admin_test_send_email_template(request: Request, template_id: int):
     """Тестовая отправка шаблона письма"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     form = await request.form()
     test_email = form.get("test_email", "").strip()
@@ -5335,7 +5340,8 @@ async def admin_test_send_email_template(request: Request, template_id: int):
 @app.get("/admin/email-settings", response_class=HTMLResponse, name="admin_email_settings")
 async def admin_email_settings(request: Request):
     """Настройки почты"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     # Получаем текущие настройки из переменных окружения
     settings = {
@@ -5368,7 +5374,8 @@ async def admin_email_settings(request: Request):
 @app.post("/admin/email-settings/save")
 async def admin_email_settings_save(request: Request):
     """Сохранение настроек почты"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     form_data = await request.form()
     
@@ -5379,7 +5386,8 @@ async def admin_email_settings_save(request: Request):
 @app.post("/admin/email-settings/test")
 async def admin_email_settings_test(request: Request):
     """Тестирование соединения с SMTP"""
-    admin_required(request)
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
     
     form_data = await request.form()
     
