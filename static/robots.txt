@@ -1,5 +1,4 @@
 User-agent: *
-Allow: /
 
 # Запрещаем индексацию админ панели
 Disallow: /admin/
