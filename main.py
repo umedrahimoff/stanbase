@@ -3595,7 +3595,10 @@ async def admin_delete_portfolio_entry(request: Request, investor_id: int, entry
         db.close()
 
 @app.get("/admin/company_search")
-async def admin_startup_search(q: str = Query('', alias='q')):
+async def admin_startup_search(request: Request, q: str = Query('', alias='q')):
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+
     db = SessionLocal()
     query = db.query(Company)
     if q:
@@ -3610,7 +3613,10 @@ async def admin_startup_search(q: str = Query('', alias='q')):
     return {"results": results}
 
 @app.get("/admin/city_search")
-async def admin_city_search(q: str = Query('', alias='q')):
+async def admin_city_search(request: Request, q: str = Query('', alias='q')):
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+
     from models import City, Country
     db = SessionLocal()
     query = db.query(City)
@@ -3768,6 +3774,9 @@ async def admin_delete_team_member(request: Request, person_id: int):
 
 @app.get("/admin/admins", response_class=HTMLResponse, name="admin_admins")
 def admin_admins(request: Request):
+    if not admin_required(request):
+        return RedirectResponse(url="/login", status_code=302)
+
     db = SessionLocal()
     users = db.query(User).filter(User.role.in_(["admin", "moderator"])).all()
     db.close()
