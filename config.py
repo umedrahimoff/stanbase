@@ -13,8 +13,8 @@ IS_STAGING = ENVIRONMENT == "staging"
 # Telegram Bot Configuration
 # ⚠️ ВНИМАНИЕ: В продакшене используйте переменные окружения!
 # Для разработки можно использовать токены здесь, но НЕ коммитьте их в Git
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8350354186:AAGPNR44pg4L0qHgpO8RAJRDoylKHlSFBak")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-4753525145")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Database Configuration
 DATABASE_URL = "sqlite:///./instance/stanbase.db"
